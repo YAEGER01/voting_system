@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>iVote | Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/design4.css') }}">
+</head>
+<body>
+<header class="page-header">
+  <button id="sidebarToggle" aria-label="Toggle Sidebar">☰</button>
+  <div class="logo-container">
+    <div class="logo-wrapper"><img src="{{ url_for('static', filename='images/isu.png') }}" alt="Logo" class="logo" /></div>
+    <div class="logo-wrapper"><img src="{{ url_for('static', filename='images/osas.png') }}" alt="Logo" class="logo" /></div>
+    <div class="logo-wrapper"><img src="{{ url_for('static', filename='images/ssc.png') }}" alt="Logo" class="logo" /></div>
+  </div>
+  <div class="header-title">
+    VOTING SYSTEM
+  </div>
+</header>
+
+<div class="sidebar">
+  <h2>Dashboard</h2>
+  {% if dept_logo %}
+    <div style="text-align:center; margin-bottom:18px;">
+        <img src="{{ url_for('static', filename='images/' ~ dept_logo) }}" alt="Department Logo" style="height:70px;max-width:120px;object-fit:contain;">
+      <div style="color:#fff; font-size:15px; margin-top:6px;">{{ user.course }}</div>
+    </div>
+  {% endif %}
+  <div class="user-divider">
+    <div class="line-container">
+      <hr><span class="username">WELCOME</span><hr>
+    </div>
+    <span class="user-name">
+      {{ user.first_name }} {{ user.last_name }}
+    </span>
+    <hr>
+  </div>
+  <a href="#" id="homeLink"><i class="fa-solid fa-house"></i><span>Home</span></a>
+  <a href="#" id="profileLink"><i class="fa-solid fa-user"></i><span>My Profile</span></a>
+  <a href="#"><i class="fa-solid fa-receipt"></i><span>Receipt Tab</span></a>
+  <a href="{{ url_for('candidates') }}"><i class="fa-solid fa-users"></i><span>Candidates</span></a>
+  <a href="{{ url_for('view_results') }}"><i class="fa-solid fa-file-alt"></i><span>View Results</span></a>
+  <a href="#"><i class="fa-solid fa-gear"></i><span>Settings</span></a> 
+  <a href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?');"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
+  <div class="developer-note">
+    <div>Developed By:</div>
+    <div>Justin Von T. Vergara</div>
+    <div> BSIT 2A - NS </div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="main-wrapper">
+    <h2>{{ user.course }} Dashboard</h2>
+    <p>
+      Voting Deadline: <b id="deadlineDisplay">{{ voting_deadline }}</b> | 
+      Now: <b id="liveNow">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</b>
+    </p>
+    <div class="sketch-container">
+      {% if voting_closed %}
+        <div style="text-align:center; color:#e74c3c; font-size:1.2em; font-weight:bold; margin:40px 0;">
+          Voting has ended.<br>
+          Thank you for your participation.<br>
+          Please view the results in <b>[View Results]</b> on the Left side of dashboard.
+        </div>
+      {% elif positions|length == 0 %}
+        <p>No voting positions are available for your department at this time.</p>
+      {% elif voted_positions|length == positions|length %}
+        <div style="text-align:center; color:#25c18c; font-size:1.2em; font-weight:bold; margin:40px 0;">
+          You Already Voted all the positions,<br>
+          Thank you for participating.<br>
+          You can view the results in <b>[View Results]</b> on the Left side of dashboard.
+        </div>
+      {% else %}
+        <p>Welcome, {{ user.first_name }}! Please select your preferred candidates below.</p>
+        <form method="POST" action="">
+          {% for pos in positions %}
+            {% if pos.id not in voted_positions %}
+              <div class="position-block">
+                <h3>{{ pos.name }}</h3>
+                <div class="candidate-card-list">
+                  {% for cand in candidates_per_position[pos.id] %}
+                    <label class="candidate-result-card">
+                      <input type="radio" name="{{ pos.id }}" value="{{ cand.id }}" required>
+                      {% if cand.image %}
+                        <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}">
+                      {% endif %}
+                      <div class="candidate-name">{{ cand.name }}</div>
+                    </label>
+                  {% endfor %}
+                  {% if candidates_per_position[pos.id]|length == 0 %}
+                    <p>No candidates for this position yet.</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+          <button type="submit">Submit Vote</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal (simplified) -->
+<div id="profileOverlay" style="display:none;">
+  <div id="profileContainer">
+    <h2>YOUR PROFILE</h2>
+    <div class="profile-columns">
+      <div class="profile-col">
+        <div class="profile-col-title">Student Information |</div>
+        <div class="profile-row"><i class="fa-solid fa-id-badge"></i><strong>First Name:</strong><span>{{ user.first_name }}</span></div>
+        <div class="profile-row"><i class="fa-solid fa-id-badge"></i><strong>Last Name:</strong><span>{{ user.last_name }}</span></div>
+        <div class="profile-row"><i class="fa-solid fa-id-badge"></i><strong>Phone Number:</strong><span>{{ user.phone }}</span></div>
+      </div>
+      <div class="profile-col">
+        <div class="profile-col-title">Login Details |</div>
+        <div class="profile-row"><i class="fa-solid fa-id-card"></i><strong>School ID:</strong><span>{{ user.school_id }}</span></div>
+        <div class="profile-row"><i class="fa-solid fa-building-columns"></i><strong>Department:</strong><span>{{ user.course }}</span></div>
+        <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Email:</strong><span>{{ user.email }}</span></div>
+        <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Password:</strong><span>(TO BE ADDED SOON)</span></div>
+        <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Confirm Password:</strong><span>(TO BE ADDED SOON)</span></div>
+      </div>
+    </div>
+    <button id="closeProfileBtn">Close</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const profileLink = document.getElementById('profileLink');
+  const profileOverlay = document.getElementById('profileOverlay');
+  const closeProfileBtn = document.getElementById('closeProfileBtn');
+  if (profileLink && profileOverlay && closeProfileBtn) {
+    profileLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      profileOverlay.style.display = 'block';
+    });
+    closeProfileBtn.addEventListener('click', function() {
+      profileOverlay.style.display = 'none';
+    });
+    profileOverlay.addEventListener('click', function(e) {
+      if (e.target === profileOverlay) {
+        profileOverlay.style.display = 'none';
+      }
+    });
+  }
+  const sidebar = document.querySelector('.sidebar');
+  const toggleBtn = document.getElementById('sidebarToggle');
+  if (toggleBtn && sidebar) {
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+    });
+  }
+});
+</script>
+<script>
+  // Parse the voting deadline from the server
+  const votingDeadlineStr = "{{ voting_deadline }}";
+  const votingClosed = {{ voting_closed|tojson }};
+  let votingDeadline = null;
+  
+  // Function to format date to words with Philippine time
+  function formatDateToWords(date) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    // Convert to Philippine time (UTC+8) using toLocaleString
+    const phTime = new Date(date.toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+    
+    const month = months[phTime.getMonth()];
+    const day = phTime.getDate();
+    const year = phTime.getFullYear();
+    const hours = phTime.getHours();
+    const minutes = phTime.getMinutes().toString().padStart(2, '0');
+    const seconds = phTime.getSeconds().toString().padStart(2, '0');
+    
+    // Convert to 12-hour format
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    
+    return `${month} ${day}, ${year} at ${displayHours}:${minutes}:${seconds} ${ampm}`;
+  }
+  
+  try {
+    // Parse the deadline string to Date object
+    votingDeadline = new Date(votingDeadlineStr);
+    
+    // Format and display the deadline immediately
+    const deadlineDisplayElem = document.getElementById('deadlineDisplay');
+    if (deadlineDisplayElem && votingDeadline) {
+      deadlineDisplayElem.textContent = formatDateToWords(votingDeadline);
+    }
+  } catch (error) {
+    console.error('Error parsing voting deadline:', error);
+  }
+  
+  // Live clock updater
+  const clockInterval = setInterval(function() {
+    const now = new Date();
+    const liveNowElem = document.getElementById('liveNow');
+    if (liveNowElem) {
+      liveNowElem.textContent = formatDateToWords(now);
+    }
+  }, 1000);
+  
+  // Deadline checker - separate from clock to avoid continuous checking after deadline
+  let deadlineChecker = null;
+  
+  // Only set up deadline checker if voting is not already closed
+  if (!votingClosed && votingDeadline) {
+    deadlineChecker = setInterval(function() {
+      const now = new Date();
+      
+      // Check if voting deadline has been reached
+      if (now >= votingDeadline) {
+        console.log('Voting deadline reached. Refreshing page...');
+        
+        // Clear both intervals to stop all checking
+        clearInterval(clockInterval);
+        clearInterval(deadlineChecker);
+        
+        // Refresh the page
+        window.location.reload();
+      }
+    }, 1000);
+  }
+</script>
+</body>
+</html>

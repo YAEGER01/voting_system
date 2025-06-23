@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register_admin1.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Register New Admin</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <p class="{{ category }}">{{ message }}</p>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" action="">
+            <label for="school_id">School ID:</label>
+            <input type="text" id="school_id" name="school_id" required>
+
+            <label for="course">Department:</label>
+            <select id="course" name="course" required>
+                <option value="" disabled selected>Select your Department</option>
+                <option value="CCSICT">CCSICT</option>
+                <option value="CCJE">CCJE</option>
+                <option value="PS">PS</option>
+                <option value="CED">CED</option>
+                <option value="CBM">CBM</option>
+                <option value="SAS">SAS</option>
+                <option value="IAT">IAT</option>
+            </select>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="first_name">First Name:</label>
+            <input type="text" id="first_name" name="first_name" required>
+
+            <label for="last_name">Last Name:</label>
+            <input type="text" id="last_name" name="last_name" required>
+
+            <button type="submit">Register Admin</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Edit Candidate</title>
+    <style>
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #f6f8fa; margin: 0; padding: 0; }
+        form { background: #fff; max-width: 480px; margin: 32px auto 0 auto; padding: 32px 28px 24px 28px; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); display: flex; flex-direction: column; gap: 18px; }
+        input[type="text"], select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; font-size: 1rem; margin-bottom: 6px; transition: border 0.2s; }
+        textarea { min-height: 80px; resize: vertical; }
+        input[type="file"] { margin-top: 6px; }
+        button[type="submit"] { background: linear-gradient(90deg, #25c18c 60%, #21532a 100%); color: #fff; border: none; border-radius: 8px; padding: 12px 0; font-size: 1.08rem; font-weight: bold; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
+        button[type="submit"]:hover { background: linear-gradient(90deg, #21532a 60%, #25c18c 100%); }
+        img { margin: 4px 0; border-radius: 6px; border: 1px solid #ddd; background: #fafafa; max-width: 60px; max-height: 60px; }
+    </style>
+</head>
+<body>
+    <h2 style="text-align:center;">Edit Candidate</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="text" name="name" value="{{ candidate.name }}" placeholder="Candidate Name" required>
+        <select name="position_id" required>
+            {% for pos in positions %}
+                <option value="{{ pos.id }}" {% if candidate.position_id == pos.id %}selected{% endif %}>{{ pos.name }}</option>
+            {% endfor %}
+        </select>
+        <textarea name="campaign_message" placeholder="Campaign Message" required>{{ candidate.campaign_message }}</textarea>
+        {% if candidate.image %}
+            <img src="{{ url_for('static', filename=candidate.image) }}" alt="img">
+        {% endif %}
+        <input type="file" name="image" accept="image/*">
+        <button type="submit">Update Candidate</button>
+    </form>
+</body>
+</html>

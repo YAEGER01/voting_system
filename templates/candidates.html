@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Candidates</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='design4.css') }}">
+    <style>
+        .candidates-container { max-width: 900px; margin: 32px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 32px 28px 24px 28px; }
+        .position-block { margin-bottom: 32px; }
+        .candidate-list { display: flex; flex-wrap: wrap; gap: 18px; }
+        .candidate-card { background: #f9f9f9; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 18px; width: 220px; display: flex; flex-direction: column; align-items: center; transition: box-shadow 0.2s, transform 0.2s; cursor: pointer; text-decoration: none; color: inherit; }
+        .candidate-card:hover { box-shadow: 0 6px 20px rgba(33,83,42,0.13); transform: translateY(-4px) scale(1.03);}
+        .candidate-card img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 1px solid #ddd; margin-bottom: 10px; }
+        .candidate-name { font-weight: bold; margin-bottom: 8px; }
+        .candidate-campaign { font-size: 0.98em; color: #444; text-align: center; }
+        @media (max-width: 700px) {
+            .candidate-list { flex-direction: column; align-items: center; }
+            .candidate-card { width: 95%; }
+        }
+    </style>
+</head>
+<body>
+<div class="candidates-container">
+    <h2>Candidates for {{ department }}</h2>
+    {% if positions_with_candidates|length == 0 %}
+        <p>No positions found for your department.</p>
+    {% else %}
+        {% for pos_block in positions_with_candidates %}
+        <div class="position-block">
+            <h3>{{ pos_block.position.name }}</h3>
+            <div class="candidate-list">
+            {% if pos_block.candidates|length == 0 %}
+                <p>No candidates for this position yet.</p>
+            {% else %}
+                {% for cand in pos_block.candidates %}
+                    <a href="{{ url_for('candidate_details', id=cand.id) }}" class="candidate-card">
+                        {% if cand.image %}
+                            <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}">
+                        {% endif %}
+                        <div class="candidate-name">{{ cand.name }}</div>
+                    </a>
+                {% endfor %}
+            {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+    <div style="text-align:center;margin-top:24px;">
+        <a href="{{ url_for('dashboard') }}" style="color:#21532a;font-weight:bold;">&larr; Back to Dashboard</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign Up Page</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/register1.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+</head>
+<body>
+  <!-- Top Logos -->
+  <div class="top-logos">
+    <span class="logo-wrapper"><img src="{{ url_for('static', filename='images/isu.png') }}" alt="Logo 2" /></span>
+    <span class="logo-wrapper"><img src="{{ url_for('static', filename='images/osas.png') }}" alt="Logo 1" /></span>
+    <span class="logo-wrapper with-divider"><img src="{{ url_for('static', filename='images/ssc.png') }}" alt="Logo 3" /></span>
+    <img src="{{ url_for('static', filename='images/ccje.png') }}" alt="Logo 4" />
+    <img src="{{ url_for('static', filename='images/cbm.png') }}" alt="Logo 5" />
+    <img src="{{ url_for('static', filename='images/SAS.png') }}" alt="Logo 6" />
+    <img src="{{ url_for('static', filename='images/ccsict.png') }}" alt="Logo 7" />
+    <img src="{{ url_for('static', filename='images/PS.png') }}" alt="Logo 8" />
+    <img src="{{ url_for('static', filename='images/educ.png') }}" alt="Logo 9" />
+    <img src="{{ url_for('static', filename='images/iat.png') }}" alt="Logo 10" />
+  </div>
+
+  <!-- Flash messages -->
+  
+
+  <!-- Sign Up Form -->
+  <div class="container">
+    <h2>REGISTRATION</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+  {{ message }}
+</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+    <form id="signup-form" method="POST" action="{{ url_for('register') }}" novalidate enctype="multipart/form-data">
+      <div class="form-grid">
+        <div class="section">
+          <h3>Login Details | </h3>
+          <label for="school-id">School ID</label>
+          <input type="text" id="school-id" name="school-id" required />
+
+          <label for="course">Department</label>
+          <select id="course" name="course" required>
+            <option value="" disabled selected>Select your Department</option>
+            <option value="CCSICT">CCSICT</option>
+            <option value="CCJE">CCJE</option>
+            <option value="PS">PS</option>
+            <option value="CED">CED</option>
+            <option value="CBM">CBM</option>
+            <option value="SAS">SAS</option>
+            <option value="IAT">IAT</option>
+          </select>
+
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" name="password" required />
+            <button type="button" class="toggle-password" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+          <small id="password-strength" style="color: #333; font-size: 0.9em;"></small>
+
+          <label for="confirm-password">Confirm Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="confirm-password" name="confirm-password" required />
+            <button type="button" class="toggle-password" onclick="togglePassword('confirm-password', this)" aria-label="Toggle confirm password visibility">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+          <span id="confirm-password-error" class="error-message" style="display:none; color: red; font-size: 0.9em;">
+            Passwords do not match!
+          </span>
+        </div>
+
+        <div class="section">
+          <h3>Student Information | </h3>
+          <label for="first-name">First Name</label>
+          <input type="text" id="first-name" name="first-name" required />
+
+          <label for="last-name">Last Name</label>
+          <input type="text" id="last-name" name="last-name" required />
+
+          <label for="phone">Phone Number</label>
+          <input type="text" id="phone" name="phone" required />
+
+          <h3>ID Verification | </h3>
+          <label for="school-id-front">School ID Picture (Front)</label>
+          <div class="file-upload-wrapper">
+            <input type="file" id="school-id-front" name="school-id-front" accept="image/*" required />
+            <small>Upload a clear photo of the front of your school ID. Max size: 5MB. Formats: JPG, PNG, GIF.</small>
+          </div>
+          <div class="preview-container" id="preview-front-container" style="display:none;">
+            <img id="preview-image-front" src="#" alt="Front Preview" />
+          </div>
+
+          <label for="school-id-back">School ID Picture (Back)</label>
+          <div class="file-upload-wrapper">
+            <input type="file" id="school-id-back" name="school-id-back" accept="image/*" required />
+            <small>Upload a clear photo of the back of your school ID. Max size: 5MB. Formats: JPG, PNG, GIF.</small>
+          </div>
+          <div class="preview-container" id="preview-back-container" style="display:none;">
+            <img id="preview-image-back" src="#" alt="Back Preview" />
+          </div>
+        </div>
+      </div>
+
+      <div class="sign-up-button">
+        <button type="submit">SIGN UP</button>
+      </div>
+    </form>
+
+    <div class="divider"></div>
+
+    <div class="login-link">
+      Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector("i");
+      if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
+    }
+
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirm-password");
+    const confirmPasswordError = document.getElementById("confirm-password-error");
+    const passwordStrength = document.getElementById("password-strength");
+
+    function checkPasswordStrength(password) {
+      const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
+      return strongRegex.test(password);
+    }
+
+    passwordInput.addEventListener("input", () => {
+      const password = passwordInput.value;
+      if (checkPasswordStrength(password)) {
+        passwordStrength.textContent = "Strong password";
+        passwordStrength.style.color = "green";
+      } else {
+        passwordStrength.textContent = "Password must be 8+ chars with uppercase, lowercase, number, and symbol.";
+        passwordStrength.style.color = "red";
+      }
+
+      if (confirmPasswordInput.value !== "" && password !== confirmPasswordInput.value) {
+        confirmPasswordInput.classList.add("invalid");
+        confirmPasswordError.style.display = "block";
+      } else {
+        confirmPasswordInput.classList.remove("invalid");
+        confirmPasswordError.style.display = "none";
+      }
+    });
+
+    confirmPasswordInput.addEventListener("input", () => {
+      if (confirmPasswordInput.value !== passwordInput.value) {
+        confirmPasswordInput.classList.add("invalid");
+        confirmPasswordError.style.display = "block";
+      } else {
+        confirmPasswordInput.classList.remove("invalid");
+        confirmPasswordError.style.display = "none";
+      }
+    });
+
+    document.getElementById('school-id-front').addEventListener('change', function(e) {
+      const previewContainer = document.getElementById('preview-front-container');
+      const previewImage = document.getElementById('preview-image-front');
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImage.src = e.target.result;
+          previewContainer.style.display = 'block';
+        }
+        reader.readAsDataURL(this.files[0]);
+      } else {
+        previewContainer.style.display = 'none';
+      }
+    });
+
+    document.getElementById('school-id-back').addEventListener('change', function(e) {
+      const previewContainer = document.getElementById('preview-back-container');
+      const previewImage = document.getElementById('preview-image-back');
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImage.src = e.target.result;
+          previewContainer.style.display = 'block';
+        }
+        reader.readAsDataURL(this.files[0]);
+      } else {
+        previewContainer.style.display = 'none';
+      }
+    });
+
+    document.getElementById("signup-form").addEventListener("submit", function (event) {
+      if (passwordInput.value !== confirmPasswordInput.value) {
+        confirmPasswordError.style.display = "block";
+        event.preventDefault();
+      }
+      if (!checkPasswordStrength(passwordInput.value)) {
+        alert("Password must be at least 8 characters with uppercase, lowercase, number, and special character.");
+        event.preventDefault();
+      }
+      const fileInputFront = document.getElementById('school-id-front');
+      const fileInputBack = document.getElementById('school-id-back');
+      if (fileInputFront.files.length === 0) {
+        alert('Please upload the front of your School ID.');
+        event.preventDefault();
+      }
+      if (fileInputBack.files.length === 0) {
+        alert('Please upload the back of your School ID.');
+        event.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>

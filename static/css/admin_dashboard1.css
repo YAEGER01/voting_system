@@ -1,0 +1,83 @@
+/* admin.css */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f9;
+    color: #2c3e50;
+}
+
+header {
+    background-color: #2980b9;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+h1, h2, h3 {
+    text-align: center;
+    margin-top: 38px;
+    color: #21532a;
+    letter-spacing: 1px;
+    font-size: 2.1rem;
+}
+
+nav {
+    background-color: #34495e;
+    padding: 15px 0;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+}
+
+nav li {
+    margin: 0;
+}
+
+nav a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 1.08rem;
+    padding: 14px 32px;
+    background: linear-gradient(90deg, #25c18c 60%, #21532a 100%);
+    border-radius: 10px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(33,83,42,0.08);
+    display: block;
+}
+
+nav a:hover {
+    background: linear-gradient(90deg, #21532a 60%, #25c18c 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(33,83,42,0.13);
+}
+
+.container {
+    padding: 30px;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    nav ul {
+        flex-direction: column;
+        gap: 18px;
+        align-items: center;
+    }
+    nav a {
+        padding: 12px 18vw;
+        font-size: 1rem;
+    }
+    h1, h2, h3 {
+        font-size: 1.4rem;
+        margin-top: 22px;
+    }
+}

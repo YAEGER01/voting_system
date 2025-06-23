@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='design2.css') }}">
+    <style>
+        .results-container { background: #fff; border-radius: 16px; box-shadow: 0 2px 12px #0001; padding: 32px; max-width: 700px; margin: 40px auto; }
+        .position-title { color: #25c18c; font-size: 1.3em; margin-top: 30px; margin-bottom: 10px; }
+        .candidate-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .candidate-row:last-child { border-bottom: none; }
+        .candidate-name { font-weight: bold; }
+        .vote-count { color: #1e3b28; font-size: 1.1em; }
+        .candidate-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 1px solid #25c18c; background: #fff; }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <h2 style="text-align:center;">Voting Results for {{ department }}</h2>
+        {% if results|length == 0 %}
+            <p>No positions available for your department.</p>
+        {% else %}
+            {% for pos_result in results %}
+                <div class="position-title">{{ pos_result.position.name }}</div>
+                {% if pos_result.candidates|length == 0 %}
+                    <div style="color:#888; margin-bottom:10px;">No candidates for this position.</div>
+                {% else %}
+                    {% for cand in pos_result.candidates %}
+                        <div class="candidate-row">
+                            <div style="display:flex;align-items:center;">
+                                {% if cand.image %}
+                                    <img src="{{ url_for('static', filename=cand.image) }}" class="candidate-img" alt="Candidate">
+                                {% endif %}
+                                <span class="candidate-name">{{ cand.name }}</span>
+                            </div>
+                            <span class="vote-count">{{ cand.vote_count }} vote{{ '' if cand.vote_count == 1 else 's' }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        <div style="text-align:center; margin-top:30px;">
+            <a href="{{ url_for('dashboard') }}" style="color:#25c18c; text-decoration:underline;">&larr; Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

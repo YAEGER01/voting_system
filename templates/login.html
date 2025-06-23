@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voting System Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"/>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Left logo -->
+    <div class="side-logo">
+      <img src="{{ url_for('static', filename='images/ssc.png') }}" alt="SSC Logo" />
+    </div>
+
+    <!-- Login form container -->
+    <div class="container">
+      <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" class="top-logo" />
+      <h2>VOTING SYSTEM</h2>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div style="color:#ED2939;"class="error-message alert-{{ category }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="">
+        <div class="form-group">
+          <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="User Icon" />
+          <input type="text" name="school_id" placeholder="School ID" required />
+        </div>
+
+        <div class="form-group">
+          <img src="https://cdn-icons-png.flaticon.com/512/3064/3064155.png" alt="Lock Icon" />
+          <input type="password" name="password" placeholder="Password" id="passwordInput" required />
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
+            alt="Toggle Password"
+            class="toggle-password"
+            id="togglePassword"
+          />
+        </div>
+
+        <div class="forgot-password">
+          <a href="#">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">LOGIN</button>
+      </form>
+
+      <div class="divider"></div>
+
+      <div class="signup-link">
+        Don't have an account?
+        <a href="{{ url_for('register') }}">Sign up</a>
+      </div>
+
+      <div class="developer">
+        DEVELOPED BY: JUSTIN VON T. VERGARA | BSIT 2A - NS | CCSICT
+      </div>
+    </div>
+
+    <!-- Right logo -->
+    <div class="side-logo">
+      <img src="{{ url_for('static', filename='images/ccsict.png') }}" alt="CCSICT Logo" />
+    </div>
+  </div>
+
+  <script>
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("passwordInput");
+
+    togglePassword.addEventListener("click", () => {
+      const isPasswordHidden = passwordInput.type === "password";
+      passwordInput.type = isPasswordHidden ? "text" : "password";
+      togglePassword.src = isPasswordHidden
+        ? "https://cdn-icons-png.flaticon.com/512/159/159604.png"
+        : "https://cdn-icons-png.flaticon.com/512/709/709612.png";
+    });
+  </script>
+  <script>
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
+</body>
+</html>

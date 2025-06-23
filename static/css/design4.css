@@ -1,0 +1,610 @@
+/* Reset margin and padding */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header styling */
+.page-header {
+  width: 100%;
+  background-color: #25c18c;
+  color: white;
+  font-weight: bold;
+  padding: 0 20px;
+  position: fixed;
+  height: 90px;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 24px;
+  padding-left: 270px;
+}
+
+/* Logo container */
+.logo-container {
+  display: flex;
+  gap: 17px;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  height: 70px;
+  align-items: center;
+  z-index: 1100;
+}
+
+.logo-wrapper {
+  background-color: white;
+  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.logo-wrapper .logo {
+  height: 50px;
+  width: auto;
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+  user-select: none;
+  font-size: 50px;
+}
+
+/* Sidebar styles */
+.sidebar {
+  position: fixed;
+  top: 90px;
+  left: 0;
+  height: calc(100vh - 90px);
+  width: 250px;
+  background-color: #1e3b28;
+  color: #ecf0f1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  transition: transform 0.3s ease-in-out;
+  z-index: 100;
+}
+
+.sidebar h2 {
+  font-size: 24px;
+  margin-bottom: 30px;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 10px 15px;
+  font-size: 18px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: all 0.2s ease;
+}
+
+.sidebar a i {
+  font-size: 22px;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  top: 2px;
+}
+
+.sidebar a:hover {
+  background-color: #34495e;
+}
+
+.sidebar a.active {
+  background-color: #1abc9c;
+  color: #fff;
+}
+
+/* Main content area */
+.main-content {
+  margin-left: 250px;
+  padding: 120px 0 0 0;
+  min-height: calc(100vh - 90px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f6f8fa;
+  transition: margin-left 0.3s ease;
+}
+
+/* Voting card container */
+.sketch-container {
+  background: #fff;
+  width: 95%;
+  max-width: 700px;
+  min-height: 400px;
+  margin: 0 auto;
+  padding: 36px 32px 32px 32px;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  border: 1.5px solid #e0e4e8;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.sketch-container h2 {
+  color: #25c18c;
+  font-size: 2rem;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.sketch-container p {
+  color: #444;
+  font-size: 1.1rem;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+/* Position block */
+.position-block {
+  background: #f8fafb;
+  border-radius: 12px;
+  padding: 18px 18px 12px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+  border: 1px solid #e6eaea;
+}
+
+.position-block h3 {
+  color: #1e3b28;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+/* Candidate card list */
+.candidate-card-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+/* Candidate Result Card Styles */
+.candidate-result-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  width: 220px;
+  padding: 18px 10px 14px 10px;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  transition: box-shadow 0.18s, border-color 0.18s;
+}
+
+.candidate-result-card:hover {
+  box-shadow: 0 4px 16px rgba(37,193,140,0.13);
+  border-color: #25c18c;
+}
+
+.candidate-result-card input[type="radio"] {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  accent-color: #25c18c;
+  width: 18px;
+  height: 18px;
+}
+
+.candidate-result-card img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1.5px solid #e0e4e8;
+  background: #f8f8f8;
+}
+
+.candidate-result-card .candidate-name {
+  font-size: 1.08rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #222;
+}
+
+.candidate-result-card .candidate-votes {
+  font-size: 1.08rem;
+  color: #1976d2;
+  font-weight: bold;
+}
+
+/* Submit button */
+.sketch-container button[type="submit"] {
+  margin-top: 18px;
+  background: #25c18c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 0;
+  width: 100%;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37,193,140,0.07);
+  transition: background 0.2s;
+  letter-spacing: 1px;
+}
+
+.sketch-container button[type="submit"]:hover {
+  background: #1fa46a;
+}
+
+/* User divider section */
+.user-divider {
+  text-align: center;
+  color: #ecf0f1;
+  margin-bottom: 20px;
+}
+
+.user-divider .line-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.user-divider .line-container hr {
+  flex: 1;
+  border: none;
+  border-top: 1px solid #ecf0f1;
+  margin: 0;
+}
+
+.user-divider .username {
+  font-weight: bold;
+  white-space: nowrap;
+  font-size: 20px;
+}
+
+.user-divider .user-name {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 20px;
+}
+
+.user-divider hr.full-divider {
+  border: none;
+  border-top: 1px solid #ecf0f1;
+  width: 80%;
+  margin: 5px auto;
+}
+
+.school-id {
+  display: block;
+  color: #ccc;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* PROFILE OVERLAY STYLES - FIXED FOR PERFECT CENTERING */
+#profileOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* When modal is shown via JavaScript (display: block), force it to use flexbox */
+#profileOverlay[style*="block"] {
+  display: flex !important;
+}
+
+#profileContainer {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  padding: 32px 38px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  margin: 20px;
+}
+
+#profileContainer h2 {
+  color: #25c18c;
+  margin-bottom: 24px;
+  font-size: 2rem;
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.profile-columns {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.profile-col {
+  background: #f8f8f8;
+  border-radius: 10px;
+  padding: 18px 22px;
+  min-width: 220px;
+  flex: 1;
+}
+
+.profile-col-title {
+  font-weight: bold;
+  color: #25c18c;
+  margin-bottom: 14px;
+  font-size: 18px;
+  text-align: left;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e0e4e8;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.profile-row i {
+  color: #25c18c;
+  min-width: 22px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.profile-row strong {
+  min-width: 120px;
+  color: #555;
+  font-weight: 600;
+}
+
+.profile-row span {
+  flex: 1;
+  color: #333;
+  word-break: break-word;
+}
+
+#closeProfileBtn {
+  margin-top: 10px;
+  background: #25c18c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 32px;
+  font-size: 17px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(37,193,140,0.2);
+}
+
+#closeProfileBtn:hover {
+  background: #1fa46a;
+  box-shadow: 0 4px 12px rgba(37,193,140,0.3);
+}
+
+/* Sidebar toggle */
+#sidebarToggle {
+  display: none;
+  background: #25c18c;
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  user-select: none;
+  z-index: 1201;
+  border-radius: 6px;
+  padding: 6px 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.developer-note {
+  margin-top: auto;
+  text-align: center;
+  color: #bdc3c7;
+  font-size: 20px;
+  padding-top: 20px;
+  line-height: 1.5;
+  font-weight: bold;
+}
+
+/* Main wrapper */
+.main-wrapper {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* ================== */
+/* Responsive for Mobile */
+/* ================== */
+@media (max-width: 768px) {
+  .page-header {
+    padding-left: 0;
+    height: 70px;
+    font-size: 18px;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+  }
+
+  #sidebarToggle {
+    display: block;
+    position: static;
+    margin-left: 10px;
+    margin-right: 18px;
+    align-self: center;
+  }
+
+  .logo-container {
+    position: static;
+    top: auto;
+    left: auto;
+    height: auto;
+    gap: 10px;
+    margin: 0 10px 0 0;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .logo-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+
+  .logo-wrapper .logo {
+    height: 30px;
+  }
+
+  .header-title {
+    flex: none;
+    text-align: left;
+    margin-left: 18px;
+    font-size: 23px;
+    align-self: center;
+    white-space: nowrap;
+  }
+
+  .sidebar {
+    width: 200px;
+    top: 70px;
+    height: calc(100vh - 70px);
+    transform: translateX(-100%);
+    z-index: 1000;
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 15px 0;
+  }
+  
+  .sketch-container {
+    padding: 25px 10px;
+    min-height: 350px;
+    width: 98%;
+    margin: 20px auto 0 auto;
+  }
+
+  .profile-columns {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .profile-col {
+    width: 100%;
+    min-width: auto;
+  }
+
+  #profileContainer {
+    width: 95%;
+    padding: 24px 20px;
+    margin: 10px;
+    max-height: 90vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    height: 60px;
+    font-size: 16px;
+  }
+
+  .logo-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .logo-wrapper .logo {
+    height: 25px;
+  }
+
+  .sidebar {
+    width: 180px;
+    top: 60px;
+    height: calc(100vh - 60px);
+  }
+
+  .header-title {
+    font-size: 19px;
+  }
+  
+  .sketch-container {
+    padding: 15px 2px;
+    min-height: 200px;
+    width: 98%;
+  }
+
+  #profileContainer {
+    padding: 20px 15px;
+    width: 98%;
+    margin: 5px;
+  }
+
+  .profile-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .profile-row strong {
+    min-width: 100px;
+    font-size: 15px;
+  }
+
+  .profile-row span {
+    margin-left: 20px;
+  }
+}
