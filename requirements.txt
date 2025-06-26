@@ -8,3 +8,4 @@ Werkzeug
 PyMySQL
 python-dotenv
 Pillow
+supabase
