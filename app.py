@@ -1,8 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from config import Config
-from models import db, User, Position, Candidate, Vote, Setting
+from supabase_client import supabase
 import os
 import re
 import sys
@@ -10,8 +9,7 @@ import platform
 from datetime import datetime
 
 app = Flask(__name__)
-app.config.from_object(Config)
-db.init_app(app)
+app.secret_key = os.getenv("SECRET_KEY", "fallback-secret")
 
 UPLOAD_FOLDER = os.path.join('static', 'uploads', 'school_ids')
 CANDIDATE_UPLOAD_FOLDER = os.path.join('static', 'uploads', 'candidates')
@@ -28,12 +26,16 @@ DEPARTMENT_LOGOS = {
     'IAT': 'iat.png',
 }
 
+
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit(
+        '.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.template_filter('nl2br')
 def nl2br_filter(s):
     return s.replace('\n', '<br>') if s else ''
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -44,17 +46,20 @@ def login():
         if not school_id or not password:
             flash("Please fill in all fields.", 'danger')
         else:
-            user = User.query.filter_by(school_id=school_id).first()
-            if user and check_password_hash(user.password_hash, password):
-                session['school_id'] = user.school_id
-                session['role'] = user.role
-                if user.role == 'admin':
+            resp = supabase.table('user').select('*').eq(
+                'school_id', school_id).single().execute()
+            user = resp.data
+            if user and check_password_hash(user['password_hash'], password):
+                session['school_id'] = user['school_id']
+                session['role'] = user['role']
+                if user['role'] == 'admin':
                     return redirect(url_for('admin_dashboard'))
                 else:
                     return redirect(url_for('dashboard'))
             else:
                 flash("Invalid School ID or Password.", 'danger')
     return render_template('login.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -70,15 +75,20 @@ def register():
         front_file = request.files.get('school-id-front')
         back_file = request.files.get('school-id-back')
 
-        if not all([school_id, course, email, password, confirm_password, first_name, last_name, phone, front_file, back_file]):
+        if not all([
+                school_id, course, email, password, confirm_password,
+                first_name, last_name, phone, front_file, back_file
+        ]):
             flash("All fields are required.", 'danger')
             return redirect(request.url)
 
-        if not allowed_file(front_file.filename) or not allowed_file(back_file.filename):
+        if not allowed_file(front_file.filename) or not allowed_file(
+                back_file.filename):
             flash('Only image files are allowed for ID photos.', 'danger')
             return redirect(request.url)
 
-        if len(front_file.read()) > MAX_FILE_SIZE or len(back_file.read()) > MAX_FILE_SIZE:
+        if len(front_file.read()) > MAX_FILE_SIZE or len(
+                back_file.read()) > MAX_FILE_SIZE:
             flash('Each ID image must be less than 5MB.', 'danger')
             return redirect(request.url)
         front_file.seek(0)
@@ -88,86 +98,59 @@ def register():
             flash('Passwords do not match!', 'danger')
             return redirect(request.url)
 
-        if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$', password):
-            flash('Password must have uppercase, lowercase, digit, and special character.', 'danger')
+        if not re.match(
+                r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$',
+                password):
+            flash(
+                'Password must have uppercase, lowercase, digit, and special character.',
+                'danger')
             return redirect(request.url)
 
-        # Check duplicates
-        if User.query.filter_by(school_id=school_id).first():
-            flash('School ID already registered.', 'danger')
-            return redirect(request.url)
-        if User.query.filter_by(email=email).first():
-            flash('Email already exists.', 'danger')
-            return redirect(request.url)
-        if User.query.filter_by(phone=phone).first():
-            flash('Phone number already in use.', 'danger')
-            return redirect(request.url)
+        # Check duplicates in Supabase
+        for field, value in [('school_id', school_id), ('email', email),
+                             ('phone', phone)]:
+            resp = supabase.table('user').select('id').eq(field,
+                                                          value).execute()
+            if resp.data:
+                flash(f'{field.replace("_", " ").title()} already registered.',
+                      'danger')
+                return redirect(request.url)
 
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        front_filename = secure_filename(f"{school_id}_front_{front_file.filename}")
-        back_filename = secure_filename(f"{school_id}_back_{back_file.filename}")
+        front_filename = secure_filename(
+            f"{school_id}_front_{front_file.filename}")
+        back_filename = secure_filename(
+            f"{school_id}_back_{back_file.filename}")
         front_path = os.path.join(UPLOAD_FOLDER, front_filename)
         back_path = os.path.join(UPLOAD_FOLDER, back_filename)
-
         front_file.save(front_path)
         back_file.save(back_path)
 
         hashed_password = generate_password_hash(password)
-        new_user = User(
-            school_id=school_id,
-            course=course,
-            email=email,
-            password_hash=hashed_password,
-            first_name=first_name,
-            last_name=last_name,
-            phone=phone,
-            id_photo_front=front_path,
-            id_photo_back=back_path,
-            role='user'
-        )
-        db.session.add(new_user)
-        db.session.commit()
+        supabase.table('user').insert({
+            'school_id': school_id,
+            'course': course,
+            'email': email,
+            'password_hash': hashed_password,
+            'first_name': first_name,
+            'last_name': last_name,
+            'phone': phone,
+            'id_photo_front': front_path,
+            'id_photo_back': back_path,
+            'role': 'user'
+        }).execute()
 
         flash("Successfully Registered!", "success")
         return redirect(url_for('register'))
 
     return render_template('register.html')
 
-@app.route('/register_admin', methods=['GET', 'POST'])
-def register_admin():
-    if request.method == 'POST':
-        school_id = request.form.get('school_id', '').strip()
-        password = request.form.get('password', '')
-        first_name = request.form.get('first_name', '').strip()
-        last_name = request.form.get('last_name', '').strip()
-        course = request.form.get('course', '').strip()
 
-        if not all([school_id, password, first_name, last_name, course]):
-            flash("Please fill in all required fields.", 'danger')
-        else:
-            email = f"{school_id}@admin.local"
-            existing = User.query.filter(
-                (User.school_id == school_id) | (User.email == email)
-            ).first()
-            if existing:
-                flash("School ID or generated email already exists.", 'danger')
-            else:
-                password_hash = generate_password_hash(password)
-                new_admin = User(
-                    school_id=school_id,
-                    course=course,
-                    email=email,
-                    password_hash=password_hash,
-                    first_name=first_name,
-                    last_name=last_name,
-                    role='admin'
-                )
-                db.session.add(new_admin)
-                db.session.commit()
-                flash("Admin registered successfully!", "success")
-        return redirect(url_for('register_admin'))
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
-    return render_template('register_admin.html')
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -175,61 +158,76 @@ def dashboard():
         return redirect(url_for('login'))
 
     school_id = session['school_id']
-    user = User.query.filter_by(school_id=school_id).first()
+    user_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    user = user_resp.data
     if not user:
         flash("User not found.", "danger")
         return redirect(url_for('login'))
 
-    dept_logo = DEPARTMENT_LOGOS.get(user.course.upper())
+    dept_logo = DEPARTMENT_LOGOS.get(user['course'].upper())
     now = datetime.now()
     voting_deadline = None
     voting_closed = False
 
     # Get voting deadline for department
-    setting = Setting.query.filter_by(department=user.course).order_by(Setting.id.desc()).first()
-    if setting:
-        voting_deadline = setting.voting_deadline
+    setting_resp = supabase.table('settings').select('*').eq(
+        'department', user['course']).order('id',
+                                            desc=True).limit(1).execute()
+    if setting_resp.data:
+        voting_deadline_str = setting_resp.data[0]['voting_deadline']
+        voting_deadline = datetime.fromisoformat(voting_deadline_str)
         voting_closed = now > voting_deadline
 
     # Voting logic
     if request.method == 'POST' and not voting_closed:
         for position_id, candidate_id in request.form.items():
             if position_id.isdigit() and candidate_id.isdigit():
-                existing_vote = Vote.query.filter_by(student_id=school_id, position_id=int(position_id)).first()
-                if not existing_vote:
-                    vote = Vote(
-                        student_id=school_id,
-                        position_id=int(position_id),
-                        candidate_id=int(candidate_id),
-                        department=user.course
-                    )
-                    db.session.add(vote)
-        db.session.commit()
+                vote_resp = supabase.table('votes').select('*').eq(
+                    'student_id', school_id).eq('position_id',
+                                                int(position_id)).execute()
+                if not vote_resp.data:
+                    supabase.table('votes').insert({
+                        'student_id':
+                        school_id,
+                        'position_id':
+                        int(position_id),
+                        'candidate_id':
+                        int(candidate_id),
+                        'department':
+                        user['course']
+                    }).execute()
         flash('Your vote has been submitted successfully!', 'success')
         return redirect(url_for('dashboard'))
 
     # Get positions for department
-    positions = Position.query.filter_by(department=user.course).all()
-    voted_positions = [
-        v.position_id for v in Vote.query.filter_by(student_id=school_id).all()
-    ]
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', user['course']).execute()
+    positions = positions_resp.data if positions_resp.data else []
+    voted_positions_resp = supabase.table('votes').select('position_id').eq(
+        'student_id', school_id).execute()
+    voted_positions = [v['position_id'] for v in voted_positions_resp.data
+                       ] if voted_positions_resp.data else []
 
     # For each position, get candidates
     candidates_per_position = {}
     for pos in positions:
-        candidates_per_position[pos.id] = Candidate.query.filter_by(position_id=pos.id).all()
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates_per_position[
+            pos['id']] = cands_resp.data if cands_resp.data else []
 
-    return render_template(
-        'dashboard.html',
-        user=user,
-        dept_logo=dept_logo,
-        voting_deadline=voting_deadline,
-        now=now,
-        voting_closed=voting_closed,
-        positions=positions,
-        voted_positions=voted_positions,
-        candidates_per_position=candidates_per_position
-    )
+    return render_template('dashboard.html',
+                           user=user,
+                           dept_logo=dept_logo,
+                           voting_deadline=voting_deadline.isoformat()
+                           if voting_deadline else None,
+                           now=now,
+                           voting_closed=voting_closed,
+                           positions=positions,
+                           voted_positions=voted_positions,
+                           candidates_per_position=candidates_per_position)
+
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
@@ -238,8 +236,110 @@ def admin_dashboard():
         return redirect(url_for('login'))
 
     school_id = session['school_id']
-    admin = User.query.filter_by(school_id=school_id).first()
+    admin_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    admin = admin_resp.data
     return render_template('admin_dashboard.html', admin=admin)
+
+
+@app.route('/candidates')
+def candidates():
+    if 'school_id' not in session:
+        flash("You must be logged in to view candidates.", "danger")
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    user_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    user = user_resp.data
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    department = user['course']
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', department).order('name', asc=True).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    positions_with_candidates = []
+    for pos in positions:
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates = cands_resp.data if cands_resp.data else []
+        positions_with_candidates.append({
+            'position': pos,
+            'candidates': candidates
+        })
+
+    return render_template('candidates.html',
+                           department=department,
+                           positions_with_candidates=positions_with_candidates)
+
+
+@app.route('/candidate/<int:id>')
+def candidate_details(id):
+    if 'school_id' not in session:
+        flash("You must be logged in to view candidate details.", "danger")
+        return redirect(url_for('login'))
+
+    cand_resp = supabase.table('candidates').select('*').eq(
+        'id', id).single().execute()
+    candidate = cand_resp.data
+    if not candidate:
+        flash("Candidate not found.", "danger")
+        return redirect(url_for('candidates'))
+
+    pos_resp = supabase.table('positions').select('name').eq(
+        'id', candidate['position_id']).single().execute()
+    position_name = pos_resp.data['name'] if pos_resp.data else ''
+
+    return render_template('candidate_details.html',
+                           candidate=candidate,
+                           position_name=position_name)
+
+
+@app.route('/view_results')
+def view_results():
+    if 'school_id' not in session:
+        flash("You must be logged in to view results.", "danger")
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    user_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    user = user_resp.data
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    department = user['course']
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', department).order('name', asc=True).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    results = []
+    for pos in positions:
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates = cands_resp.data if cands_resp.data else []
+        candidate_list = []
+        for cand in candidates:
+            votes_resp = supabase.table('votes').select('id').eq(
+                'candidate_id', cand['id']).eq('position_id',
+                                               pos['id']).execute()
+            vote_count = len(votes_resp.data) if votes_resp.data else 0
+            candidate_list.append({
+                'id': cand['id'],
+                'name': cand['name'],
+                'image': cand['image'],
+                'vote_count': vote_count
+            })
+        results.append({'position': pos, 'candidates': candidate_list})
+
+    return render_template('view_results.html',
+                           department=department,
+                           results=results)
+
 
 @app.route('/manage_poll', methods=['GET', 'POST'])
 def manage_poll():
@@ -247,27 +347,29 @@ def manage_poll():
         flash("You must be an admin to access this page.", "danger")
         return redirect(url_for('login'))
 
-    admin = User.query.filter_by(school_id=session['school_id']).first()
-    admin_department = admin.course if admin else ''
+    admin_resp = supabase.table('user').select('*').eq(
+        'school_id', session['school_id']).single().execute()
+    admin = admin_resp.data
+    admin_department = admin['course'] if admin else ''
     message = ""
 
-    # Handle adding a new position
+    # Add position
     if request.method == 'POST' and 'position_name' in request.form:
         position_name = request.form.get('position_name', '').strip()
         if position_name:
-            new_position = Position(name=position_name, department=admin_department)
-            db.session.add(new_position)
-            db.session.commit()
+            supabase.table('positions').insert({
+                'name': position_name,
+                'department': admin_department
+            }).execute()
             message = "Position added successfully!"
 
-    # Handle adding a new candidate
+    # Add candidate
     if request.method == 'POST' and 'candidate_name' in request.form and 'position_id' in request.form:
         candidate_name = request.form.get('candidate_name', '').strip()
         position_id = request.form.get('position_id')
         campaign_message = request.form.get('campaign_message', '').strip()
         image_path = ''
 
-        # Handle image upload
         file = request.files.get('candidate_image')
         if file and file.filename:
             allowed_types = {'image/jpeg', 'image/png', 'image/gif'}
@@ -278,34 +380,41 @@ def manage_poll():
             else:
                 file.seek(0)
                 os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
-                filename = secure_filename(f"{int(Position.query.count())}_{file.filename}")
-                image_path = f"uploads/candidates/{filename}"  # always forward slashes
-                full_save_path = os.path.join(app.root_path, 'static', 'uploads', 'candidates', filename)
+                filename = secure_filename(f"{position_id}_{file.filename}")
+                image_path = f"uploads/candidates/{filename}"
+                full_save_path = os.path.join(app.root_path, 'static',
+                                              'uploads', 'candidates',
+                                              filename)
                 file.save(full_save_path)
         if candidate_name and position_id and not message:
-            new_candidate = Candidate(
-                position_id=position_id,
-                name=candidate_name,
-                image=image_path,
-                campaign_message=campaign_message
-            )
-            db.session.add(new_candidate)
-            db.session.commit()
+            supabase.table('candidates').insert({
+                'position_id':
+                int(position_id),
+                'name':
+                candidate_name,
+                'image':
+                image_path,
+                'campaign_message':
+                campaign_message
+            }).execute()
             message = "Candidate added successfully!"
 
-    # Get all positions and candidates for this department
-    positions = Position.query.filter_by(department=admin_department).all()
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', admin_department).execute()
+    positions = positions_resp.data if positions_resp.data else []
     candidates_per_position = {}
     for pos in positions:
-        candidates_per_position[pos.id] = Candidate.query.filter_by(position_id=pos.id).all()
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates_per_position[
+            pos['id']] = cands_resp.data if cands_resp.data else []
 
-    return render_template(
-        'manage_poll.html',
-        admin_department=admin_department,
-        message=message,
-        positions=positions,
-        candidates_per_position=candidates_per_position
-    )
+    return render_template('manage_poll.html',
+                           admin_department=admin_department,
+                           message=message,
+                           positions=positions,
+                           candidates_per_position=candidates_per_position)
+
 
 @app.route('/manage_candidates', methods=['GET', 'POST'])
 def manage_candidates():
@@ -313,7 +422,7 @@ def manage_candidates():
         flash("You must be an admin to access this page.", "danger")
         return redirect(url_for('login'))
 
-    # Handle add candidate
+    # Add candidate
     if request.method == 'POST' and 'add_candidate' in request.form:
         name = request.form.get('name', '').strip()
         position_id = request.form.get('position_id')
@@ -323,153 +432,37 @@ def manage_candidates():
         file = request.files.get('image')
         if file and file.filename:
             os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
-            filename = secure_filename(f"{int(Position.query.count())}_{file.filename}")
-            image_path = f"uploads/candidates/{filename}"  # always forward slashes
-            full_save_path = os.path.join(app.root_path, 'static', 'uploads', 'candidates', filename)
-            print("Attempting to save file to:", full_save_path)  # Debug print
-            try:
-                file.save(full_save_path)
-                print("File saved successfully.")
-            except Exception as e:
-                print("File save error:", e)
-                flash("Error saving file: " + str(e), "danger")
+            filename = secure_filename(f"{position_id}_{file.filename}")
+            image_path = f"uploads/candidates/{filename}"
+            full_save_path = os.path.join(app.root_path, 'static', 'uploads',
+                                          'candidates', filename)
+            file.save(full_save_path)
 
-        new_candidate = Candidate(
-            position_id=position_id,
-            name=name,
-            image=image_path,
-            campaign_message=campaign_message
-        )
-        db.session.add(new_candidate)
-        db.session.commit()
+        supabase.table('candidates').insert({
+            'position_id':
+            int(position_id),
+            'name':
+            name,
+            'image':
+            image_path,
+            'campaign_message':
+            campaign_message
+        }).execute()
         flash("Candidate added successfully!", "success")
         return redirect(url_for('manage_candidates'))
 
-    # Fetch all positions for dropdown
-    positions = Position.query.order_by(Position.name.asc()).all()
+    positions_resp = supabase.table('positions').select('*').order(
+        'name', asc=True).execute()
+    positions = positions_resp.data if positions_resp.data else []
 
-    # Fetch all candidates with position names
-    candidates = db.session.query(
-        Candidate, Position.name.label('position_name')
-    ).join(Position, Candidate.position_id == Position.id).order_by(Position.name, Candidate.name).all()
+    candidates_resp = supabase.table('candidates').select(
+        '*,positions(name)').execute()
+    candidates = candidates_resp.data if candidates_resp.data else []
 
-    return render_template(
-        'manage_candidates.html',
-        positions=positions,
-        candidates=candidates
-    )
+    return render_template('manage_candidates.html',
+                           positions=positions,
+                           candidates=candidates)
 
-@app.route('/candidates')
-def candidates():
-    if 'school_id' not in session:
-        flash("You must be logged in to view candidates.", "danger")
-        return redirect(url_for('login'))
-
-    school_id = session['school_id']
-    user = User.query.filter_by(school_id=school_id).first()
-    if not user:
-        flash("User not found.", "danger")
-        return redirect(url_for('login'))
-
-    department = user.course
-    positions = Position.query.filter_by(department=department).order_by(Position.name.asc()).all()
-
-    # For each position, get candidates
-    positions_with_candidates = []
-    for pos in positions:
-        candidates = Candidate.query.filter_by(position_id=pos.id).all()
-        positions_with_candidates.append({
-            'position': pos,
-            'candidates': candidates
-        })
-
-    return render_template(
-        'candidates.html',
-        department=department,
-        positions_with_candidates=positions_with_candidates
-    )
-
-@app.route('/candidate/<int:id>')
-def candidate_details(id):
-    if 'school_id' not in session:
-        flash("You must be logged in to view candidate details.", "danger")
-        return redirect(url_for('login'))
-
-    candidate = db.session.query(
-        Candidate, Position.name.label('position_name')
-    ).join(Position, Candidate.position_id == Position.id).filter(Candidate.id == id).first()
-
-    if not candidate:
-        flash("Candidate not found.", "danger")
-        return redirect(url_for('candidates'))
-
-    cand, position_name = candidate[0], candidate[1]
-    return render_template(
-        'candidate_details.html',
-        candidate=cand,
-        position_name=position_name
-    )
-
-@app.route('/view_results')
-def view_results():
-    if 'school_id' not in session:
-        flash("You must be logged in to view results.", "danger")
-        return redirect(url_for('login'))
-
-    school_id = session['school_id']
-    user = User.query.filter_by(school_id=school_id).first()
-    if not user:
-        flash("User not found.", "danger")
-        return redirect(url_for('login'))
-
-    department = user.course
-
-    # Get all positions for this department
-    positions = Position.query.filter_by(department=department).order_by(Position.name.asc()).all()
-
-    # For each position, get candidates and their vote counts
-    results = []
-    for pos in positions:
-        candidates = Candidate.query.filter_by(position_id=pos.id).all()
-        candidate_list = []
-        for cand in candidates:
-            vote_count = Vote.query.filter_by(candidate_id=cand.id, position_id=pos.id).count()
-            candidate_list.append({
-                'id': cand.id,
-                'name': cand.name,
-                'image': cand.image,
-                'vote_count': vote_count
-            })
-        results.append({
-            'position': pos,
-            'candidates': candidate_list
-        })
-
-    return render_template(
-        'view_results.html',
-        department=department,
-        results=results
-    )
-
-@app.route('/delete_candidate/<int:id>')
-def delete_candidate(id):
-    if 'school_id' not in session or session.get('role') != 'admin':
-        flash("You must be an admin to access this page.", "danger")
-        return redirect(url_for('login'))
-
-    candidate = Candidate.query.get(id)
-    if candidate:
-        # Delete candidate image file if it exists
-        if candidate.image:
-            image_path = os.path.join('static', candidate.image)
-            if os.path.exists(image_path):
-                os.remove(image_path)
-        db.session.delete(candidate)
-        db.session.commit()
-        flash("Candidate deleted successfully!", "success")
-    else:
-        flash("Candidate not found.", "danger")
-    return redirect(url_for('manage_candidates'))
 
 @app.route('/edit_candidate/<int:id>', methods=['GET', 'POST'])
 def edit_candidate(id):
@@ -477,33 +470,66 @@ def edit_candidate(id):
         flash("You must be an admin to access this page.", "danger")
         return redirect(url_for('login'))
 
-    candidate = Candidate.query.get_or_404(id)
-    positions = Position.query.order_by(Position.name.asc()).all()
+    cand_resp = supabase.table('candidates').select('*').eq(
+        'id', id).single().execute()
+    candidate = cand_resp.data
+    positions_resp = supabase.table('positions').select('*').order(
+        'name', asc=True).execute()
+    positions = positions_resp.data if positions_resp.data else []
 
     if request.method == 'POST':
-        candidate.name = request.form.get('name', '').strip()
-        candidate.position_id = request.form.get('position_id')
-        candidate.campaign_message = request.form.get('campaign_message', '').strip()
+        name = request.form.get('name', '').strip()
+        position_id = request.form.get('position_id')
+        campaign_message = request.form.get('campaign_message', '').strip()
+        image_path = candidate['image']
 
         file = request.files.get('image')
         if file and file.filename:
-            # Delete old image if exists
-            if candidate.image:
-                old_path = os.path.join('static', candidate.image)
+            if image_path:
+                old_path = os.path.join('static', image_path)
                 if os.path.exists(old_path):
                     os.remove(old_path)
             os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
-            filename = secure_filename(f"{int(Position.query.count())}_{file.filename}")
-            image_path = f"uploads/candidates/{filename}"  # always forward slashes
-            full_save_path = os.path.join(app.root_path, 'static', 'uploads', 'candidates', filename)
+            filename = secure_filename(f"{position_id}_{file.filename}")
+            image_path = f"uploads/candidates/{filename}"
+            full_save_path = os.path.join(app.root_path, 'static', 'uploads',
+                                          'candidates', filename)
             file.save(full_save_path)
-            candidate.image = image_path
 
-        db.session.commit()
+        supabase.table('candidates').update({
+            'name': name,
+            'position_id': int(position_id),
+            'campaign_message': campaign_message,
+            'image': image_path
+        }).eq('id', id).execute()
         flash("Candidate updated successfully!", "success")
         return redirect(url_for('manage_candidates'))
 
-    return render_template('edit_candidate.html', candidate=candidate, positions=positions)
+    return render_template('edit_candidate.html',
+                           candidate=candidate,
+                           positions=positions)
+
+
+@app.route('/delete_candidate/<int:id>')
+def delete_candidate(id):
+    if 'school_id' not in session or session.get('role') != 'admin':
+        flash("You must be an admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    cand_resp = supabase.table('candidates').select('*').eq(
+        'id', id).single().execute()
+    candidate = cand_resp.data
+    if candidate:
+        if candidate['image']:
+            image_path = os.path.join('static', candidate['image'])
+            if os.path.exists(image_path):
+                os.remove(image_path)
+        supabase.table('candidates').delete().eq('id', id).execute()
+        flash("Candidate deleted successfully!", "success")
+    else:
+        flash("Candidate not found.", "danger")
+    return redirect(url_for('manage_candidates'))
+
 
 @app.route('/manage_settings', methods=['GET', 'POST'])
 def manage_settings():
@@ -511,49 +537,37 @@ def manage_settings():
         flash("You must be an admin to access this page.", "danger")
         return redirect(url_for('login'))
 
-    admin = User.query.filter_by(school_id=session['school_id']).first()
-    admin_department = admin.course if admin else ''
+    admin_resp = supabase.table('user').select('*').eq(
+        'school_id', session['school_id']).single().execute()
+    admin = admin_resp.data
+    admin_department = admin['course'] if admin else ''
     message = ""
     current_deadline = None
 
-    # Get current deadline for this department
-    setting = Setting.query.filter_by(department=admin_department).order_by(Setting.id.desc()).first()
-    if setting:
-        current_deadline = setting.voting_deadline
+    setting_resp = supabase.table('settings').select('*').eq(
+        'department', admin_department).order('id',
+                                              desc=True).limit(1).execute()
+    if setting_resp.data:
+        current_deadline = setting_resp.data[0]['voting_deadline']
 
-    # Handle form submission
     if request.method == 'POST':
         new_deadline_str = request.form.get('voting_deadline')
         if new_deadline_str:
-            try:
-                new_deadline = datetime.strptime(new_deadline_str, "%Y-%m-%dT%H:%M")
-                new_setting = Setting(department=admin_department, voting_deadline=new_deadline)
-                db.session.add(new_setting)
-                db.session.commit()
-                current_deadline = new_deadline
-                message = f"Voting deadline updated for {admin_department}!"
-            except ValueError:
-                message = "Invalid date format."
+            supabase.table('settings').insert({
+                'department':
+                admin_department,
+                'voting_deadline':
+                new_deadline_str
+            }).execute()
+            current_deadline = new_deadline_str
+            message = f"Voting deadline updated for {admin_department}!"
 
-    return render_template(
-        'manage_settings.html',
-        admin_department=admin_department,
-        current_deadline=current_deadline,
-        message=message
-    )
+    return render_template('manage_settings.html',
+                           admin_department=admin_department,
+                           current_deadline=current_deadline,
+                           message=message)
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
 
-@app.route('/db-test')
-def db_test():
-    result = db.session.execute("SELECT COUNT(*) FROM users")
-    count = result.fetchone()[0]
-    return f"Total users: {count}"
-
-# For development/debug only
 @app.route('/pyinfo')
 def pyinfo():
     info = [
@@ -566,5 +580,6 @@ def pyinfo():
     ]
     return Response("<br>".join(info), mimetype="text/html")
 
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True)
