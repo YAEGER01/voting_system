@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNIVOTE</title>
+  <link rel="stylesheet" href="/static/css/UNIVOTE.css">
+</head>
+
+<body>
+  <header>
+    <div class="logo">UNIVOTE: Campus ELections RE-Imagined</div>
+    <nav>
+      <a href="{{ url_for('login') }}"><button class="nav-btn">LOGIN</button></a>
+      <a href="{{ url_for('register') }}"><button class="nav-btn">SIGNUP</button></a>
+      <a href="{{ url_for('contacts') }}"><button class="nav-btn">CONTACTS</button></a>
+      <button id="dark-mode-toggle">🌓</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>UNIVOTE</h1>
+      <p class="subtitle">SHEESH</p>
+    </section>
+
+    <section class="content-grid">
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+    </section>
+
+    <section class="carousel">
+      <div class="carousel-item"></div>
+      <div class="carousel-item"></div>
+      <div class="carousel-item"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2023 Your Name. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const html = document.documentElement;
+
+    darkModeToggle.addEventListener('click', () => {
+      const currentTheme = html.getAttribute('data-theme');
+      if (currentTheme === 'dark') {
+        html.removeAttribute('data-theme');
+        darkModeToggle.textContent = '🌓';
+      } else {
+        html.setAttribute('data-theme', 'dark');
+        darkModeToggle.textContent = '☀️';
+      }
+    });
+
+  </script>
+</body>
+
+</html>

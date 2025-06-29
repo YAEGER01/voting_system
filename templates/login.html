@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Voting System Login</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
 </head>
+
 <body>
   <div class="wrapper">
     <!-- Left logo -->
@@ -15,17 +17,22 @@
 
     <!-- Login form container -->
     <div class="container">
-      <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" class="top-logo" />
+      <a href="{{ url_for('index') }}">
+        <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" class="top-logo" />
+      </a>
+
+
+
       <h2>VOTING SYSTEM</h2>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            <div style="color:#ED2939;"class="error-message alert-{{ category }}">
-              {{ message }}
-            </div>
-          {% endfor %}
-        {% endif %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div style="color:#ED2939;" class="error-message alert-{{ category }}">
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
       {% endwith %}
 
       <form method="POST" action="">
@@ -37,12 +44,8 @@
         <div class="form-group">
           <img src="https://cdn-icons-png.flaticon.com/512/3064/3064155.png" alt="Lock Icon" />
           <input type="password" name="password" placeholder="Password" id="passwordInput" required />
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
-            alt="Toggle Password"
-            class="toggle-password"
-            id="togglePassword"
-          />
+          <img src="https://cdn-icons-png.flaticon.com/512/709/709612.png" alt="Toggle Password" class="toggle-password"
+            id="togglePassword" />
         </div>
 
         <div class="forgot-password">
@@ -90,4 +93,5 @@
     });
   </script>
 </body>
+
 </html>
