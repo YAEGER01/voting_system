@@ -6,7 +6,8 @@ import os
 import re
 import sys
 import platform
-from datetime import datetime
+from datetime import datetime, timedelta
+import hashlib
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "fallback-secret")
@@ -37,7 +38,12 @@ def nl2br_filter(s):
     return s.replace('\n', '<br>') if s else ''
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
+def index():
+    return render_template('UNIVOTE.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         school_id = request.form.get('school_id', '').strip()
@@ -46,10 +52,26 @@ def login():
         if not school_id or not password:
             flash("Please fill in all fields.", 'danger')
         else:
-            resp = supabase.table('user').select('*').eq(
-                'school_id', school_id).single().execute()
-            user = resp.data
-            if user and check_password_hash(user['password_hash'], password):
+            try:
+                resp = supabase.table('user').select('*').eq(
+                    'school_id', school_id).single().execute()
+                user = resp.data
+            except Exception:
+                user = None
+
+            if not user:
+                # Check if user is still pending
+                pending_check = supabase.table('pending_users').select(
+                    'id').eq('school_id', school_id).execute()
+                if pending_check.data:
+                    flash(
+                        "YOUR REGISTRATION IS UNDER REVIEW. PLEASE WAIT FOR ADMIN APPROVAL.",
+                        'warning')
+                else:
+                    flash("Invalid School ID or Password.", 'danger')
+                return redirect(request.url)
+
+            if check_password_hash(user['password_hash'], password):
                 session['school_id'] = user['school_id']
                 session['role'] = user['role']
                 if user['role'] == 'admin':
@@ -58,6 +80,7 @@ def login():
                     return redirect(url_for('dashboard'))
             else:
                 flash("Invalid School ID or Password.", 'danger')
+
     return render_template('login.html')
 
 
@@ -126,18 +149,17 @@ def register():
         front_file.save(front_path)
         back_file.save(back_path)
 
-        hashed_password = generate_password_hash(password)
-        supabase.table('user').insert({
+        supabase.table('pending_users').insert({
             'school_id': school_id,
             'course': course,
             'email': email,
-            'password_hash': hashed_password,
+            'password_plain':
+            password,  # stored temporarily, hash during approval
             'first_name': first_name,
             'last_name': last_name,
             'phone': phone,
             'id_photo_front': front_path,
-            'id_photo_back': back_path,
-            'role': 'user'
+            'id_photo_back': back_path
         }).execute()
 
         flash("Successfully Registered!", "success")
@@ -239,7 +261,7 @@ def admin_dashboard():
     admin_resp = supabase.table('user').select('*').eq(
         'school_id', school_id).single().execute()
     admin = admin_resp.data
-    return render_template('admin_dashboard.html', admin=admin)
+    return render_template('admin_dash.html', admin=admin)
 
 
 @app.route('/candidates')
@@ -274,6 +296,11 @@ def candidates():
     return render_template('candidates.html',
                            department=department,
                            positions_with_candidates=positions_with_candidates)
+
+
+@app.route('/contacts')
+def contacts():
+    return render_template('contacts.html')
 
 
 @app.route('/candidate/<int:id>')
@@ -313,8 +340,10 @@ def view_results():
         return redirect(url_for('login'))
 
     department = user['course']
-    positions_resp = supabase.table('positions').select('*').eq(
-        'department', department).order('name', asc=True).execute()
+    positions_resp = supabase.table('positions').select('*') \
+    .eq('department', department) \
+    .order('name', desc=False) \
+    .execute()
     positions = positions_resp.data if positions_resp.data else []
 
     results = []
@@ -339,6 +368,71 @@ def view_results():
     return render_template('view_results.html',
                            department=department,
                            results=results)
+
+
+@app.route('/vote_receipt')
+def vote_receipt():
+    if 'school_id' not in session:
+        return redirect('/login')
+
+    school_id = session['school_id']
+    now = datetime.utcnow()
+
+    # Check access log
+    log_resp = supabase.table("receipt_access_logs") \
+        .select("*") \
+        .eq("school_id", school_id) \
+        .eq("status", "active") \
+        .order("viewed_at", desc=True) \
+        .limit(1) \
+        .execute()
+
+    log = log_resp.data[0] if log_resp.data else None
+
+    if not log:
+        # Insert first-time access
+        view_time = now.isoformat()
+        expiry_time = (now + timedelta(minutes=5)).isoformat()
+        supabase.table("receipt_access_logs").insert({
+            "school_id": school_id,
+            "viewed_at": view_time,
+            "expired_at": expiry_time,
+            "status": "active"
+        }).execute()
+    else:
+        # Already viewed
+        expiry_time = datetime.fromisoformat(log['expired_at'])
+        if now > expiry_time:
+            supabase.table("receipt_access_logs") \
+                .update({"status": "expired"}) \
+                .eq("id", log['id']) \
+                .execute()
+            return "<h1>Receipt viewing time expired.</h1>"
+
+    # Fetch and hash user votes
+    votes_resp = supabase.table("votes") \
+        .select("position_id, candidate_id") \
+        .eq("student_id", school_id) \
+        .execute()
+    votes = votes_resp.data
+    hashed_votes = [
+        hashlib.sha256(f"{school_id}:{v['position_id']}:{v['candidate_id']}".
+                       encode()).hexdigest() for v in votes
+    ]
+
+    # Fetch all users and hash school_ids
+    users_resp = supabase.table("user").select("school_id").execute()
+    users = users_resp.data
+    hashed_users = [
+        hashlib.sha256(u['school_id'].encode()).hexdigest() for u in users
+    ]
+
+    return render_template(
+        "vote_receipt.html",
+        hashed_votes=hashed_votes,
+        hashed_users=hashed_users,
+        receipt_expiry=(now +
+                        timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S"))
 
 
 @app.route('/manage_poll', methods=['GET', 'POST'])
@@ -529,6 +623,48 @@ def delete_candidate(id):
     else:
         flash("Candidate not found.", "danger")
     return redirect(url_for('manage_candidates'))
+
+
+@app.route('/manage_students')
+def manage_students():
+    if session.get('role') != 'admin':
+        return redirect('/')
+
+    resp = supabase.table('pending_users').select('*').order(
+        'submitted_at', desc=True).execute()
+    pending_users = resp.data
+    return render_template('manage_students.html', users=pending_users)
+
+
+@app.route('/approve_user/<int:user_id>', methods=['POST'])
+def approve_user(user_id):
+    user = supabase.table('pending_users').select('*').eq(
+        'id', user_id).single().execute().data
+    if not user:
+        return "User not found", 404
+
+    hashed_pw = generate_password_hash(user['password_plain'], method='scrypt')
+    supabase.table('user').insert({
+        'school_id': user['school_id'],
+        'course': user['course'],
+        'email': user['email'],
+        'password_hash': hashed_pw,
+        'first_name': user['first_name'],
+        'last_name': user['last_name'],
+        'phone': user['phone'],
+        'id_photo_front': user['id_photo_front'],
+        'id_photo_back': user['id_photo_back'],
+        'role': 'user'
+    }).execute()
+
+    supabase.table('pending_users').delete().eq('id', user_id).execute()
+    return redirect(url_for('manage_students'))
+
+
+@app.route('/reject_user/<int:user_id>', methods=['POST'])
+def reject_user(user_id):
+    supabase.table('pending_users').delete().eq('id', user_id).execute()
+    return redirect(url_for('manage_students'))
 
 
 @app.route('/manage_settings', methods=['GET', 'POST'])
