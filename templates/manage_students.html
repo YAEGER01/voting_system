@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNIVOTE: ADMIN DASHBOARD</title>
+  <link rel="stylesheet" href="static/css/admin_dash.css">
+</head>
+
+<body>
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1>Student Approval</h1>
+        <div class="header-actions">
+          <button id="theme-toggle" class="btn">🌙 Dark Mode</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="dashboard-nav">
+      <ul class="nav-list">
+        <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
+        <li class="nav-item"><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
+        <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
+        <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
+        <li class="nav-item"><a href="{{ url_for('manage_settings') }}">Manage Voting Settings</a></li>
+        <li class="nav-item"><a href="{{ url_for('logout') }}"
+            onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+        <li class="nav-item"><a href="#">Help</a></li>
+      </ul>
+    </nav>
+
+    <main class="dashboard-content">
+      <div class="card">
+        <h2>Pending Student Approvals</h2>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>School ID</th>
+                <th>Name</th>
+                <th>Course</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>ID Front</th>
+                <th>ID Back</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+              <tr>
+                <td>{{ user.school_id }}</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                <td>{{ user.course }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone }}</td>
+                <td>
+                  <a href="{{ user.id_photo_front }}" target="_blank">
+                    <img src="{{ user.id_photo_front }}" alt="Front ID" class="preview">
+                  </a>
+                </td>
+                <td>
+                  <a href="{{ user.id_photo_back }}" target="_blank">
+                    <img src="{{ user.id_photo_back }}" alt="Back ID" class="preview">
+                  </a>
+                </td>
+                <td>{{ user.submitted_at }}</td>
+                <td class="actions">
+                  <form action="{{ url_for('approve_user', user_id=user.id) }}" method="post">
+                    <button type="submit" class="btn approve">Approve</button>
+                  </form>
+                  <form action="{{ url_for('reject_user', user_id=user.id) }}" method="post">
+                    <button type="submit" class="btn reject">Reject</button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="9" style="text-align:center;">No pending registrations.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script> document.addEventListener('DOMContentLoaded', () => {
+      const themeToggle = document.getElementById('theme-toggle');
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+      // Check for saved theme or use preferred color scheme
+      const currentTheme = localStorage.getItem('theme') ||
+        (prefersDarkScheme.matches ? 'dark' : 'light');
+
+      if (currentTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀️ Light Mode';
+      }
+
+      themeToggle.addEventListener('click', () => {
+        let theme;
+        if (document.body.getAttribute('data-theme') === 'dark') {
+          document.body.removeAttribute('data-theme');
+          theme = 'light';
+          themeToggle.textContent = '🌙 Dark Mode';
+        } else {
+          document.body.setAttribute('data-theme', 'dark');
+          theme = 'dark';
+          themeToggle.textContent = '☀️ Light Mode';
+        }
+        localStorage.setItem('theme', theme);
+      });
+    });
+  </script>
+</body>
+
+</html>
