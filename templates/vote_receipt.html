@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vote Receipt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            position: relative;
+        }
+
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: rotate(-45deg) translate(-50%, -50%);
+            font-size: 5em;
+            color: #000;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .expired-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            color: black;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="watermark">{{ session['school_id'] }}</div>
+
+    <h1>Your Vote Receipt (Valid for 5 Minutes)</h1>
+    <ul>
+        {% for vote_hash in hashed_votes %}
+        <li>{{ vote_hash }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>All Hashed User IDs</h2>
+    <ul>
+        {% for user_hash in hashed_users %}
+        <li>{{ user_hash }}</li>
+        {% endfor %}
+    </ul>
+
+    <div id="expired" class="expired-overlay">
+        <div>Receipt viewing time has expired.</div>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            document.body.innerHTML = '';
+            document.getElementById('expired').style.display = 'flex';
+        }, 5 * 60 * 1000); // 5 minutes
+    </script>
+</body>
+
+</html>
