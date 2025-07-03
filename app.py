@@ -8,6 +8,7 @@ import sys
 import platform
 from datetime import datetime, timedelta
 import hashlib
+import uuid
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "fallback-secret")
@@ -25,6 +26,28 @@ DEPARTMENT_LOGOS = {
     'PS': 'PS.png',
     'EDUC': 'educ.png',
     'IAT': 'iat.png',
+}
+
+COURSE_FULL_NAMES = {
+    "BSIT": "Bachelor of Science in Information Technology",
+    "BSIndTech": "Bachelor of Science in Industrial Technology",
+    "BSCS": "Bachelor of Science in Computer Science",
+    "BSEMC": "Bachelor of Science in Entertainment and Multimedia Computing",
+    "BSBA": "Bachelor of Science in Business Administration",
+    "BSM": "Bachelor of Science in Management",
+    "BSHM": "Bachelor of Science in Hospitality Management",
+    "BSTM": "Bachelor of Science in Tourism Management",
+    "BSAIS": "Bachelor of Science in Accounting Information System",
+    "BSMA": "Bachelor of Science in Management Accounting",
+    "BSEntrep": "Bachelor of Science in Entrepreneurship",
+    "BSLM": "Bachelor of Science in Legal Management",
+    "BSCRIM": "Bachelor of Science in Criminology",
+    "BSED": "Bachelor of Secondary Education",
+    "BEED": "Bachelor of Elementary Education",
+    "BPEd": "Bachelor of Physical Education",
+    "BAELS": "Bachelor of Arts in English Language Studies",
+    "BAPS": "Bachelor of Arts in Political Science",
+    "DAS": "Diploma in Agricultural Sciences"
 }
 
 
@@ -60,7 +83,6 @@ def login():
                 user = None
 
             if not user:
-                # Check if user is still pending
                 pending_check = supabase.table('pending_users').select(
                     'id').eq('school_id', school_id).execute()
                 if pending_check.data:
@@ -81,14 +103,18 @@ def login():
             else:
                 flash("Invalid School ID or Password.", 'danger')
 
-    return render_template('login.html')
+    return render_template('login2.html')
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         school_id = request.form.get('school-id', '').strip()
-        course = request.form.get('course', '').strip()
+        department = request.form.get('department', '').strip()
+        course_code = request.form.get('course', '').strip()
+        track = request.form.get('track', '').strip()
+        year_level = request.form.get('year_level', '').strip()
+        course = COURSE_FULL_NAMES.get(course_code, course_code)
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm-password', '')
@@ -99,8 +125,9 @@ def register():
         back_file = request.files.get('school-id-back')
 
         if not all([
-                school_id, course, email, password, confirm_password,
-                first_name, last_name, phone, front_file, back_file
+                school_id, department, course_code, email, password,
+                confirm_password, first_name, last_name, phone, front_file,
+                back_file, year_level
         ]):
             flash("All fields are required.", 'danger')
             return redirect(request.url)
@@ -129,7 +156,6 @@ def register():
                 'danger')
             return redirect(request.url)
 
-        # Check duplicates in Supabase
         for field, value in [('school_id', school_id), ('email', email),
                              ('phone', phone)]:
             resp = supabase.table('user').select('id').eq(field,
@@ -151,10 +177,13 @@ def register():
 
         supabase.table('pending_users').insert({
             'school_id': school_id,
+            'department': department,
             'course': course,
+            'course_code': course_code,
+            'track': track,
+            'year_level': year_level,
             'email': email,
-            'password_plain':
-            password,  # stored temporarily, hash during approval
+            'password_plain': password,
             'first_name': first_name,
             'last_name': last_name,
             'phone': phone,
@@ -165,7 +194,52 @@ def register():
         flash("Successfully Registered!", "success")
         return redirect(url_for('register'))
 
-    return render_template('register.html')
+    return render_template('register2.html')
+
+
+@app.route('/register_admin', methods=['GET', 'POST'])
+def register_admin():
+    if request.method == 'POST':
+        school_id = request.form.get('school_id', '').strip()
+        password = request.form.get('password', '')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        course = request.form.get('course', '').strip()
+
+        if not all([school_id, password, first_name, last_name, course]):
+            flash("Please fill in all required fields.", 'danger')
+            return redirect(url_for('register_admin'))
+
+        email = f"{school_id}@admin.local"
+
+        resp = supabase.table('user').select('id').or_(
+            f'school_id.eq.{school_id},email.eq.{email}').execute()
+        if resp.data:
+            flash("School ID or generated email already exists.", 'danger')
+            return redirect(url_for('register_admin'))
+
+        password_hash = generate_password_hash(password)
+
+        short_uuid = str(uuid.uuid4())[:8]  # ✅ Only 8 characters
+        fake_phone = f"admin-{short_uuid}"  # ✅ Result is like "admin-9f2a6b1c"
+
+        supabase.table('user').insert({
+            'school_id': school_id,
+            'course': course,
+            'email': email,
+            'password_hash': password_hash,
+            'first_name': first_name,
+            'last_name': last_name,
+            'role': 'admin',
+            'phone': fake_phone,  # ✅ Now guaranteed < 20 characters
+            'id_photo_front': 'N/A',
+            'id_photo_back': 'N/A'
+        }).execute()
+
+        flash("Admin registered successfully!", "success")
+        return redirect(url_for('register_admin'))
+
+    return render_template('register_admin.html')
 
 
 @app.route('/logout')
@@ -187,21 +261,21 @@ def dashboard():
         flash("User not found.", "danger")
         return redirect(url_for('login'))
 
-    dept_logo = DEPARTMENT_LOGOS.get(user['course'].upper())
+    dept_logo = DEPARTMENT_LOGOS.get(user.get('department', '').upper())
     now = datetime.now()
     voting_deadline = None
     voting_closed = False
 
-    # Get voting deadline for department
     setting_resp = supabase.table('settings').select('*').eq(
-        'department', user['course']).order('id',
-                                            desc=True).limit(1).execute()
+        'department',
+        user.get('department',
+                 user.get('course', ''))).order('id',
+                                                desc=True).limit(1).execute()
     if setting_resp.data:
         voting_deadline_str = setting_resp.data[0]['voting_deadline']
         voting_deadline = datetime.fromisoformat(voting_deadline_str)
         voting_closed = now > voting_deadline
 
-    # Voting logic
     if request.method == 'POST' and not voting_closed:
         for position_id, candidate_id in request.form.items():
             if position_id.isdigit() and candidate_id.isdigit():
@@ -217,21 +291,20 @@ def dashboard():
                         'candidate_id':
                         int(candidate_id),
                         'department':
-                        user['course']
+                        user.get('department', user.get('course', ''))
                     }).execute()
         flash('Your vote has been submitted successfully!', 'success')
         return redirect(url_for('dashboard'))
 
-    # Get positions for department
     positions_resp = supabase.table('positions').select('*').eq(
-        'department', user['course']).execute()
+        'department', user.get('department', user.get('course',
+                                                      ''))).execute()
     positions = positions_resp.data if positions_resp.data else []
     voted_positions_resp = supabase.table('votes').select('position_id').eq(
         'student_id', school_id).execute()
     voted_positions = [v['position_id'] for v in voted_positions_resp.data
                        ] if voted_positions_resp.data else []
 
-    # For each position, get candidates
     candidates_per_position = {}
     for pos in positions:
         cands_resp = supabase.table('candidates').select('*').eq(
@@ -278,9 +351,9 @@ def candidates():
         flash("User not found.", "danger")
         return redirect(url_for('login'))
 
-    department = user['course']
+    department = user.get('department', user.get('course', ''))
     positions_resp = supabase.table('positions').select('*').eq(
-        'department', department).order('name', asc=True).execute()
+        'department', department).order('name', desc=False).execute()
     positions = positions_resp.data if positions_resp.data else []
 
     positions_with_candidates = []
@@ -339,7 +412,7 @@ def view_results():
         flash("User not found.", "danger")
         return redirect(url_for('login'))
 
-    department = user['course']
+    department = user.get('department', user.get('course', ''))
     positions_resp = supabase.table('positions').select('*') \
     .eq('department', department) \
     .order('name', desc=False) \
@@ -378,7 +451,6 @@ def vote_receipt():
     school_id = session['school_id']
     now = datetime.utcnow()
 
-    # Check access log
     log_resp = supabase.table("receipt_access_logs") \
         .select("*") \
         .eq("school_id", school_id) \
@@ -390,7 +462,6 @@ def vote_receipt():
     log = log_resp.data[0] if log_resp.data else None
 
     if not log:
-        # Insert first-time access
         view_time = now.isoformat()
         expiry_time = (now + timedelta(minutes=5)).isoformat()
         supabase.table("receipt_access_logs").insert({
@@ -400,7 +471,6 @@ def vote_receipt():
             "status": "active"
         }).execute()
     else:
-        # Already viewed
         expiry_time = datetime.fromisoformat(log['expired_at'])
         if now > expiry_time:
             supabase.table("receipt_access_logs") \
@@ -409,7 +479,6 @@ def vote_receipt():
                 .execute()
             return "<h1>Receipt viewing time expired.</h1>"
 
-    # Fetch and hash user votes
     votes_resp = supabase.table("votes") \
         .select("position_id, candidate_id") \
         .eq("student_id", school_id) \
@@ -420,7 +489,6 @@ def vote_receipt():
                        encode()).hexdigest() for v in votes
     ]
 
-    # Fetch all users and hash school_ids
     users_resp = supabase.table("user").select("school_id").execute()
     users = users_resp.data
     hashed_users = [
@@ -444,10 +512,10 @@ def manage_poll():
     admin_resp = supabase.table('user').select('*').eq(
         'school_id', session['school_id']).single().execute()
     admin = admin_resp.data
-    admin_department = admin['course'] if admin else ''
+    admin_department = admin.get('department', admin.get('course',
+                                                         '')) if admin else ''
     message = ""
 
-    # Add position
     if request.method == 'POST' and 'position_name' in request.form:
         position_name = request.form.get('position_name', '').strip()
         if position_name:
@@ -457,7 +525,6 @@ def manage_poll():
             }).execute()
             message = "Position added successfully!"
 
-    # Add candidate
     if request.method == 'POST' and 'candidate_name' in request.form and 'position_id' in request.form:
         candidate_name = request.form.get('candidate_name', '').strip()
         position_id = request.form.get('position_id')
@@ -503,7 +570,7 @@ def manage_poll():
         candidates_per_position[
             pos['id']] = cands_resp.data if cands_resp.data else []
 
-    return render_template('manage_poll.html',
+    return render_template('admin_manage_poll.html',
                            admin_department=admin_department,
                            message=message,
                            positions=positions,
@@ -516,7 +583,6 @@ def manage_candidates():
         flash("You must be an admin to access this page.", "danger")
         return redirect(url_for('login'))
 
-    # Add candidate
     if request.method == 'POST' and 'add_candidate' in request.form:
         name = request.form.get('name', '').strip()
         position_id = request.form.get('position_id')
@@ -546,14 +612,14 @@ def manage_candidates():
         return redirect(url_for('manage_candidates'))
 
     positions_resp = supabase.table('positions').select('*').order(
-        'name', asc=True).execute()
+        'name', desc=False).execute()
     positions = positions_resp.data if positions_resp.data else []
 
     candidates_resp = supabase.table('candidates').select(
         '*,positions(name)').execute()
     candidates = candidates_resp.data if candidates_resp.data else []
 
-    return render_template('manage_candidates.html',
+    return render_template('admin_manage_candidates.html',
                            positions=positions,
                            candidates=candidates)
 
@@ -568,7 +634,7 @@ def edit_candidate(id):
         'id', id).single().execute()
     candidate = cand_resp.data
     positions_resp = supabase.table('positions').select('*').order(
-        'name', asc=True).execute()
+        'name', desc=False).execute()
     positions = positions_resp.data if positions_resp.data else []
 
     if request.method == 'POST':
@@ -630,10 +696,31 @@ def manage_students():
     if session.get('role') != 'admin':
         return redirect('/')
 
-    resp = supabase.table('pending_users').select('*').order(
-        'submitted_at', desc=True).execute()
-    pending_users = resp.data
-    return render_template('manage_students.html', users=pending_users)
+    admin_school_id = session.get('school_id')
+    if not admin_school_id:
+        return "Missing school ID in session", 400
+
+    admin_data = supabase.table('user') \
+        .select('department') \
+        .eq('school_id', admin_school_id) \
+        .single() \
+        .execute().data
+
+    if not admin_data:
+        return "Admin not found", 404
+
+    department = admin_data.get('department')
+    if not department:
+        return "Admin has no department assigned", 400
+
+    resp = supabase.table('pending_users') \
+        .select('*') \
+        .eq('department', department) \
+        .order('submitted_at', desc=True) \
+        .execute()
+
+    pending_users = resp.data or []
+    return render_template('admin_manage_students.html', users=pending_users)
 
 
 @app.route('/approve_user/<int:user_id>', methods=['POST'])
@@ -646,7 +733,11 @@ def approve_user(user_id):
     hashed_pw = generate_password_hash(user['password_plain'], method='scrypt')
     supabase.table('user').insert({
         'school_id': user['school_id'],
+        'department': user.get('department', ''),
         'course': user['course'],
+        'course_code': user.get('course_code', ''),
+        'track': user.get('track', ''),
+        'year_level': user.get('year_level', ''),
         'email': user['email'],
         'password_hash': hashed_pw,
         'first_name': user['first_name'],
@@ -676,7 +767,8 @@ def manage_settings():
     admin_resp = supabase.table('user').select('*').eq(
         'school_id', session['school_id']).single().execute()
     admin = admin_resp.data
-    admin_department = admin['course'] if admin else ''
+    admin_department = admin.get('department', admin.get('course',
+                                                         '')) if admin else ''
     message = ""
     current_deadline = None
 
@@ -698,7 +790,7 @@ def manage_settings():
             current_deadline = new_deadline_str
             message = f"Voting deadline updated for {admin_department}!"
 
-    return render_template('manage_settings.html',
+    return render_template('admin_manage_settings.html',
                            admin_department=admin_department,
                            current_deadline=current_deadline,
                            message=message)
