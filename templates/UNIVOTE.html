@@ -4,60 +4,194 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UNIVOTE</title>
-  <link rel="stylesheet" href="/static/css/UNIVOTE.css">
+  <title>UNIVOTE: Campus Elections Reimagined</title>
+  <style>
+    :root {
+      --primary: #4CAF50;
+      --primary-light: #81C784;
+      --primary-dark: #388E3C;
+      --text: #333;
+      --bg: #f5f5f5;
+      --card-bg: #fff;
+      --nav-btn: #2E7D32;
+      --nav-btn-hover: #1B5E20;
+    }
+
+    [data-theme="dark"] {
+      --primary: #689F38;
+      --primary-light: #8BC34A;
+      --primary-dark: #33691E;
+      --text: #f5f5f5;
+      --bg: #121212;
+      --card-bg: #1E1E1E;
+      --nav-btn: #4CAF50;
+      --nav-btn-hover: #81C784;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .description {
+      max-width: 800px;
+      background-color: var(--card-bg);
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+    }
+
+    .description p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav-btn {
+      background-color: var(--nav-btn);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .nav-btn:hover {
+      background-color: var(--nav-btn-hover);
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .description {
+        padding: 1.5rem;
+      }
+
+      nav {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .nav-btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .description {
+        padding: 1rem;
+      }
+
+      .description p {
+        font-size: 1rem;
+      }
+    }
+  </style>
 </head>
 
 <body>
   <header>
-    <div class="logo">UNIVOTE: Campus ELections RE-Imagined</div>
+    <button class="theme-toggle" id="themeToggle">🌓</button>
+    <h1>UNIVOTE</h1>
+    <p>Campus Elections Reimagined</p>
+  </header>
+
+  <main>
+    <div class="description">
+      <p>UNIVOTE is a modern, secure, and accessible voting platform designed specifically for campus elections. Our
+        system ensures transparent, fair, and efficient elections while providing an intuitive experience for both
+        voters and administrators.</p>
+      <p>With UNIVOTE, you can participate in your campus democracy from anywhere, at any time, with just a few clicks.
+      </p>
+    </div>
+
     <nav>
       <a href="{{ url_for('login') }}"><button class="nav-btn">LOGIN</button></a>
       <a href="{{ url_for('register') }}"><button class="nav-btn">SIGNUP</button></a>
       <a href="{{ url_for('contacts') }}"><button class="nav-btn">CONTACTS</button></a>
-      <button id="dark-mode-toggle">🌓</button>
     </nav>
-  </header>
-
-  <main>
-    <section class="hero">
-      <h1>UNIVOTE</h1>
-      <p class="subtitle">SHEESH</p>
-    </section>
-
-    <section class="content-grid">
-      <div class="grid-item"></div>
-      <div class="grid-item"></div>
-      <div class="grid-item"></div>
-      <div class="grid-item"></div>
-    </section>
-
-    <section class="carousel">
-      <div class="carousel-item"></div>
-      <div class="carousel-item"></div>
-      <div class="carousel-item"></div>
-    </section>
   </main>
 
-  <footer>
-    <p>© 2023 Your Name. All rights reserved.</p>
-  </footer>
-
   <script>
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const themeToggle = document.getElementById('themeToggle');
     const html = document.documentElement;
 
-    darkModeToggle.addEventListener('click', () => {
-      const currentTheme = html.getAttribute('data-theme');
-      if (currentTheme === 'dark') {
-        html.removeAttribute('data-theme');
-        darkModeToggle.textContent = '🌓';
-      } else {
-        html.setAttribute('data-theme', 'dark');
-        darkModeToggle.textContent = '☀️';
-      }
-    });
+    // Check for saved theme preference or use preferred color scheme
+    const savedTheme = localStorage.getItem('theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
+    // Apply the saved theme
+    html.setAttribute('data-theme', savedTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
   </script>
 </body>
 

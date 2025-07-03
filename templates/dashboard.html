@@ -31,7 +31,7 @@
     <div style="text-align:center; margin-bottom:18px;">
       <img src="{{ url_for('static', filename='images/' ~ dept_logo) }}" alt="Department Logo"
         style="height:70px;max-width:120px;object-fit:contain;">
-      <div style="color:#fff; font-size:15px; margin-top:6px;">{{ user.course }}</div>
+      <div style="color:#fff; font-size:15px; margin-top:6px;">{{ user.department }}</div>
     </div>
     {% endif %}
     <div class="user-divider">
@@ -61,7 +61,7 @@
 
   <div class="main-content">
     <div class="main-wrapper">
-      <h2>{{ user.course }} Dashboard</h2>
+      <h2>{{ user.department }} Dashboard</h2>
       <p>
         Voting Deadline: <b id="deadlineDisplay">{{ voting_deadline }}</b> |
         Now: <b id="liveNow">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</b>
@@ -125,13 +125,17 @@
               user.last_name }}</span></div>
           <div class="profile-row"><i class="fa-solid fa-id-badge"></i><strong>Phone Number:</strong><span>{{ user.phone
               }}</span></div>
+          <div class="profile-row"><i class="fa-solid fa-building-columns"></i><strong>Department:</strong><span>{{
+              user.course }}</span></div>
+          <div class="profile-row"><i class="fa-solid fa-road"></i><strong>Track:</strong><span>{{ user.track }}</span>
+          </div>
+          <div class="profile-row"><i class="fa-solid fa-layer-group"></i><strong>Year Level:</strong><span>{{
+              user.year_level }}</span></div>
         </div>
         <div class="profile-col">
           <div class="profile-col-title">Login Details |</div>
           <div class="profile-row"><i class="fa-solid fa-id-card"></i><strong>School ID:</strong><span>{{ user.school_id
               }}</span></div>
-          <div class="profile-row"><i class="fa-solid fa-building-columns"></i><strong>Department:</strong><span>{{
-              user.course }}</span></div>
           <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Email:</strong><span>{{ user.email
               }}</span></div>
           <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Password:</strong><span>(TO BE ADDED

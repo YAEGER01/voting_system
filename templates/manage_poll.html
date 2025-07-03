@@ -1,78 +1,181 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Manage Poll</title>
     <style>
-        body { font-family: "Segoe UI", Arial, sans-serif; background: #f6f8fa; margin: 0; padding: 0; }
-        h2, h3, h4 { text-align: center; color: #21532a; margin-top: 32px; letter-spacing: 1px; }
-        .container { max-width: 900px; margin: 32px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 32px 28px 24px 28px; }
-        form { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
-        input[type="text"], select, textarea { padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; font-size: 1rem; }
-        textarea { min-height: 60px; resize: vertical; }
-        input[type="file"] { margin-top: 4px; }
-        button[type="submit"] { background: linear-gradient(90deg, #25c18c 60%, #21532a 100%); color: #fff; border: none; border-radius: 8px; padding: 12px 0; font-size: 1.08rem; font-weight: bold; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
-        button[type="submit"]:hover { background: linear-gradient(90deg, #21532a 60%, #25c18c 100%); }
-        hr { margin: 32px 0; border: none; border-top: 2px solid #e0e0e0; }
-        ul { list-style: none; padding-left: 0; }
-        li { margin-bottom: 10px; background: #f9f9f9; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 16px; }
-        img { border-radius: 6px; border: 1px solid #ddd; background: #fafafa; max-width: 60px; max-height: 60px; }
-        .message { text-align: center; margin: 18px 0; color: #21532a; font-weight: bold; }
-        @media (max-width: 700px) { .container { padding: 10px 2vw; } h2, h3, h4 { font-size: 1.1rem; } }
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f6f8fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2,
+        h3,
+        h4 {
+            text-align: center;
+            color: #21532a;
+            margin-top: 32px;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 32px auto;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+            padding: 32px 28px 24px 28px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+            font-size: 1rem;
+        }
+
+        textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        input[type="file"] {
+            margin-top: 4px;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(90deg, #25c18c 60%, #21532a 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 0;
+            font-size: 1.08rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            background: linear-gradient(90deg, #21532a 60%, #25c18c 100%);
+        }
+
+        hr {
+            margin: 32px 0;
+            border: none;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        img {
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            max-width: 60px;
+            max-height: 60px;
+        }
+
+        .message {
+            text-align: center;
+            margin: 18px 0;
+            color: #21532a;
+            font-weight: bold;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 10px 2vw;
+            }
+
+            h2,
+            h3,
+            h4 {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <h2>Manage Voting Positions and Candidates<br>
-        <span style="font-size:1rem;color:#2980b9;">{{ admin_department }} Department</span>
-    </h2>
+    <div class="container">
+        <h2>Manage Voting Positions and Candidates<br>
+            <span style="font-size:1rem;color:#2980b9;">{{ admin_department }} Department</span>
+        </h2>
 
-    {% if message %}
+        {% if message %}
         <div class="message">{{ message }}</div>
-    {% endif %}
+        {% endif %}
 
-    <h3>Add Position</h3>
-    <form method="post">
-        <input type="text" name="position_name" placeholder="Position Name (e.g., President)" required>
-        <button type="submit">Add Position</button>
-    </form>
+        <h3>Add Position</h3>
+        <form method="post">
+            <input type="text" name="position_name" placeholder="Position Name (e.g., President)" required>
+            <button type="submit">Add Position</button>
+        </form>
 
-    <hr>
+        <hr>
 
-    <h3>Add Candidate</h3>
-    <form method="post" enctype="multipart/form-data">
-        <select name="position_id" required>
-            <option value="" disabled selected>Select Position</option>
-            {% for pos in positions %}
+        <h3>Add Candidate</h3>
+        <form method="post" enctype="multipart/form-data">
+            <select name="position_id" required>
+                <option value="" disabled selected>Select Position</option>
+                {% for pos in positions %}
                 <option value="{{ pos.id }}">{{ pos.name }}</option>
-            {% endfor %}
-        </select>
-        <input type="text" name="candidate_name" placeholder="Candidate Name" required>
-        <textarea name="campaign_message" placeholder="Campaign Message" required></textarea>
-        <input type="file" name="candidate_image" accept="image/*" required>
-        <button type="submit">Add Candidate</button>
-    </form>
+                {% endfor %}
+            </select>
+            <input type="text" name="candidate_name" placeholder="Candidate Name" required>
+            <textarea name="campaign_message" placeholder="Campaign Message" required></textarea>
+            <input type="file" name="candidate_image" accept="image/*" required>
+            <button type="submit">Add Candidate</button>
+        </form>
 
-    <hr>
+        <hr>
 
-    <h3>Current Positions and Candidates</h3>
-    {% for pos in positions %}
+        <h3>Current Positions and Candidates</h3>
+        {% for pos in positions %}
         <h4>{{ pos.name }}</h4>
         <ul>
-        {% for cand in candidates_per_position[pos.id] %}
+            {% for cand in candidates_per_position[pos.id] %}
             <li>
                 <strong>{{ cand.name }}</strong>
                 {% if cand.image %}
-                    <img src="{{ url_for('static', filename=cand.image) }}" alt="Candidate">
+                <img src="{{ url_for('static', filename=cand.image) }}" alt="Candidate">
                 {% endif %}
                 {% if cand.campaign_message %}
-                    <span style="font-size:0.97em;color:#555;margin-left:10px;">
-                        {{ cand.campaign_message | nl2br }}
-                    </span>
+                <span style="font-size:0.97em;color:#555;margin-left:10px;">
+                    {{ cand.campaign_message | nl2br }}
+                </span>
                 {% endif %}
             </li>
-        {% endfor %}
+            {% endfor %}
         </ul>
-    {% endfor %}
-</div>
+        {% endfor %}
+    </div>
 </body>
+
 </html>

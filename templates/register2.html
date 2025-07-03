@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNIVOTE: Campus Elections Reimagined - Register</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    :root {
+      --primary: #4CAF50;
+      --primary-light: #81C784;
+      --primary-dark: #388E3C;
+      --text: #333;
+      --bg: #f5f5f5;
+      --card-bg: #fff;
+      --nav-btn: #2E7D32;
+      --nav-btn-hover: #1B5E20;
+      --error: #ED2939;
+      --border: #ddd;
+    }
+
+    [data-theme="dark"] {
+      --primary: #689F38;
+      --primary-light: #8BC34A;
+      --primary-dark: #33691E;
+      --text: #f5f5f5;
+      --bg: #121212;
+      --card-bg: #1E1E1E;
+      --nav-btn: #4CAF50;
+      --nav-btn-hover: #81C784;
+      --error: #FF5252;
+      --border: #444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      padding: 2rem;
+    }
+
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .logo-container img {
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .register-container {
+      background-color: var(--card-bg);
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .register-title {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--primary-dark);
+    }
+
+    .alert {
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .alert-error {
+      background-color: #ffebee;
+      color: var(--error);
+    }
+
+    [data-theme="dark"] .alert-error {
+      background-color: #330000;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section h3 {
+      margin-bottom: 1rem;
+      color: var(--primary);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background-color: var(--card-bg);
+      color: var(--text);
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .file-upload-wrapper {
+      margin-bottom: 1rem;
+    }
+
+    .file-upload-wrapper small {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+      color: #777;
+    }
+
+    .preview-container {
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .preview-container img {
+      max-width: 100%;
+      max-height: 200px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .sign-up-button {
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .sign-up-button button {
+      background-color: var(--nav-btn);
+      color: white;
+      border: none;
+      padding: 0.8rem 2rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .sign-up-button button:hover {
+      background-color: var(--nav-btn-hover);
+    }
+
+    .divider {
+      height: 1px;
+      background-color: var(--border);
+      margin: 1.5rem 0;
+    }
+
+    .login-link {
+      text-align: center;
+    }
+
+    .login-link a {
+      color: var(--primary-dark);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    #password-strength {
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .error-message {
+      color: var(--error);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .invalid {
+      border-color: var(--error) !important;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <button class="theme-toggle" id="themeToggle">🌓</button>
+    <h1>UNIVOTE</h1>
+    <p>Campus Elections Reimagined</p>
+  </header>
+
+  <main>
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" />
+      <img src="{{ url_for('static', filename='images/osas.png') }}" alt="OSAS Logo" />
+      <img src="{{ url_for('static', filename='images/ssc.png') }}" alt="SSC Logo" />
+      <img src="{{ url_for('static', filename='images/ccje.png') }}" alt="CCJE Logo" />
+      <img src="{{ url_for('static', filename='images/cbm.png') }}" alt="CBM Logo" />
+      <img src="{{ url_for('static', filename='images/SAS.png') }}" alt="SAS Logo" />
+      <img src="{{ url_for('static', filename='images/ccsict.png') }}" alt="CCSICT Logo" />
+      <img src="{{ url_for('static', filename='images/PS.png') }}" alt="PS Logo" />
+      <img src="{{ url_for('static', filename='images/educ.png') }}" alt="EDUC Logo" />
+      <img src="{{ url_for('static', filename='images/iat.png') }}" alt="IAT Logo" />
+    </div>
+
+    <div class="register-container">
+      <h2 class="register-title">REGISTRATION</h2>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <form id="signup-form" method="POST" action="{{ url_for('register') }}" novalidate enctype="multipart/form-data">
+        <div class="form-grid">
+          <div class="section">
+            <h3>Login Details | </h3>
+            <label for="school-id">School ID</label>
+            <input type="text" id="school-id" name="school-id" required />
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required />
+
+            <label for="password">Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="password" name="password" required />
+              <button type="button" class="toggle-password" onclick="togglePassword('password', this)"
+                aria-label="Toggle password visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <small id="password-strength" style="color: var(--text); font-size: 0.9em;"></small>
+
+            <label for="confirm-password">Confirm Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="confirm-password" name="confirm-password" required />
+              <button type="button" class="toggle-password" onclick="togglePassword('confirm-password', this)"
+                aria-label="Toggle confirm password visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <span id="confirm-password-error" class="error-message" style="display:none;">
+              Passwords do not match!
+            </span>
+          </div>
+
+          <div class="section">
+            <h3>Student Information | </h3>
+            <label for="first-name">First Name</label>
+            <input type="text" id="first-name" name="first-name" required />
+
+            <label for="last-name">Last Name</label>
+            <input type="text" id="last-name" name="last-name" required />
+
+            <label for="department">Department</label>
+            <select id="department" name="department" required>
+              <option value="" disabled selected>Select your Department</option>
+              <option value="CCSICT">COLLEGE OF COMPUTING, STUDIES, INFORMATION AND COMMUNICATION TECHNOLOGY</option>
+              <option value="CBM">COLLEGE OF BUSINESS AND MANAGEMENT</option>
+              <option value="CCJE">COLLEGE OF CRIMINAL JUSTICE EDUCATION</option>
+              <option value="CED">COLLEGE OF EDUCATION</option>
+              <option value="PS">POLYTECHNIC SCHOOL</option>
+              <option value="SAS">SCHOOL OF ARTS AND SCIENCES</option>
+              <option value="IAT">ISU CAUAYAN-AURORA EXTENSION INSTITUTE OF AGRICULTURAL TECHNOLOGY</option>
+            </select>
+
+            <label for="course">Course</label>
+            <select id="course" name="course" required disabled>
+              <option value="" disabled selected>Select your Course</option>
+            </select>
+
+            <label for="track">Track</label>
+            <select id="track" name="track" required disabled>
+              <option value="" disabled selected>Select your Track</option>
+            </select>
+
+            <label for="year">Year Level</label>
+            <select id="year" name="year_level" required>
+              <option value="" disabled selected>Select Year Level</option>
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+            </select>
+
+            <label for="phone">Phone Number</label>
+            <input type="text" id="phone" name="phone" required />
+
+            <h3>ID Verification | </h3>
+            <label for="school-id-front">School ID Picture (Front)</label>
+            <div class="file-upload-wrapper">
+              <input type="file" id="school-id-front" name="school-id-front" accept="image/*" required />
+              <small>Upload a clear photo of the front of your school ID. Max size: 5MB. Formats: JPG, PNG, GIF.</small>
+            </div>
+            <div class="preview-container" id="preview-front-container" style="display:none;">
+              <img id="preview-image-front" src="#" alt="Front Preview" />
+            </div>
+
+            <label for="school-id-back">School ID Picture (Back)</label>
+            <div class="file-upload-wrapper">
+              <input type="file" id="school-id-back" name="school-id-back" accept="image/*" required />
+              <small>Upload a clear photo of the back of your school ID. Max size: 5MB. Formats: JPG, PNG, GIF.</small>
+            </div>
+            <div class="preview-container" id="preview-back-container" style="display:none;">
+              <img id="preview-image-back" src="#" alt="Back Preview" />
+            </div>
+          </div>
+        </div>
+
+        <div class="sign-up-button">
+          <button type="submit">SIGN UP</button>
+        </div>
+      </form>
+
+      <div class="divider"></div>
+
+      <div class="login-link">
+        Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Department → Course (short) → Track (full)
+    const courseData = {
+      "CCSICT": {
+        "BSIT": [
+          "Networking and Security",
+          "Business Analytics",
+          "Service Management for Business Process",
+          "Web and Mobile Application Development"
+        ],
+        "BSCS": [
+          "Data Mining",
+          "Business Analytics"
+        ],
+        "BSEMC": [
+          "Game Development",
+          "Digital Animation"
+        ]
+      },
+      "CBM": {
+        "BSBA": [],
+        "BSM": [],
+        "BSHM": [],
+        "BSTM": [],
+        "BSAIS": [],
+        "BSMA": [],
+        "BSEntrep": [],
+        "BSLM": []
+      },
+      "CCJE": {
+        "BSCRIM": []
+      },
+      "CED": {
+        "BSED": [
+          "English",
+          "Filipino",
+          "Math",
+          "Science"
+        ],
+        "BEED": [],
+        "BPEd": []
+      },
+      "PS": {
+        "BSIndTech": [
+          "Automotive Technology",
+          "Electronics Technology"
+        ]
+      },
+      "SAS": {
+        "BAELS": [],
+        "BAPS": []
+      },
+      "IAT": {
+        "DAS": []
+      }
+    };
+
+    const courseFullNames = {
+      "BSIT": "Bachelor of Science in Information Technology",
+      "BSIndTech": "Bachelor of Science in Industrial Technology",
+      "BSCS": "Bachelor of Science in Computer Science",
+      "BSEMC": "Bachelor of Science in Entertainment and Multimedia Computing",
+      "BSBA": "Bachelor of Science in Business Administration",
+      "BSM": "Bachelor of Science in Management",
+      "BSHM": "Bachelor of Science in Hospitality Management",
+      "BSTM": "Bachelor of Science in Tourism Management",
+      "BSAIS": "Bachelor of Science in Accounting Information System",
+      "BSMA": "Bachelor of Science in Management Accounting",
+      "BSEntrep": "Bachelor of Science in Entrepreneurship",
+      "BSLM": "Bachelor of Science in Legal Management",
+      "BSCRIM": "Bachelor of Science in Criminology",
+      "BSED": "Bachelor of Secondary Education",
+      "BEED": "Bachelor of Elementary Education",
+      "BPEd": "Bachelor of Physical Education",
+      "BAELS": "Bachelor of Arts in English Language Studies",
+      "BAPS": "Bachelor of Arts in Political Science",
+      "DAS": "Diploma in Agricultural Sciences"
+    };
+
+    const departmentSelect = document.getElementById('department');
+    const courseSelect = document.getElementById('course');
+    const trackSelect = document.getElementById('track');
+
+    departmentSelect.addEventListener('change', function () {
+      const dept = this.value;
+      courseSelect.innerHTML = '<option value="" disabled selected>Select your Course</option>';
+      trackSelect.innerHTML = '<option value="" disabled selected>Select your Track</option>';
+      trackSelect.disabled = true;
+      if (courseData[dept]) {
+        Object.keys(courseData[dept]).forEach(function (shortName) {
+          const opt = document.createElement('option');
+          opt.value = shortName;
+          opt.textContent = shortName + (courseFullNames[shortName] ? ` (${courseFullNames[shortName]})` : '');
+          courseSelect.appendChild(opt);
+        });
+        courseSelect.disabled = false;
+      } else {
+        courseSelect.disabled = true;
+      }
+    });
+
+    courseSelect.addEventListener('change', function () {
+      const dept = departmentSelect.value;
+      const course = this.value;
+      trackSelect.innerHTML = '<option value="" disabled selected>Select your Track</option>';
+      if (courseData[dept] && courseData[dept][course] && courseData[dept][course].length > 0) {
+        courseData[dept][course].forEach(function (track) {
+          const opt = document.createElement('option');
+          opt.value = track;
+          opt.textContent = track;
+          trackSelect.appendChild(opt);
+        });
+        trackSelect.disabled = false;
+      } else {
+        trackSelect.disabled = true;
+      }
+    });
+
+    function togglePassword(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector("i");
+      if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
+    }
+
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirm-password");
+    const confirmPasswordError = document.getElementById("confirm-password-error");
+    const passwordStrength = document.getElementById("password-strength");
+
+    function checkPasswordStrength(password) {
+      const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
+      return strongRegex.test(password);
+    }
+
+    passwordInput.addEventListener("input", () => {
+      const password = passwordInput.value;
+      if (checkPasswordStrength(password)) {
+        passwordStrength.textContent = "Strong password";
+        passwordStrength.style.color = "green";
+      } else {
+        passwordStrength.textContent = "Password must be 8+ chars with uppercase, lowercase, number, and symbol.";
+        passwordStrength.style.color = "red";
+      }
+
+      if (confirmPasswordInput.value !== "" && password !== confirmPasswordInput.value) {
+        confirmPasswordInput.classList.add("invalid");
+        confirmPasswordError.style.display = "block";
+      } else {
+        confirmPasswordInput.classList.remove("invalid");
+        confirmPasswordError.style.display = "none";
+      }
+    });
+
+    confirmPasswordInput.addEventListener("input", () => {
+      if (confirmPasswordInput.value !== passwordInput.value) {
+        confirmPasswordInput.classList.add("invalid");
+        confirmPasswordError.style.display = "block";
+      } else {
+        confirmPasswordInput.classList.remove("invalid");
+        confirmPasswordError.style.display = "none";
+      }
+    });
+
+    document.getElementById('school-id-front').addEventListener('change', function (e) {
+      const previewContainer = document.getElementById('preview-front-container');
+      const previewImage = document.getElementById('preview-image-front');
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewImage.src = e.target.result;
+          previewContainer.style.display = 'block';
+        }
+        reader.readAsDataURL(this.files[0]);
+      } else {
+        previewContainer.style.display = 'none';
+      }
+    });
+
+    document.getElementById('school-id-back').addEventListener('change', function (e) {
+      const previewContainer = document.getElementById('preview-back-container');
+      const previewImage = document.getElementById('preview-image-back');
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewImage.src = e.target.result;
+          previewContainer.style.display = 'block';
+        }
+        reader.readAsDataURL(this.files[0]);
+      } else {
+        previewContainer.style.display = 'none';
+      }
+    });
+
+    document.getElementById("signup-form").addEventListener("submit", function (event) {
+      if (passwordInput.value !== confirmPasswordInput.value) {
+        confirmPasswordError.style.display = "block";
+        event.preventDefault();
+      }
+      if (!checkPasswordStrength(passwordInput.value)) {
+        alert("Password must be at least 8 characters with uppercase, lowercase, number, and special character.");
+        event.preventDefault();
+      }
+      const fileInputFront = document.getElementById('school-id-front');
+      const fileInputBack = document.getElementById('school-id-back');
+      if (fileInputFront.files.length === 0) {
+        alert('Please upload the front of your School ID.');
+        event.preventDefault();
+      }
+      if (fileInputBack.files.length === 0) {
+        alert('Please upload the back of your School ID.');
+        event.preventDefault();
+      }
+    });
+
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    // Check for saved theme preference or use preferred color scheme
+    const savedTheme = localStorage.getItem('theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    // Apply the saved theme
+    html.setAttribute('data-theme', savedTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
+</body>
+
+</html>

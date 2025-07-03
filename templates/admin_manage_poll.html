@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNIVOTE: ADMIN MANAGE POLL</title>
+  <link rel="stylesheet" href="static/css/admin_dash.css">
+  <style>
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+      padding: 32px 28px 24px 28px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #f9f9f9;
+      font-size: 1rem;
+    }
+
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    input[type="file"] {
+      margin-top: 4px;
+    }
+
+    button[type="submit"] {
+      /*background: linear-gradient(90deg, #25c18c 60%, #21532a 100%);*/
+      background-color: var(--header-bg);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 0;
+      font-size: 1.08rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    button[type="submit"]:hover {
+      background-color: var(--primary-dark);
+      /*background: linear-gradient(90deg, #21532a 60%, #25c18c 100%);*/
+    }
+
+    hr {
+      margin: 32px 0;
+      border: none;
+      border-top: 2px solid #e0e0e0;
+    }
+
+
+
+    img {
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background: #fafafa;
+      max-width: 60px;
+      max-height: 60px;
+    }
+
+    .message {
+      text-align: center;
+      margin: 18px 0;
+      color: #21532a;
+      font-weight: bold;
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        padding: 10px 2vw;
+      }
+
+      h2,
+      h3,
+      h4 {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1>UNIVOTE: MANAGE POLL</h1>
+        <div class="header-actions">
+          <button id="theme-toggle" class="btn">🌙 Dark Mode</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="dashboard-nav">
+      <ul class="nav-list">
+        <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
+        <li class="nav-item"><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
+        <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
+        <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
+        <li class="nav-item"><a href="{{ url_for('manage_settings') }}">Manage Voting Settings</a></li>
+        <li class="nav-item"><a href="{{ url_for('logout') }}"
+            onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+        <li class="nav-item"><a href="#">Help</a></li>
+      </ul>
+    </nav>
+
+    <main class="dashboard-content">
+      <div id="app">
+        <div class="container">
+          <h2>Manage Voting Positions and Candidates<br>
+            <span style="font-size:1rem;color:#2980b9;">{{ admin_department }} Department</span>
+          </h2>
+
+          {% if message %}
+          <div class="message">{{ message }}</div>
+          {% endif %}
+
+          <h3>Add Position</h3>
+          <form method="post">
+            <input type="text" name="position_name" placeholder="Position Name (e.g., President)" required>
+            <button type="submit">Add Position</button>
+          </form>
+
+          <hr>
+
+          <h3>Add Candidate</h3>
+          <form method="post" enctype="multipart/form-data">
+            <select name="position_id" required>
+              <option value="" disabled selected>Select Position</option>
+              {% for pos in positions %}
+              <option value="{{ pos.id }}">{{ pos.name }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="candidate_name" placeholder="Candidate Name" required>
+            <textarea name="campaign_message" placeholder="Campaign Message" required></textarea>
+            <input type="file" name="candidate_image" accept="image/*" required>
+            <button type="submit">Add Candidate</button>
+          </form>
+
+          <hr>
+
+          <h3>Current Positions and Candidates</h3>
+          {% for pos in positions %}
+          <h4>{{ pos.name }}</h4>
+          <ul>
+            {% for cand in candidates_per_position[pos.id] %}
+            <li>
+              <strong>{{ cand.name }}</strong>
+              {% if cand.image %}
+              <img src="{{ url_for('static', filename=cand.image) }}" alt="Candidate">
+              {% endif %}
+              {% if cand.campaign_message %}
+              <span style="font-size:0.97em;color:#555;margin-left:10px;">
+                {{ cand.campaign_message | nl2br }}
+              </span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endfor %}
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggle = document.getElementById('theme-toggle');
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+      // Check for saved theme or use preferred color scheme
+      const currentTheme = localStorage.getItem('theme') ||
+        (prefersDarkScheme.matches ? 'dark' : 'light');
+
+      if (currentTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀️ Light Mode';
+      }
+
+      themeToggle.addEventListener('click', () => {
+        let theme;
+        if (document.body.getAttribute('data-theme') === 'dark') {
+          document.body.removeAttribute('data-theme');
+          theme = 'light';
+          themeToggle.textContent = '🌙 Dark Mode';
+        } else {
+          document.body.setAttribute('data-theme', 'dark');
+          theme = 'dark';
+          themeToggle.textContent = '☀️ Light Mode';
+        }
+        localStorage.setItem('theme', theme);
+      });
+    });
+
+  </script>
+</body>
+
+</html>

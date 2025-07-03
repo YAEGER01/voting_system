@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNIVOTE: Campus Elections Reimagined - Login</title>
+  <style>
+    :root {
+      --primary: #4CAF50;
+      --primary-light: #81C784;
+      --primary-dark: #388E3C;
+      --text: #333;
+      --bg: #f5f5f5;
+      --card-bg: #fff;
+      --nav-btn: #2E7D32;
+      --nav-btn-hover: #1B5E20;
+      --error: #ED2939;
+    }
+
+    [data-theme="dark"] {
+      --primary: #689F38;
+      --primary-light: #8BC34A;
+      --primary-dark: #33691E;
+      --text: #f5f5f5;
+      --bg: #121212;
+      --card-bg: #1E1E1E;
+      --nav-btn: #4CAF50;
+      --nav-btn-hover: #81C784;
+      --error: #FF5252;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .login-container {
+      background-color: var(--card-bg);
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .login-title {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--primary-dark);
+    }
+
+    .error-message {
+      color: var(--error);
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group img {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      filter: invert(50%);
+    }
+
+    [data-theme="dark"] .form-group img {
+      filter: invert(80%);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 12px 12px 40px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      background-color: var(--card-bg);
+      color: var(--text);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .toggle-password {
+      left: auto !important;
+      right: 15px;
+      cursor: pointer;
+    }
+
+    .forgot-password {
+      text-align: right;
+      margin-bottom: 1.5rem;
+    }
+
+    .forgot-password a {
+      color: var(--primary-dark);
+      text-decoration: none;
+    }
+
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--nav-btn);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .login-btn:hover {
+      background-color: var(--nav-btn-hover);
+    }
+
+    .divider {
+      height: 1px;
+      background-color: #ddd;
+      margin: 1.5rem 0;
+    }
+
+    .signup-link {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .signup-link a {
+      color: var(--primary-dark);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+
+    .developer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 1rem;
+    }
+
+    .logo-container {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .logo-container img {
+      height: 60px;
+      margin: 0 1rem;
+      object-fit: contain;
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        padding: 1.5rem;
+      }
+
+      .logo-container img {
+        height: 50px;
+        margin: 0.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 1rem;
+      }
+
+      .logo-container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .logo-container img {
+        margin: 0.5rem 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <button class="theme-toggle" id="themeToggle">🌓</button>
+    <h1>UNIVOTE</h1>
+    <p>Campus Elections Reimagined</p>
+  </header>
+
+  <main>
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/ssc.png') }}" alt="SSC Logo" />
+      <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" />
+      <img src="{{ url_for('static', filename='images/ccsict.png') }}" alt="CCSICT Logo" />
+    </div>
+
+    <div class="login-container">
+      <h2 class="login-title">VOTING SYSTEM LOGIN</h2>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="error-message alert-{{ category }}">
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="">
+        <div class="form-group">
+          <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="User Icon" />
+          <input type="text" name="school_id" placeholder="School ID" required />
+        </div>
+
+        <div class="form-group">
+          <img src="https://cdn-icons-png.flaticon.com/512/3064/3064155.png" alt="Lock Icon" />
+          <input type="password" name="password" placeholder="Password" id="passwordInput" required />
+          <img src="https://cdn-icons-png.flaticon.com/512/709/709612.png" alt="Toggle Password" class="toggle-password"
+            id="togglePassword" />
+        </div>
+
+        <div class="forgot-password">
+          <a href="#">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">LOGIN</button>
+      </form>
+
+      <div class="divider"></div>
+
+      <div class="signup-link">
+        Don't have an account?
+        <a href="{{ url_for('register') }}">Sign up</a>
+      </div>
+
+      <div class="developer">
+        DEVELOPED BY: JUSTIN VON T. VERGARA | BSIT 2A - NS | CCSICT
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("passwordInput");
+
+    togglePassword.addEventListener("click", () => {
+      const isPasswordHidden = passwordInput.type === "password";
+      passwordInput.type = isPasswordHidden ? "text" : "password";
+      togglePassword.src = isPasswordHidden
+        ? "https://cdn-icons-png.flaticon.com/512/159/159604.png"
+        : "https://cdn-icons-png.flaticon.com/512/709/709612.png";
+    });
+
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    // Check for saved theme preference or use preferred color scheme
+    const savedTheme = localStorage.getItem('theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    // Apply the saved theme
+    html.setAttribute('data-theme', savedTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
+</body>
+
+</html>

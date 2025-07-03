@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sign Up Page</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/register1.css') }}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
+
 <body>
   <!-- Top Logos -->
   <div class="top-logos">
     <span class="logo-wrapper"><img src="{{ url_for('static', filename='images/isu.png') }}" alt="Logo 2" /></span>
     <span class="logo-wrapper"><img src="{{ url_for('static', filename='images/osas.png') }}" alt="Logo 1" /></span>
-    <span class="logo-wrapper with-divider"><img src="{{ url_for('static', filename='images/ssc.png') }}" alt="Logo 3" /></span>
+    <span class="logo-wrapper with-divider"><img src="{{ url_for('static', filename='images/ssc.png') }}"
+        alt="Logo 3" /></span>
     <img src="{{ url_for('static', filename='images/ccje.png') }}" alt="Logo 4" />
     <img src="{{ url_for('static', filename='images/cbm.png') }}" alt="Logo 5" />
     <img src="{{ url_for('static', filename='images/SAS.png') }}" alt="Logo 6" />
@@ -22,21 +26,18 @@
     <img src="{{ url_for('static', filename='images/iat.png') }}" alt="Logo 10" />
   </div>
 
-  <!-- Flash messages -->
-  
-
   <!-- Sign Up Form -->
   <div class="container">
     <h2>REGISTRATION</h2>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">
-  {{ message }}
-</div>
-      {% endfor %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">
+      {{ message }}
+    </div>
+    {% endfor %}
     {% endif %}
-  {% endwith %}
+    {% endwith %}
     <form id="signup-form" method="POST" action="{{ url_for('register') }}" novalidate enctype="multipart/form-data">
       <div class="form-grid">
         <div class="section">
@@ -44,25 +45,14 @@
           <label for="school-id">School ID</label>
           <input type="text" id="school-id" name="school-id" required />
 
-          <label for="course">Department</label>
-          <select id="course" name="course" required>
-            <option value="" disabled selected>Select your Department</option>
-            <option value="CCSICT">CCSICT</option>
-            <option value="CCJE">CCJE</option>
-            <option value="PS">PS</option>
-            <option value="CED">CED</option>
-            <option value="CBM">CBM</option>
-            <option value="SAS">SAS</option>
-            <option value="IAT">IAT</option>
-          </select>
-
           <label for="email">Email</label>
           <input type="email" id="email" name="email" required />
 
           <label for="password">Password</label>
           <div class="password-wrapper">
             <input type="password" id="password" name="password" required />
-            <button type="button" class="toggle-password" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
+            <button type="button" class="toggle-password" onclick="togglePassword('password', this)"
+              aria-label="Toggle password visibility">
               <i class="fa-solid fa-eye"></i>
             </button>
           </div>
@@ -71,7 +61,8 @@
           <label for="confirm-password">Confirm Password</label>
           <div class="password-wrapper">
             <input type="password" id="confirm-password" name="confirm-password" required />
-            <button type="button" class="toggle-password" onclick="togglePassword('confirm-password', this)" aria-label="Toggle confirm password visibility">
+            <button type="button" class="toggle-password" onclick="togglePassword('confirm-password', this)"
+              aria-label="Toggle confirm password visibility">
               <i class="fa-solid fa-eye"></i>
             </button>
           </div>
@@ -87,6 +78,37 @@
 
           <label for="last-name">Last Name</label>
           <input type="text" id="last-name" name="last-name" required />
+
+          <label for="department">Department</label>
+          <select id="department" name="department" required>
+            <option value="" disabled selected>Select your Department</option>
+            <option value="CCSICT">COLLEGE OF COMPUTING, STUDIES, INFORMATION AND COMMUNICATION TECHNOLOGY</option>
+            <option value="CBM">COLLEGE OF BUSINESS AND MANAGEMENT</option>
+            <option value="CCJE">COLLEGE OF CRIMINAL JUSTICE EDUCATION</option>
+            <option value="CED">COLLEGE OF EDUCATION</option>
+            <option value="PS">POLYTECHNIC SCHOOL</option>
+            <option value="SAS">SCHOOL OF ARTS AND SCIENCES</option>
+            <option value="IAT">ISU CAUAYAN-AURORA EXTENSION INSTITUTE OF AGRICULTURAL TECHNOLOGY</option>
+          </select>
+
+          <label for="course">Course</label>
+          <select id="course" name="course" required disabled>
+            <option value="" disabled selected>Select your Course</option>
+          </select>
+
+          <label for="track">Track</label>
+          <select id="track" name="track" required disabled>
+            <option value="" disabled selected>Select your Track</option>
+          </select>
+
+          <label for="year">Year Level</label>
+          <select id="year" name="year_level" required>
+            <option value="" disabled selected>Select Year Level</option>
+            <option value="1st Year">1st Year</option>
+            <option value="2nd Year">2nd Year</option>
+            <option value="3rd Year">3rd Year</option>
+            <option value="4th Year">4th Year</option>
+          </select>
 
           <label for="phone">Phone Number</label>
           <input type="text" id="phone" name="phone" required />
@@ -125,6 +147,124 @@
   </div>
 
   <script>
+    // Department → Course (short) → Track (full)
+    const courseData = {
+      "CCSICT": {
+        "BSIT": [
+          "Networking and Security",
+          "Business Analytics",
+          "Service Management for Business Process",
+          "Web and Mobile Application Development"
+        ],
+        "BSCS": [
+          "Data Mining",
+          "Business Analytics"
+        ],
+        "BSEMC": [
+          "Game Development",
+          "Digital Animation"
+        ]
+      },
+      "CBM": {
+        "BSBA": [],
+        "BSM": [],
+        "BSHM": [],
+        "BSTM": [],
+        "BSAIS": [],
+        "BSMA": [],
+        "BSEntrep": [],
+        "BSLM": []
+      },
+      "CCJE": {
+        "BSCRIM": []
+      },
+      "CED": {
+        "BSED": [
+          "English",
+          "Filipino",
+          "Math",
+          "Science"
+        ],
+        "BEED": [],
+        "BPEd": []
+      },
+      "PS": {
+        "BSIndTech": [
+          "Automotive Technology",
+          "Electronics Technology"
+        ]
+      },
+      "SAS": {
+        "BAELS": [],
+        "BAPS": []
+      },
+      "IAT": {
+        "DAS": []
+      }
+    };
+
+    const courseFullNames = {
+      "BSIT": "Bachelor of Science in Information Technology",
+      "BSIndTech": "Bachelor of Science in Industrial Technology",
+      "BSCS": "Bachelor of Science in Computer Science",
+      "BSEMC": "Bachelor of Science in Entertainment and Multimedia Computing",
+      "BSBA": "Bachelor of Science in Business Administration",
+      "BSM": "Bachelor of Science in Management",
+      "BSHM": "Bachelor of Science in Hospitality Management",
+      "BSTM": "Bachelor of Science in Tourism Management",
+      "BSAIS": "Bachelor of Science in Accounting Information System",
+      "BSMA": "Bachelor of Science in Management Accounting",
+      "BSEntrep": "Bachelor of Science in Entrepreneurship",
+      "BSLM": "Bachelor of Science in Legal Management",
+      "BSCRIM": "Bachelor of Science in Criminology",
+      "BSED": "Bachelor of Secondary Education",
+      "BEED": "Bachelor of Elementary Education",
+      "BPEd": "Bachelor of Physical Education",
+      "BAELS": "Bachelor of Arts in English Language Studies",
+      "BAPS": "Bachelor of Arts in Political Science",
+      "DAS": "Diploma in Agricultural Sciences"
+    };
+
+    const departmentSelect = document.getElementById('department');
+    const courseSelect = document.getElementById('course');
+    const trackSelect = document.getElementById('track');
+
+    departmentSelect.addEventListener('change', function () {
+      const dept = this.value;
+      courseSelect.innerHTML = '<option value="" disabled selected>Select your Course</option>';
+      trackSelect.innerHTML = '<option value="" disabled selected>Select your Track</option>';
+      trackSelect.disabled = true;
+      if (courseData[dept]) {
+        Object.keys(courseData[dept]).forEach(function (shortName) {
+          const opt = document.createElement('option');
+          opt.value = shortName;
+          opt.textContent = shortName + (courseFullNames[shortName] ? ` (${courseFullNames[shortName]})` : '');
+          courseSelect.appendChild(opt);
+        });
+        courseSelect.disabled = false;
+      } else {
+        courseSelect.disabled = true;
+      }
+    });
+
+    courseSelect.addEventListener('change', function () {
+      const dept = departmentSelect.value;
+      const course = this.value;
+      trackSelect.innerHTML = '<option value="" disabled selected>Select your Track</option>';
+      if (courseData[dept] && courseData[dept][course] && courseData[dept][course].length > 0) {
+        courseData[dept][course].forEach(function (track) {
+          const opt = document.createElement('option');
+          opt.value = track;
+          opt.textContent = track;
+          trackSelect.appendChild(opt);
+        });
+        trackSelect.disabled = false;
+      } else {
+        trackSelect.disabled = true;
+      }
+    });
+
+    // Password and file validation (existing code)
     function togglePassword(inputId, btn) {
       const input = document.getElementById(inputId);
       const icon = btn.querySelector("i");
@@ -178,12 +318,12 @@
       }
     });
 
-    document.getElementById('school-id-front').addEventListener('change', function(e) {
+    document.getElementById('school-id-front').addEventListener('change', function (e) {
       const previewContainer = document.getElementById('preview-front-container');
       const previewImage = document.getElementById('preview-image-front');
       if (this.files && this.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
           previewImage.src = e.target.result;
           previewContainer.style.display = 'block';
         }
@@ -193,12 +333,12 @@
       }
     });
 
-    document.getElementById('school-id-back').addEventListener('change', function(e) {
+    document.getElementById('school-id-back').addEventListener('change', function (e) {
       const previewContainer = document.getElementById('preview-back-container');
       const previewImage = document.getElementById('preview-image-back');
       if (this.files && this.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
           previewImage.src = e.target.result;
           previewContainer.style.display = 'block';
         }
@@ -230,4 +370,5 @@
     });
   </script>
 </body>
+
 </html>
