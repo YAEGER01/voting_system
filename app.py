@@ -1,9 +1,10 @@
+#HELLO WORLD TANG INA MO PAUL BADING SI RUDY
 from flask import Flask, render_template, request, redirect, url_for, flash, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from supabase_client import supabase
 from flask_mail import Mail, Message
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, timezone
 import os
 import re
 import sys
@@ -18,6 +19,9 @@ from Crypto.Random import get_random_bytes
 import base64
 import json
 import time
+import threading
+
+PH_TZ = timezone(timedelta(hours=8))
 
 
 class Block:
@@ -65,8 +69,58 @@ class Blockchain:
         return True
 
 
+BLOCKCHAIN_FILE = "blockchain_data.json"
+blockchain_lock = threading.Lock()
+
+
+def save_blockchain_to_file(blockchain):
+    with blockchain_lock:
+        with open(BLOCKCHAIN_FILE, "w") as f:
+            json.dump([{
+                "index": block.index,
+                "timestamp": block.timestamp,
+                "data": block.data,
+                "previous_hash": block.previous_hash,
+                "hash": block.hash
+            } for block in blockchain.chain],
+                      f,
+                      indent=2)
+
+
+def load_blockchain_from_file():
+    if not os.path.exists(BLOCKCHAIN_FILE):
+        return None
+    with open(BLOCKCHAIN_FILE, "r") as f:
+        chain_data = json.load(f)
+    chain = []
+    for b in chain_data:
+        block = Block(index=b["index"],
+                      timestamp=b["timestamp"],
+                      data=b["data"],
+                      previous_hash=b["previous_hash"])
+        block.hash = b["hash"]
+        chain.append(block)
+    bc = Blockchain()
+    bc.chain = chain
+    return bc
+
+
 # Initialize blockchain (in-memory)
-vote_blockchain = Blockchain()
+vote_blockchain = load_blockchain_from_file() or Blockchain()
+
+
+def add_block_and_save(self, data):
+    latest_block = self.get_latest_block()
+    new_block = Block(index=latest_block.index + 1,
+                      timestamp=str(time.time()),
+                      data=data,
+                      previous_hash=latest_block.hash)
+    self.chain.append(new_block)
+    save_blockchain_to_file(self)
+    return new_block
+
+
+Blockchain.add_block = add_block_and_save
 
 AES_KEY = os.getenv("AES_KEY",
                     "thisisaverysecretkey1234567890123456").encode()[:32]
@@ -968,7 +1022,7 @@ def dashboard():
         return redirect(url_for('login'))
 
     dept_logo = DEPARTMENT_LOGOS.get(user.get('department', '').upper())
-    now = datetime.now()
+    now = datetime.now(timezone.utc)  # timezone-aware
     voting_deadline = None
     voting_closed = False
 
@@ -979,8 +1033,17 @@ def dashboard():
                                                 desc=True).limit(1).execute()
     if setting_resp.data:
         voting_deadline_str = setting_resp.data[0]['voting_deadline']
-        voting_deadline = datetime.fromisoformat(voting_deadline_str)
-        voting_closed = now > voting_deadline
+        if voting_deadline_str:
+            try:
+                voting_deadline = datetime.fromisoformat(voting_deadline_str)
+                # Ensure voting_deadline is timezone-aware
+                if voting_deadline.tzinfo is None or voting_deadline.tzinfo.utcoffset(
+                        voting_deadline) is None:
+                    voting_deadline = voting_deadline.replace(
+                        tzinfo=timezone.utc)
+            except Exception:
+                voting_deadline = None
+        voting_closed = now > voting_deadline if voting_deadline else False
 
     # Handle Vote Submission
     if request.method == 'POST' and not voting_closed:
@@ -1170,9 +1233,9 @@ def view_results():
 
     department = user.get('department', user.get('course', ''))
     positions_resp = supabase.table('positions').select('*') \
-    .eq('department', department) \
-    .order('name', desc=False) \
-    .execute()
+        .eq('department', department) \
+        .order('name', desc=False) \
+        .execute()
     positions = positions_resp.data if positions_resp.data else []
 
     results = []
@@ -1201,6 +1264,8 @@ def view_results():
                 'image': cand['image'],
                 'vote_count': vote_count
             })
+        # Sort candidates by vote_count descending (leading candidate first)
+        candidate_list.sort(key=lambda x: x['vote_count'], reverse=True)
         results.append({'position': pos, 'candidates': candidate_list})
 
     return render_template('view_results.html',
@@ -1632,23 +1697,43 @@ def manage_settings():
     message = ""
     current_deadline = None
 
+    # Handle POST (save new deadline)
+    if request.method == 'POST':
+        new_deadline_str = request.form.get('voting_deadline')
+        if new_deadline_str:
+            try:
+                # Parse as naive datetime (from browser input)
+                dt = datetime.strptime(new_deadline_str, "%Y-%m-%dT%H:%M")
+                # Attach PH timezone
+                dt = dt.replace(tzinfo=PH_TZ)
+                # Save as ISO string with PH timezone info
+                supabase.table('settings').insert({
+                    'department':
+                    admin_department,
+                    'voting_deadline':
+                    dt.isoformat()
+                }).execute()
+                current_deadline = dt
+                message = f"Voting deadline updated for {admin_department}!"
+            except Exception:
+                current_deadline = None
+                message = "Invalid date format."
+
+    # Handle GET (load latest deadline)
     setting_resp = supabase.table('settings').select('*').eq(
         'department', admin_department).order('id',
                                               desc=True).limit(1).execute()
     if setting_resp.data:
-        current_deadline = setting_resp.data[0]['voting_deadline']
-
-    if request.method == 'POST':
-        new_deadline_str = request.form.get('voting_deadline')
-        if new_deadline_str:
-            supabase.table('settings').insert({
-                'department':
-                admin_department,
-                'voting_deadline':
-                new_deadline_str
-            }).execute()
-            current_deadline = new_deadline_str
-            message = f"Voting deadline updated for {admin_department}!"
+        current_deadline_str = setting_resp.data[0]['voting_deadline']
+        if current_deadline_str:
+            try:
+                dt = datetime.fromisoformat(current_deadline_str)
+                # If no tzinfo, treat as PH time
+                if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
+                    dt = dt.replace(tzinfo=PH_TZ)
+                current_deadline = dt.astimezone(PH_TZ)
+            except Exception:
+                current_deadline = None
 
     return render_template('admin_manage_settings.html',
                            admin_department=admin_department,
