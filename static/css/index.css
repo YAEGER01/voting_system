@@ -18,7 +18,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 130px;
-  flex-wrap: wrap; /* Ensures it wraps on smaller screens */
+  flex-wrap: wrap;
 }
 
 .side-logo img {
@@ -55,7 +55,7 @@ body {
 }
 
 .container img.top-logo {
-  width: 300px;
+  width: 220px;
   margin-bottom: 20px;
   border-radius: 12px;
   transition: box-shadow 0.3s ease;
@@ -64,6 +64,79 @@ body {
 .container h2 {
   font-size: 36px;
   margin-bottom: 30px;
+}
+
+/* Message Styles */
+.message-container {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.alert-message {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 500;
+  position: relative;
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alert-error,
+.alert-warning,
+.alert-info {
+  background: red;
+  color: white;
+  border-left: 4px solid #ff4757;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #51cf66, #40c057);
+  color: white;
+  border-left: 4px solid #2f9e44;
+}
+
+.alert-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.alert-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.alert-close:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .form-group {
@@ -81,6 +154,29 @@ body {
 .form-group img {
   width: 26px;
   margin-right: 14px;
+}
+
+.homepage-link {
+  text-align: center;
+  margin-top: 18px;
+}
+
+.home-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #25c18c 0%, #21532a 100%);
+  color: #fff;
+  padding: 10px 28px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(33, 83, 42, 0.08);
+}
+
+.home-btn:hover {
+  background: linear-gradient(135deg, #21532a 0%, #25c18c 100%);
+  box-shadow: 0 4px 16px rgba(33, 83, 42, 0.13);
 }
 
 .form-group input {
@@ -200,36 +296,56 @@ body {
   opacity: 1;
 }
 
-/* ✅ Responsive for mobile devices */
+/* CAPTCHA Group */
+.form-group.captcha-group {
+  background: white;
+  border-radius: 6px;
+  padding: 15px 20px;
+  margin: 12px 0;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Mobile Responsive Design */
 @media (max-width: 600px) {
   body {
-    height: auto;
-    padding: 20px 10px;
-    background: linear-gradient(to bottom, #00aa77 50%, #8933cc 50%);
+    height: 100vh;
+    width: 100vw;
+    padding: 0;
+    margin: 0;
+    background: #1e3b28;
+    /* same as .container background for seamless look */
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
     overflow-y: auto;
   }
 
   .wrapper {
     flex-direction: column;
-    gap: 40px;
+    gap: 0;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
-  .side-logo img {
-    width: 180px;
-    height: 180px;
-    margin: 0 auto;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  .side-logo {
+    display: none;
   }
 
   .container {
     width: 100%;
-    max-width: 360px;
-    min-height: auto;
+    max-width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
     padding: 30px 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: none;
   }
 
   .container img.top-logo {
@@ -240,6 +356,20 @@ body {
   .container h2 {
     font-size: 28px;
     margin-bottom: 25px;
+  }
+
+  .message-container {
+    max-width: 100%;
+  }
+
+  .alert-message {
+    font-size: 14px;
+    padding: 12px 15px;
+  }
+
+  .alert-icon {
+    width: 20px;
+    height: 20px;
   }
 
   .form-group {
@@ -254,6 +384,11 @@ body {
 
   .form-group input {
     font-size: 16px;
+  }
+
+  .form-group.captcha-group {
+    max-width: 100%;
+    padding: 12px 10px;
   }
 
   .forgot-password {
@@ -297,178 +432,3 @@ body {
     right: 12px;
   }
 }
-
-* {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Arial, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: linear-gradient(to right, #00aa77 50%, #8933cc 50%);
-      overflow: hidden;
-    }
-
-    .wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 130px;
-    }
-
-    .side-logo img {
-      width: 350px;
-      height: 350px;
-      border-radius: 50%;
-      object-fit: cover;
-      box-shadow: 0 12px 60px rgba(0, 0, 0, 0.35);
-      transition: box-shadow 0.3s ease;
-    }
-
-    .side-logo img:hover {
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .container {
-      width: 800px;
-      min-height: 500px;
-      background-color: #1e3b28;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.6);
-      border-radius: 12px;
-      color: white;
-      padding: 40px;
-      text-align: center;
-      transition: box-shadow 0.3s ease;
-    }
-
-    .container:hover {
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
-    }
-
-    .container img.top-logo {
-      width: 220px;
-      margin-bottom: 20px;
-      border-radius: 12px;
-      transition: box-shadow 0.3s ease;
-    }
-
-    .container h2 {
-      font-size: 36px;
-      margin-bottom: 30px;
-    }
-
-    .form-group {
-      display: flex;
-      align-items: center;
-      background-color: white;
-      border-radius: 6px;
-      padding: 15px 20px;
-      margin: 12px 0;
-      width: 100%;
-      max-width: 420px;
-      position: relative;
-    }
-
-    .form-group img {
-      width: 26px;
-      margin-right: 14px;
-    }
-
-    .form-group input {
-      border: none;
-      outline: none;
-      font-size: 18px;
-      width: 100%;
-    }
-
-    .forgot-password {
-      width: 100%;
-      max-width: 420px;
-      text-align: right;
-      margin-top: 5px;
-      margin-bottom: 10px;
-    }
-
-    .forgot-password a {
-      color: #00e6a7;
-      font-size: 16px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: color 0.3s ease;
-    }
-
-    .forgot-password a:hover {
-      color: #33ffd1;
-    }
-
-    .login-btn {
-      width: 100%;
-      max-width: 420px;
-      padding: 15px 0;
-      margin: 15px 0 0;
-      border: none;
-      border-radius: 6px;
-      background: linear-gradient(to right, #00aa77, #8933cc);
-      color: white;
-      font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 170, 119, 0.5), 0 4px 12px rgba(137, 51, 204, 0.5);
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .login-btn:hover {
-      background: linear-gradient(to right, #007f59, #6a2a99);
-      box-shadow: 0 6px 16px rgba(0, 127, 89, 0.7), 0 6px 16px rgba(106, 42, 153, 0.7);
-    }
-
-    .divider {
-      height: 2px;
-      background-color: white;
-      width: 60%;
-      margin: 25px 0 20px;
-    }
-
-    .signup-link {
-      font-size: 18px;
-      margin-bottom: 10px;
-    }
-
-    .signup-link a {
-      color: #00e6a7;
-      text-decoration: none;
-      font-weight: bold;
-      margin-left: 5px;
-      transition: color 0.3s ease;
-    }
-
-    .signup-link a:hover {
-      color: #33ffd1;
-    }
-
-    .developer {
-      font-size: 16px;
-      margin-top: 5px;
-      opacity: 0.85;
-    }
-
-    .toggle-password {
-      position: absolute;
-      right: 15px;
-      cursor: pointer;
-      width: 24px;
-      opacity: 0.7;
-      transition: opacity 0.3s ease;
-    }
-
-    .toggle-password:hover {
-      opacity: 1;
-    }

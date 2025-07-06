@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blockchain Viewer</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #f4f4f4; }
+        pre { margin: 0; }
+    </style>
+</head>
+<body>
+    <h1>Blockchain Viewer</h1>
+    <table>
+        <tr>
+            <th>Index</th>
+            <th>Timestamp</th>
+            <th>Data</th>
+            <th>Previous Hash</th>
+            <th>Hash</th>
+        </tr>
+        {% for block in chain %}
+        <tr>
+            <td>{{ block.index }}</td>
+            <td>{{ block.timestamp }}</td>
+            <td><pre>{{ block.data | tojson(indent=2) }}</pre></td>
+            <td style="font-size:small">{{ block.previous_hash }}</td>
+            <td style="font-size:small">{{ block.hash }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

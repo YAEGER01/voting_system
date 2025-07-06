@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Register Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/register_admin1.css') }}">
 </head>
+
 <body>
     <div class="container">
         <h2>Register New Admin</h2>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <p class="{{ category }}">{{ message }}</p>
-            {% endfor %}
-          {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <p class="{{ category }}">{{ message }}</p>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
 
         <form method="post" action="">
@@ -45,4 +47,5 @@
         </form>
     </div>
 </body>
+
 </html>

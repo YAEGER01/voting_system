@@ -20,8 +20,7 @@
       <div class="logo-wrapper"><img src="{{ url_for('static', filename='images/ssc.png') }}" alt="Logo" class="logo" />
       </div>
     </div>
-    <div class="header-title">
-      VOTING SYSTEM
+    <div class="header-title">VOTING SYSTEM
     </div>
   </header>
 
@@ -49,7 +48,10 @@
     <a href="{{ url_for('vote_receipt') }}"><i class="fa-solid fa-receipt"></i><span>Receipt Tab</span></a>
     <a href="{{ url_for('candidates') }}"><i class="fa-solid fa-users"></i><span>Candidates</span></a>
     <a href="{{ url_for('view_results') }}"><i class="fa-solid fa-file-alt"></i><span>View Results</span></a>
-    <a href="#"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+    <a href="{{ url_for('blockchain_html') }}">
+      <i class="fa-solid fa-shield-alt"></i>
+      <span>Vote Audit Trail</span>
+    </a>
     <a href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?');"><i
         class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
     <div class="developer-note">
@@ -61,6 +63,13 @@
 
   <div class="main-content">
     <div class="main-wrapper">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
       <h2>{{ user.department }} Dashboard</h2>
       <p>
         Voting Deadline: <b id="deadlineDisplay">{{ voting_deadline }}</b> |
@@ -75,12 +84,13 @@
         </div>
         {% elif positions|length == 0 %}
         <p>No voting positions are available for your department at this time.</p>
-        {% elif voted_positions|length == positions|length %}
+        {% elif all_voted %}
         <div style="text-align:center; color:#25c18c; font-size:1.2em; font-weight:bold; margin:40px 0;">
-          You Already Voted all the positions,<br>
+          You already voted in all available positions,<br>
           Thank you for participating.<br>
-          You can view the results in <b>[View Results]</b> on the Left side of dashboard.
+          You can view the results in <b>[View Results]</b> on the Left side of the dashboard.
         </div>
+
         {% else %}
         <p>Welcome, {{ user.first_name }}! Please select your preferred candidates below.</p>
         <form method="POST" action="">

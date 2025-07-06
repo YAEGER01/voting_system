@@ -35,26 +35,45 @@
             align-items: center;
             font-size: 2em;
         }
+
+        .info {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
 <body>
     <div class="watermark">{{ session['school_id'] }}</div>
 
-    <h1>Your Vote Receipt (Valid for 5 Minutes)</h1>
+    <h1>Your Vote Receipt{% if receipt_timeout_enabled %} (Valid for 5 Minutes){% endif %}</h1>
+
+    <div class="info">
+        <h2>Your Hashed User ID</h2>
+        <ul>
+            {% for user_hash in hashed_users %}
+            <li>{{ user_hash }}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>Masked Name:</strong> {{ masked_first }} {{ masked_last }}</p>
+        <p><strong>Course:</strong> {{ course }}</p>
+        <p><strong>Track:</strong> {{ track }}</p>
+        <p><strong>Year Level:</strong> {{ year_level }}</p>
+        <p><strong>Department:</strong> {{ department }}</p>
+    </div>
+
+    <h2>Your Vote Entries</h2>
     <ul>
-        {% for vote_hash in hashed_votes %}
-        <li>{{ vote_hash }}</li>
+        {% for vote in vote_entries %}
+        <li>
+            <strong>Candidate:</strong> {{ vote.masked_candidate }}<br>
+            <strong>Position:</strong> {{ vote.position_name }}<br>
+            <strong>Hashed:</strong> {{ vote.hash }}
+        </li>
         {% endfor %}
     </ul>
 
-    <h2>All Hashed User IDs</h2>
-    <ul>
-        {% for user_hash in hashed_users %}
-        <li>{{ user_hash }}</li>
-        {% endfor %}
-    </ul>
 
+    {% if receipt_timeout_enabled %}
     <div id="expired" class="expired-overlay">
         <div>Receipt viewing time has expired.</div>
     </div>
@@ -65,6 +84,7 @@
             document.getElementById('expired').style.display = 'flex';
         }, 5 * 60 * 1000); // 5 minutes
     </script>
+    {% endif %}
 </body>
 
 </html>

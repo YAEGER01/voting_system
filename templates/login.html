@@ -5,7 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Voting System Login</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+  <style>
+  </style>
 </head>
 
 <body>
@@ -20,50 +22,70 @@
       <a href="{{ url_for('index') }}">
         <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" class="top-logo" />
       </a>
-
-
-
       <h2>VOTING SYSTEM</h2>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      {% for category, message in messages %}
-      <div style="color:#ED2939;" class="error-message alert-{{ category }}">
-        {{ message }}
+      <!-- Enhanced Message Container -->
+      <div class="message-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert-message alert-{{ category }}">
+          {% if category == 'error' %}
+          <svg class="alert-icon" viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+          </svg>
+          {% elif category == 'success' %}
+          <svg class="alert-icon" viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+          {% elif category == 'warning' %}
+          <svg class="alert-icon" viewBox="0 0 24 24">
+            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+          </svg>
+          {% else %}
+          <svg class="alert-icon" viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+          </svg>
+          {% endif %}
+          <span>{{ message }}</span>
+          <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
       </div>
-      {% endfor %}
-      {% endif %}
-      {% endwith %}
 
       <form method="POST" action="">
         <div class="form-group">
           <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="User Icon" />
           <input type="text" name="school_id" placeholder="School ID" required />
         </div>
-
-        <div class="form-group">
+        <div class="form-group password-group">
           <img src="https://cdn-icons-png.flaticon.com/512/3064/3064155.png" alt="Lock Icon" />
           <input type="password" name="password" placeholder="Password" id="passwordInput" required />
           <img src="https://cdn-icons-png.flaticon.com/512/709/709612.png" alt="Toggle Password" class="toggle-password"
-            id="togglePassword" />
+            id="togglePassword" data-state="hidden" />
         </div>
-
+        <!-- Improved reCAPTCHA alignment -->
+        <div class="form-group captcha-group">
+          <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+        </div>
         <div class="forgot-password">
-          <a href="#">Forgot Password?</a>
+          <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
         </div>
-
         <button type="submit" class="login-btn">LOGIN</button>
       </form>
 
       <div class="divider"></div>
-
       <div class="signup-link">
         Don't have an account?
         <a href="{{ url_for('register') }}">Sign up</a>
       </div>
-
-      <div class="developer">
-        DEVELOPED BY: JUSTIN VON T. VERGARA | BSIT 2A - NS | CCSICT
+      <div class="homepage-link">
+        <a href="{{ url_for('index') }}" class="home-btn">🏠 Homepage</a>
       </div>
     </div>
 
@@ -78,20 +100,30 @@
     const passwordInput = document.getElementById("passwordInput");
 
     togglePassword.addEventListener("click", () => {
-      const isPasswordHidden = passwordInput.type === "password";
-      passwordInput.type = isPasswordHidden ? "text" : "password";
-      togglePassword.src = isPasswordHidden
+      const isHidden = togglePassword.getAttribute('data-state') === "hidden";
+      passwordInput.type = isHidden ? "text" : "password";
+      togglePassword.src = isHidden
         ? "https://cdn-icons-png.flaticon.com/512/159/159604.png"
         : "https://cdn-icons-png.flaticon.com/512/709/709612.png";
+      togglePassword.setAttribute('data-state', isHidden ? "visible" : "hidden");
     });
-  </script>
-  <script>
+
+    // Auto-hide messages after 5 seconds
+    setTimeout(() => {
+      const messages = document.querySelectorAll('.alert-message');
+      messages.forEach(msg => {
+        msg.style.animation = 'slideIn 0.3s ease-out reverse';
+        setTimeout(() => msg.remove(), 300);
+      });
+    }, 5000);
+
     window.addEventListener('pageshow', function (event) {
       if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
         window.location.reload();
       }
     });
   </script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 
 </html>

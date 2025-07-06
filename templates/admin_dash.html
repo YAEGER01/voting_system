@@ -6,6 +6,235 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UNIVOTE: ADMIN DASHBOARD</title>
   <link rel="stylesheet" href="static/css/admin_dash.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+   
+    .dashboard-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Dashboard Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .dashboard-card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px var(--shadow);
+      padding: 1.5rem;
+      border-left: 4px solid var(--primary);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--primary-dark);
+    }
+
+    .card-icon {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    /* Position Participation */
+    .position-item {
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .position-name {
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+
+    .progress-container {
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      margin: 0.5rem 0;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background-color: var(--primary);
+      border-radius: 4px;
+    }
+
+    .position-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    /* Department Activity */
+    .department-chart {
+      height: 200px;
+      margin: 1rem 0;
+      position: relative;
+    }
+
+    .department-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      margin-right: 0.5rem;
+    }
+
+    /* Voting Timeline */
+    .timeline-container {
+      margin: 1rem 0;
+    }
+
+    .time-remaining {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary-dark);
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .time-progress {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .time-label {
+      font-size: 0.85rem;
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-time {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 0.25rem;
+    }
+
+    .activity-text {
+      font-size: 0.9rem;
+    }
+
+    /* Flagged Issues */
+    .issues-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .issues-table th,
+    .issues-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .issues-table th {
+      background-color: var(--primary-light);
+      color: var(--text-light);
+    }
+
+    .issue-type {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .issue-critical {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    .issue-warning {
+      background-color: var(--warning);
+      color: var(--text);
+    }
+
+    .issue-info {
+      background-color: var(--info);
+      color: white;
+    }
+
+    /* Export Controls */
+    .export-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .export-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      background-color: var(--primary);
+      color: var(--text-light);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .export-btn:hover {
+      background-color: var(--primary-dark);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-list {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -21,7 +250,7 @@
 
     <nav class="dashboard-nav">
       <ul class="nav-list">
-        <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
+        <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}" class="active">Home</a></li>
         <li class="nav-item"><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
         <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
         <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
@@ -32,8 +261,194 @@
       </ul>
     </nav>
 
-    <main class="dashboard-content">
-      <div id="app"></div>
+    <main class="dashboard-content">  
+        <!-- Position Participation Card -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2 class="card-title">🗳 Live Position Participation</h2>
+            <span class="card-icon"><i class="fas fa-chart-bar"></i></span>
+          </div>
+          <div class="position-list">
+            <div class="position-item">
+              <div class="position-name">Student Council President</div>
+              <div class="progress-container">
+                <div class="progress-bar" style="width: 75%"></div>
+              </div>
+              <div class="position-stats">
+                <span>450/600 votes</span>
+                <span>75% participation</span>
+              </div>
+            </div>
+            <div class="position-item">
+              <div class="position-name">Vice President</div>
+              <div class="progress-container">
+                <div class="progress-bar" style="width: 68%"></div>
+              </div>
+              <div class="position-stats">
+                <span>408/600 votes</span>
+                <span>68% participation</span>
+              </div>
+            </div>
+            <div class="position-item">
+              <div class="position-name">Secretary</div>
+              <div class="progress-container">
+                <div class="progress-bar" style="width: 52%"></div>
+              </div>
+              <div class="position-stats">
+                <span>312/600 votes</span>
+                <span>52% participation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Departmental Activity Card -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2 class="card-title">🧭 Departmental Voter Activity</h2>
+            <span class="card-icon"><i class="fas fa-chart-pie"></i></span>
+          </div>
+          <div class="department-chart">
+            <!-- Placeholder for chart - would be replaced with actual chart library -->
+            <div style="text-align: center; padding: 2rem; color: #888;">
+              [Departmental Activity Chart]
+            </div>
+          </div>
+          <div class="department-legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #4CAF50;"></div>
+              <span>CCSICT - 72% voted</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #2196F3;"></div>
+              <span>COE - 65% voted</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #FFC107;"></div>
+              <span>CABE - 58% voted</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #FF5722;"></div>
+              <span>CAS - 42% voted</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voting Timeline Card -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2 class="card-title">🕒 Voting Timeline Progress</h2>
+            <span class="card-icon"><i class="fas fa-clock"></i></span>
+          </div>
+          <div class="time-remaining">
+            2 days 4 hours remaining
+          </div>
+          <div class="timeline-container">
+            <div class="time-progress">
+              <span class="time-label">Start: Oct 1, 9:00 AM</span>
+              <span class="time-label">End: Oct 5, 5:00 PM</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" style="width: 65%"></div>
+            </div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <div style="text-align: center; color: #888;">
+              [Voting Activity Timeline Chart]
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity Card -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2 class="card-title">🔍 Recent Activity Feed</h2>
+            <span class="card-icon"><i class="fas fa-list"></i></span>
+          </div>
+          <div class="activity-feed">
+            <div class="activity-item">
+              <div class="activity-time">2 minutes ago</div>
+              <div class="activity-text">Student from CCSICT voted for Vice President</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-time">15 minutes ago</div>
+              <div class="activity-text">New candidate approved: John Doe for Secretary</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-time">32 minutes ago</div>
+              <div class="activity-text">Student from COE voted for President</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-time">1 hour ago</div>
+              <div class="activity-text">System settings updated by Admin</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-time">2 hours ago</div>
+              <div class="activity-text">5 new students approved for voting</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flagged Issues Card -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2 class="card-title">❗ Flagged Issues or Reports</h2>
+            <span class="card-icon"><i class="fas fa-exclamation-triangle"></i></span>
+          </div>
+          <table class="issues-table">
+            <thead>
+              <tr>
+                <th>Reported By</th>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Jane Smith (CCSICT)</td>
+                <td>Today, 10:15 AM</td>
+                <td><span class="issue-type issue-critical">Critical</span></td>
+                <td>Unable to cast vote - system error</td>
+              </tr>
+              <tr>
+                <td>System</td>
+                <td>Today, 9:30 AM</td>
+                <td><span class="issue-type issue-warning">Warning</span></td>
+                <td>Unusual voting pattern detected</td>
+              </tr>
+              <tr>
+                <td>John Doe (COE)</td>
+                <td>Yesterday, 4:45 PM</td>
+                <td><span class="issue-type issue-info">Info</span></td>
+                <td>Candidate information incorrect</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Export Controls Card -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2 class="card-title">📁 Export / Download Controls</h2>
+            <span class="card-icon"><i class="fas fa-download"></i></span>
+          </div>
+          <div class="export-controls">
+            <button class="export-btn">
+              <i class="fas fa-file-csv"></i> Export Votes (CSV)
+            </button>
+            <button class="export-btn">
+              <i class="fas fa-file-excel"></i> Voter Turnout Summary
+            </button>
+            <button class="export-btn">
+              <i class="fas fa-database"></i> System Backup
+            </button>
+            <button class="export-btn">
+              <i class="fas fa-archive"></i> Archive Election
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
   <script>
@@ -64,7 +479,6 @@
         localStorage.setItem('theme', theme);
       });
     });
-
   </script>
 </body>
 

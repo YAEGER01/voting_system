@@ -9,3 +9,7 @@ PyMySQL
 python-dotenv
 Pillow
 supabase
+requests
+sendgrid
+flask-mail
+crypto
