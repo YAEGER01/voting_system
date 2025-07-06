@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabbed Interface</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/register_admin1.css') }}">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .tabs {
+      display: flex;
+      list-style: none;
+      margin-bottom: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: none;
+      color: black;
+      border: none;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      font-weight: bold;
+      border-bottom: 3px solid #007bff;
+      color: #007bff;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 20px;
+      border: 1px solid #ddd;
+
+      animation: fadeIn 0.5s;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .tabs {
+        flex-direction: column;
+      }
+
+      .tab-btn {
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .tab-btn.active {
+        border-left: 3px solid #007bff;
+        border-bottom: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <ul class="tabs">
+    <li><button class="tab-btn active" data-tab="home">Home</button></li>
+    <li><button class="tab-btn" data-tab="AccCreate">Account Creation</button></li>
+    <li><button class="tab-btn" data-tab="services">Services</button></li>
+    <li><button class="tab-btn" data-tab="portfolio">Portfolio</button></li>
+    <li><button class="tab-btn" data-tab="contact">Contact</button></li>
+    <li>
+      <a href="{{ url_for('logout') }}" class="tab-btn" style="color: red; text-decoration: none;">
+        Logout
+      </a>
+    </li>
+  </ul>
+
+  <br>
+  <br>
+  <div id="home" class="tab-content active">
+    <h1>Hello, welcome to our System Admin page tings</h1>
+    <p>You are now viewing the System Admin page, this page will allow you to view the overall activity of the whole
+      system, the user log-in, logged in, admin activity, vote counts, etc...</p>
+  </div>
+
+  <div id="AccCreate" class="tab-content">
+    <div class="container">
+      <h2>REGISTRATION OF DEPARTMENT ADMIN</h2>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <p class="{{ category }}">{{ message }}</p>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('register_admin') }}">
+        <label for="school_id">School ID:</label>
+        <input type="text" id="school_id" name="school_id" required>
+
+        <label for="course">Department:</label>
+        <select id="course" name="course" required>
+          <option value="" disabled selected>Select your Department</option>
+          <option value="CCSICT">CCSICT</option>
+          <option value="CCJE">CCJE</option>
+          <option value="PS">PS</option>
+          <option value="CED">CED</option>
+          <option value="CBM">CBM</option>
+          <option value="SAS">SAS</option>
+          <option value="IAT">IAT</option>
+        </select>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+
+        <label for="first_name">First Name:</label>
+        <input type="text" id="first_name" name="first_name" required>
+
+        <label for="last_name">Last Name:</label>
+        <input type="text" id="last_name" name="last_name" required>
+
+        <button type="submit">Register Admin</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="services" class="tab-content">
+    <h2>Our Services</h2>
+    <p>Discover the range of services we offer to our clients.</p>
+    <img src="https://via.placeholder.com/400x200?text=Services+Image" alt="Services Image">
+  </div>
+
+  <div id="portfolio" class="tab-content">
+    <h2>Portfolio</h2>
+    <p>Check out our latest projects and work samples.</p>
+    <img src="https://via.placeholder.com/400x200?text=Portfolio+Image" alt="Portfolio Image">
+  </div>
+
+  <div id="contact" class="tab-content">
+    <h2>Contact Us</h2>
+    <p>Get in touch with our team for inquiries or collaborations.</p>
+    <img src="https://via.placeholder.com/400x200?text=Contact+Image" alt="Contact Image">
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+          const tabId = this.getAttribute('data-tab');
+
+          // Remove active class from all buttons and contents
+          tabBtns.forEach(btn => btn.classList.remove('active'));
+          tabContents.forEach(content => content.classList.remove('active'));
+
+          // Add active class to clicked button and corresponding content
+          this.classList.add('active');
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

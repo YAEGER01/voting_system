@@ -189,31 +189,22 @@
   <script>
     // Parse the voting deadline from the server
     const votingDeadlineStr = "{{ voting_deadline }}";
-    const votingClosed = {{voting_closed| tojson }};
+    const votingClosed = {{voting_closed | tojson }};
     let votingDeadline = null;
 
     // Function to format date to words with Philippine time
     function formatDateToWords(date) {
-      const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-
-      // Convert to Philippine time (UTC+8) using toLocaleString
-      const phTime = new Date(date.toLocaleString("en-US", {timeZone: "Asia/Manila"}));
-
-      const month = months[phTime.getMonth()];
-      const day = phTime.getDate();
-      const year = phTime.getFullYear();
-      const hours = phTime.getHours();
-      const minutes = phTime.getMinutes().toString().padStart(2, '0');
-      const seconds = phTime.getSeconds().toString().padStart(2, '0');
-
-      // Convert to 12-hour format
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours % 12 || 12;
-
-      return `${month} ${day}, ${year} at ${displayHours}:${minutes}:${seconds} ${ampm}`;
+      // Use toLocaleString with Asia/Manila time zone for correct PH time
+      return date.toLocaleString("en-US", {
+        timeZone: "Asia/Manila",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+      });
     }
 
     try {
@@ -222,7 +213,7 @@
 
       // Format and display the deadline immediately
       const deadlineDisplayElem = document.getElementById('deadlineDisplay');
-      if (deadlineDisplayElem && votingDeadline) {
+      if (deadlineDisplayElem && votingDeadlineStr) {
         deadlineDisplayElem.textContent = formatDateToWords(votingDeadline);
       }
     } catch (error) {

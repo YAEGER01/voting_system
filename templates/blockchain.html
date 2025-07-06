@@ -12,11 +12,41 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary: #4CAF50;
+            --primary-light: #81C784;
+            --primary-dark: #388E3C;
+            --text: #333;
+            --text-light: #f5f5f5;
+            --bg: #f5f5f5;
+            --header-bg: #4CAF50;
+            --nav-bg: #388E3C;
+            --card-bg: #fff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --border: #e0e0e0;
+            --danger: #f44336;
+        }
+
+        [data-theme="dark"] {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --text: #f5f5f5;
+            --text-light: #f5f5f5;
+            --bg: #121212;
+            --header-bg: #1B5E20;
+            --nav-bg: #2E7D32;
+            --card-bg: #1E1E1E;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --border: #333;
+            --danger: #d32f2f;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg);
             min-height: 100vh;
-            color: #333;
+            color: var(--text);
             padding: 20px;
         }
 
@@ -26,18 +56,18 @@
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px var(--shadow);
+            border: 1px solid var(--border);
         }
 
         h1 {
             font-size: 2.5rem;
-            color: #2c3e50;
+            color: var(--primary-dark);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -45,8 +75,8 @@
         }
 
         .security-badge {
-            background: #27ae60;
-            color: white;
+            background: var(--primary);
+            color: var(--text-light);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 0.9rem;
@@ -59,22 +89,22 @@
         .description {
             font-size: 1.1rem;
             line-height: 1.6;
-            color: #5a6c7d;
+            color: var(--primary-dark);
             margin-bottom: 20px;
         }
 
         .audit-table {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px var(--shadow);
+            border: 1px solid var(--border);
         }
 
         .table-header {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--text-light);
             padding: 20px;
             font-size: 1.2rem;
             font-weight: 600;
@@ -86,43 +116,43 @@
         }
 
         th {
-            background: #34495e;
-            color: white;
+            background: var(--nav-bg);
+            color: var(--text-light);
             padding: 15px 12px;
             font-weight: 600;
             text-align: left;
-            border-bottom: 2px solid #2c3e50;
+            border-bottom: 2px solid var(--primary-dark);
         }
 
         td {
             padding: 15px 12px;
-            border-bottom: 1px solid #ecf0f1;
+            border-bottom: 1px solid var(--border);
             vertical-align: top;
         }
 
         tr:hover {
-            background: rgba(52, 152, 219, 0.05);
+            background: var(--primary-light);
             transition: all 0.3s ease;
         }
 
         td:first-child {
             font-weight: bold;
-            color: #2980b9;
+            color: var(--primary-dark);
             font-size: 1.1rem;
         }
 
         td:nth-child(2) {
             font-family: 'Courier New', monospace;
-            color: #7f8c8d;
+            color: var(--primary-dark);
             font-size: 0.9rem;
         }
 
         td:nth-child(3) {
-            background: #f8f9fa;
+            background: var(--bg);
             border-radius: 8px;
             font-family: 'Courier New', monospace;
             font-size: 0.85rem;
-            border-left: 4px solid #3498db;
+            border-left: 4px solid var(--primary);
             max-width: 300px;
             overflow-x: auto;
         }
@@ -131,15 +161,15 @@
         td:nth-child(5) {
             font-family: 'Courier New', monospace;
             font-size: 0.75rem;
-            color: #7f8c8d;
+            color: var(--primary-dark);
             word-break: break-all;
-            background: #f8f9fa;
+            background: var(--bg);
             border-radius: 4px;
-            border-left: 3px solid #e74c3c;
+            border-left: 3px solid var(--danger);
         }
 
         td:nth-child(4) {
-            border-left-color: #f39c12;
+            border-left-color: var(--primary-light);
         }
 
         pre {
@@ -154,7 +184,7 @@
             padding: 20px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
-            color: #ecf0f1;
+            color: var(--primary-dark);
             font-size: 0.9rem;
         }
 
@@ -162,8 +192,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: #27ae60;
-            color: white;
+            background: var(--primary);
+            color: var(--text-light);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 0.9rem;
@@ -200,31 +230,54 @@
 </head>
 
 <body>
+    <a href="{{ url_for('dashboard') }}" style="
+        display: inline-block;
+        margin-bottom: 24px;
+        padding: 12px 28px;
+        background: var(--primary);
+        color: var(--text-light);
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 2px 8px var(--shadow);
+        transition: background 0.2s;
+        position: relative;
+        top: 0;
+        left: 0;
+    " onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+        ← Back to Dashboard
+    </a>
     <div class="container">
         <div class="header">
             <h1>
-                🔒 Vote Audit Trail
+                🗳️ Voting Records
                 <span class="security-badge">
-                    ✓ Cryptographically Secured
+                    ✓ Secure & Transparent
                 </span>
             </h1>
             <p class="description">
-                This page shows a secure, tamper-proof log of all voting actions. Each row is a record of a vote, stored
-                in a way that cannot be changed or deleted. This ensures transparency and trust in the voting process.
+                Below is a secure log of all votes. Each record is stored in a way that cannot be changed or deleted,
+                making the voting process fair and trustworthy for everyone.
             </p>
         </div>
 
         <div class="audit-table">
             <div class="table-header">
-                📊 Blockchain Audit Records
+                📊 Voting Records Log
             </div>
             <table>
                 <tr>
                     <th>Record #</th>
                     <th>Time</th>
-                    <th>Vote Data (Anonymized)</th>
-                    <th>Previous Record Hash</th>
-                    <th>Record Hash</th>
+                    <th>Vote Details</th>
+                    <th>Previous Record (for security)
+                        <span title="Used to link records together for security.">🛈</span>
+                    </th>
+                    <th>Security Code
+                        <span title="A unique code that proves this record hasn't been changed.">🛈</span>
+                    </th>
                 </tr>
                 {% for block in chain %}
                 <tr>
@@ -233,15 +286,15 @@
                     <td>
                         <pre>{{ block.data | tojson(indent=2) }}</pre>
                     </td>
-                    <td>{{ block.previous_hash }}</td>
-                    <td>{{ block.hash }}</td>
+                    <td title="Used to link records together for security.">{{ block.previous_hash[:8] }}... </td>
+                    <td title="A unique code that proves this record hasn't been changed.">{{ block.hash[:8] }}... </td>
                 </tr>
                 {% endfor %}
             </table>
         </div>
 
         <div class="footer">
-            <p>🔐 All records are cryptographically secured and cannot be altered or deleted.</p>
+            <p>🔐 All records are securely stored and cannot be altered or deleted.</p>
             <p>🔍 For privacy, all personal information is anonymized and hashed.</p>
             <div class="integrity-badge">
                 ✅ Chain Integrity Verified

@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="static/css/admin_dash.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-   
     .dashboard-content {
       flex: 1;
       padding: 2rem;
@@ -234,6 +233,64 @@
         justify-content: center;
       }
     }
+
+    .user-card {
+      width: 300px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: white;
+      color: green;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .user-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .user-item:last-child {
+      border-bottom: none;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-weight: bold;
+    }
+
+    .user-name {
+      font-weight: 500;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #4caf50;
+      margin-left: auto;
+    }
   </style>
 </head>
 
@@ -261,194 +318,56 @@
       </ul>
     </nav>
 
-    <main class="dashboard-content">  
-        <!-- Position Participation Card -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h2 class="card-title">🗳 Live Position Participation</h2>
-            <span class="card-icon"><i class="fas fa-chart-bar"></i></span>
-          </div>
-          <div class="position-list">
-            <div class="position-item">
-              <div class="position-name">Student Council President</div>
-              <div class="progress-container">
-                <div class="progress-bar" style="width: 75%"></div>
+    <main class="dashboard-content">
+      <!-- Position Participation Card -->
+      <div class="dashboard-card">
+        <div class="user-card">
+          <div class="card-header">Active Users ({{ active_users|length }})</div>
+          <ul class="user-list">
+            {% for user in active_users %}
+            <li class="user-item">
+              <div class="user-avatar">
+                {{ user.first_name[0] }}{{ user.last_name[0] }}
               </div>
-              <div class="position-stats">
-                <span>450/600 votes</span>
-                <span>75% participation</span>
-              </div>
-            </div>
-            <div class="position-item">
-              <div class="position-name">Vice President</div>
-              <div class="progress-container">
-                <div class="progress-bar" style="width: 68%"></div>
-              </div>
-              <div class="position-stats">
-                <span>408/600 votes</span>
-                <span>68% participation</span>
-              </div>
-            </div>
-            <div class="position-item">
-              <div class="position-name">Secretary</div>
-              <div class="progress-container">
-                <div class="progress-bar" style="width: 52%"></div>
-              </div>
-              <div class="position-stats">
-                <span>312/600 votes</span>
-                <span>52% participation</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Departmental Activity Card -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h2 class="card-title">🧭 Departmental Voter Activity</h2>
-            <span class="card-icon"><i class="fas fa-chart-pie"></i></span>
-          </div>
-          <div class="department-chart">
-            <!-- Placeholder for chart - would be replaced with actual chart library -->
-            <div style="text-align: center; padding: 2rem; color: #888;">
-              [Departmental Activity Chart]
-            </div>
-          </div>
-          <div class="department-legend">
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #4CAF50;"></div>
-              <span>CCSICT - 72% voted</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #2196F3;"></div>
-              <span>COE - 65% voted</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #FFC107;"></div>
-              <span>CABE - 58% voted</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #FF5722;"></div>
-              <span>CAS - 42% voted</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Voting Timeline Card -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h2 class="card-title">🕒 Voting Timeline Progress</h2>
-            <span class="card-icon"><i class="fas fa-clock"></i></span>
-          </div>
-          <div class="time-remaining">
-            2 days 4 hours remaining
-          </div>
-          <div class="timeline-container">
-            <div class="time-progress">
-              <span class="time-label">Start: Oct 1, 9:00 AM</span>
-              <span class="time-label">End: Oct 5, 5:00 PM</span>
-            </div>
-            <div class="progress-container">
-              <div class="progress-bar" style="width: 65%"></div>
-            </div>
-          </div>
-          <div style="margin-top: 1rem;">
-            <div style="text-align: center; color: #888;">
-              [Voting Activity Timeline Chart]
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Activity Card -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h2 class="card-title">🔍 Recent Activity Feed</h2>
-            <span class="card-icon"><i class="fas fa-list"></i></span>
-          </div>
-          <div class="activity-feed">
-            <div class="activity-item">
-              <div class="activity-time">2 minutes ago</div>
-              <div class="activity-text">Student from CCSICT voted for Vice President</div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-time">15 minutes ago</div>
-              <div class="activity-text">New candidate approved: John Doe for Secretary</div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-time">32 minutes ago</div>
-              <div class="activity-text">Student from COE voted for President</div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-time">1 hour ago</div>
-              <div class="activity-text">System settings updated by Admin</div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-time">2 hours ago</div>
-              <div class="activity-text">5 new students approved for voting</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Flagged Issues Card -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h2 class="card-title">❗ Flagged Issues or Reports</h2>
-            <span class="card-icon"><i class="fas fa-exclamation-triangle"></i></span>
-          </div>
-          <table class="issues-table">
-            <thead>
-              <tr>
-                <th>Reported By</th>
-                <th>Time</th>
-                <th>Type</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Jane Smith (CCSICT)</td>
-                <td>Today, 10:15 AM</td>
-                <td><span class="issue-type issue-critical">Critical</span></td>
-                <td>Unable to cast vote - system error</td>
-              </tr>
-              <tr>
-                <td>System</td>
-                <td>Today, 9:30 AM</td>
-                <td><span class="issue-type issue-warning">Warning</span></td>
-                <td>Unusual voting pattern detected</td>
-              </tr>
-              <tr>
-                <td>John Doe (COE)</td>
-                <td>Yesterday, 4:45 PM</td>
-                <td><span class="issue-type issue-info">Info</span></td>
-                <td>Candidate information incorrect</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Export Controls Card -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h2 class="card-title">📁 Export / Download Controls</h2>
-            <span class="card-icon"><i class="fas fa-download"></i></span>
-          </div>
-          <div class="export-controls">
-            <button class="export-btn">
-              <i class="fas fa-file-csv"></i> Export Votes (CSV)
-            </button>
-            <button class="export-btn">
-              <i class="fas fa-file-excel"></i> Voter Turnout Summary
-            </button>
-            <button class="export-btn">
-              <i class="fas fa-database"></i> System Backup
-            </button>
-            <button class="export-btn">
-              <i class="fas fa-archive"></i> Archive Election
-            </button>
-          </div>
+              <span class="user-name">
+                {{ user.first_name }} {{ user.last_name }}
+                {% if user.school_id == admin.school_id %}
+                (You)
+                {% endif %}
+              </span>
+              <div class="status-indicator"></div>
+            </li>
+            {% endfor %}
+          </ul>
         </div>
       </div>
+
+      <br>
+      <hr>
+      <br>
+
+      <!-- Export Controls Card -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2 class="card-title">📁 Export / Download Controls</h2>
+          <span class="card-icon"><i class="fas fa-download"></i></span>
+        </div>
+        <div class="export-controls">
+          <button class="export-btn">
+            <i class="fas fa-file-csv"></i> Export Votes (CSV)
+          </button>
+          <button class="export-btn">
+            <i class="fas fa-file-excel"></i> Voter Turnout Summary
+          </button>
+          <button class="export-btn">
+            <i class="fas fa-database"></i> System Backup
+          </button>
+          <button class="export-btn">
+            <i class="fas fa-archive"></i> Archive Election
+          </button>
+        </div>
+      </div>
+
     </main>
   </div>
   <script>

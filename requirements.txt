@@ -12,4 +12,5 @@ supabase
 requests
 sendgrid
 flask-mail
-crypto
+Crypto
+PyCryptodome==3.20.0# <-- Changed from 'crypto' to 'pycryptodome'

@@ -1,52 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Candidates</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='design4.css') }}">
     <style>
-        .candidates-container { max-width: 900px; margin: 32px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 32px 28px 24px 28px; }
-        .position-block { margin-bottom: 32px; }
-        .candidate-list { display: flex; flex-wrap: wrap; gap: 18px; }
-        .candidate-card { background: #f9f9f9; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 18px; width: 220px; display: flex; flex-direction: column; align-items: center; transition: box-shadow 0.2s, transform 0.2s; cursor: pointer; text-decoration: none; color: inherit; }
-        .candidate-card:hover { box-shadow: 0 6px 20px rgba(33,83,42,0.13); transform: translateY(-4px) scale(1.03);}
-        .candidate-card img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 1px solid #ddd; margin-bottom: 10px; }
-        .candidate-name { font-weight: bold; margin-bottom: 8px; }
-        .candidate-campaign { font-size: 0.98em; color: #444; text-align: center; }
+        :root {
+            --primary: #25c18c;
+            --primary-dark: #1e3b28;
+            --primary-light: #81C784;
+            --text: #333;
+            --bg: #f5f5f5;
+            --card-bg: #fff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .candidates-container {
+            max-width: 900px;
+            margin: 32px auto;
+            background: var(--card-bg);
+            border-radius: 14px;
+            box-shadow: 0 4px 24px var(--shadow);
+            padding: 32px 28px 24px 28px;
+        }
+
+        .position-block {
+            margin-bottom: 32px;
+        }
+
+        .candidate-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .candidate-card {
+            background: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px var(--shadow);
+            padding: 18px;
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: box-shadow 0.2s, transform 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            border: 2px solid transparent;
+        }
+
+        .candidate-card:hover {
+            box-shadow: 0 6px 20px rgba(33, 83, 42, 0.13);
+            transform: translateY(-4px) scale(1.03);
+            border: 2px solid var(--primary);
+        }
+
+        .candidate-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .candidate-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--primary-dark);
+        }
+
+        .candidate-campaign {
+            font-size: 0.98em;
+            color: #444;
+            text-align: center;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 24px;
+            padding: 12px 28px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: background 0.2s;
+            position: relative;
+            top: 0;
+            left: 0;
+        }
+
+        .back-btn:hover,
+        .back-btn:focus {
+            background: var(--primary-dark);
+            color: #fff;
+        }
+
+        .note {
+            max-width: 900px;
+            margin: 0 auto 18px auto;
+            padding: 10px 20px 10px 20px;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border-radius: 8px;
+            font-size: 1.05em;
+        }
+
         @media (max-width: 700px) {
-            .candidate-list { flex-direction: column; align-items: center; }
-            .candidate-card { width: 95%; }
+            .candidate-list {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .candidate-card {
+                width: 95%;
+            }
         }
     </style>
 </head>
+
 <body>
-<div class="candidates-container">
-    <h2>Candidates for {{ department }}</h2>
-    {% if positions_with_candidates|length == 0 %}
+    <a href="{{ url_for('dashboard') }}" class="back-btn">&larr; Back to Dashboard</a>
+    <div class="note">
+        <strong>Note:</strong> You can click on any candidate to view their information and campaign details.
+    </div>
+    <div class="candidates-container">
+        <h2>Candidates for {{ department }}</h2>
+        {% if positions_with_candidates|length == 0 %}
         <p>No positions found for your department.</p>
-    {% else %}
+        {% else %}
         {% for pos_block in positions_with_candidates %}
         <div class="position-block">
             <h3>{{ pos_block.position.name }}</h3>
             <div class="candidate-list">
-            {% if pos_block.candidates|length == 0 %}
+                {% if pos_block.candidates|length == 0 %}
                 <p>No candidates for this position yet.</p>
-            {% else %}
+                {% else %}
                 {% for cand in pos_block.candidates %}
-                    <a href="{{ url_for('candidate_details', id=cand.id) }}" class="candidate-card">
-                        {% if cand.image %}
-                            <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}">
-                        {% endif %}
-                        <div class="candidate-name">{{ cand.name }}</div>
-                    </a>
+                <a href="{{ url_for('candidate_details', id=cand.id) }}" class="candidate-card">
+                    {% if cand.image %}
+                    <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}">
+                    {% endif %}
+                    <div class="candidate-name">{{ cand.name }}</div>
+                </a>
                 {% endfor %}
-            {% endif %}
+                {% endif %}
             </div>
         </div>
         {% endfor %}
-    {% endif %}
-    <div style="text-align:center;margin-top:24px;">
-        <a href="{{ url_for('dashboard') }}" style="color:#21532a;font-weight:bold;">&larr; Back to Dashboard</a>
+        {% endif %}
     </div>
-</div>
-</body>
-</html>
