@@ -81,6 +81,24 @@
         border-bottom: 1px solid #ddd;
       }
     }
+
+    h2 {
+      color: #00ff00;
+      margin-bottom: 20px;
+    }
+
+    .log-line {
+      margin-bottom: 5px;
+      white-space: pre-wrap;
+    }
+
+    #log-feed {
+      background: #101010;
+      border: 1px solid #222;
+      padding: 10px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
   </style>
 </head>
 
@@ -89,6 +107,7 @@
     <li><button class="tab-btn active" data-tab="home">Home</button></li>
     <li><button class="tab-btn" data-tab="AccCreate">Account Creation</button></li>
     <li><button class="tab-btn" data-tab="services">Services</button></li>
+
     <li><button class="tab-btn" data-tab="portfolio">Portfolio</button></li>
     <li><button class="tab-btn" data-tab="contact">Contact</button></li>
     <li>
@@ -154,12 +173,13 @@
     <p>Discover the range of services we offer to our clients.</p>
     <img src="https://via.placeholder.com/400x200?text=Services+Image" alt="Services Image">
   </div>
-
   <div id="portfolio" class="tab-content">
-    <h2>Portfolio</h2>
-    <p>Check out our latest projects and work samples.</p>
-    <img src="https://via.placeholder.com/400x200?text=Portfolio+Image" alt="Portfolio Image">
+    <h2>LOGS</h2>
+
+
   </div>
+  </div>
+
 
   <div id="contact" class="tab-content">
     <h2>Contact Us</h2>
@@ -172,21 +192,38 @@
       const tabBtns = document.querySelectorAll('.tab-btn');
       const tabContents = document.querySelectorAll('.tab-content');
 
+      function activateTab(tabId) {
+        tabBtns.forEach(btn => {
+          const btnTab = btn.getAttribute('data-tab');
+          if (btnTab) {
+            btn.classList.toggle('active', btnTab === tabId);
+          }
+        });
+
+        tabContents.forEach(content => {
+          content.classList.toggle('active', content.id === tabId);
+        });
+      }
+
+      // Get `tab` from URL query
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialTab = urlParams.get('tab') || 'home';
+      activateTab(initialTab);
+
+      // Manual tab switching
       tabBtns.forEach(btn => {
         btn.addEventListener('click', function () {
           const tabId = this.getAttribute('data-tab');
-
-          // Remove active class from all buttons and contents
-          tabBtns.forEach(btn => btn.classList.remove('active'));
-          tabContents.forEach(content => content.classList.remove('active'));
-
-          // Add active class to clicked button and corresponding content
-          this.classList.add('active');
-          document.getElementById(tabId).classList.add('active');
+          activateTab(tabId);
+          // Optionally update URL without reloading
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.set('tab', tabId);
+          window.history.replaceState({}, '', newUrl);
         });
       });
     });
   </script>
+
 </body>
 
 </html>

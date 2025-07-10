@@ -84,7 +84,8 @@
   <div class="dashboard">
     <header class="dashboard-header">
       <div class="header-content">
-        <h1>UNIVOTE</h1>
+        <h1>UNIVOTE<h5>MANAGE VOTE SETTINGS</h5>
+        </h1>
         <div class="header-actions">
           <button id="theme-toggle" class="btn">🌙 Dark Mode</button>
         </div>
@@ -92,16 +93,19 @@
     </header>
 
     <nav class="dashboard-nav">
-      <ul class="nav-list">
-        <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_settings') }}">Manage Voting Settings</a></li>
-        <li class="nav-item"><a href="{{ url_for('logout') }}"
-            onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-        <li class="nav-item"><a href="#">Help</a></li>
-      </ul>
+      <div class="nav-container">
+        <button class="nav-toggle" onclick="toggleNav()">☰</button>
+        <ul class="nav-list" id="navMenu">
+          <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_settings') }}" class="active">Manage Voting Settings</a></li>
+          <li class="nav-item"><a href="{{ url_for('logout') }}"
+              onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+          <li class="nav-item"><a href="#">Help</a></li>
+        </ul>
+      </div>
     </nav>
 
     <main class="dashboard-content">
@@ -160,6 +164,11 @@
       });
     });
 
+  </script>
+  <script>
+    function toggleNav() {
+      document.getElementById('navMenu').classList.toggle('show');
+    }
   </script>
 </body>
 

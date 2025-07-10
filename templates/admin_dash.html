@@ -11,7 +11,7 @@
   <style>
     .dashboard-content {
       flex: 1;
-      padding: 2rem;
+      padding: .5rem;
       max-width: 1200px;
       margin: 0 auto;
       width: 100%;
@@ -21,7 +21,7 @@
     .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
+      gap: 1rem;
       margin-bottom: 2rem;
     }
 
@@ -29,9 +29,12 @@
       background-color: var(--card-bg);
       border-radius: 8px;
       box-shadow: 0 2px 10px var(--shadow);
-      padding: 1.5rem;
+      padding: .5rem;
       border-left: 4px solid var(--primary);
+      outline: 1px dashed purple;
+
     }
+
 
     .card-header {
       display: flex;
@@ -234,7 +237,7 @@
       font-size: 1.05em;
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 600px) {
       .candidate-list {
         flex-direction: column;
         align-items: center;
@@ -243,6 +246,17 @@
       .candidate-card {
         width: 95%;
       }
+
+      .dashboard-content {
+        padding: .5rem;
+      }
+
+      .dashboard-card {
+        width: 100% !important;
+        margin: 0 auto;
+      }
+
+    }
   </style>
 </head>
 
@@ -305,10 +319,11 @@
         <h1>Welcome Department Administrator, {{ admin.first_name }} {{ admin.last_name }} .
         </h1>
         <p>
-          you can view the votes breakdown below, <br>
-          Just click the start button to load the candidates and their votes.<br>
-          Restart button will reload the candidates and their votes.<br>
-          End button will hide candidates table.
+          You can view the votes breakdown below, <br>
+          Just click the: <br>
+          START button to load the candidates and their votes.<br>
+          RESTART button will reload the candidates and their votes.<br>
+          END button will hide candidates table.
         </p>
         <br>
         <hr>
@@ -432,7 +447,7 @@
                 <tr>
                   <td>${c.name}</td>
                   <td>${c.vote_count}</td>
-                  <td><button class="btn" onclick="openVoteDetails('${c.id}', '${c.name}', '${block.position.name}')">View Vote Breakdown</button></td>
+                  <td><button class="btn" onclick="openVoteDetails('${c.id}', '${c.name}', '${block.position.name}')">Vote Details</button></td>
                 </tr>
               `).join('')}
             </tbody>

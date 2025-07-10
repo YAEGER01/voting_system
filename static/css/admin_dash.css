@@ -78,10 +78,11 @@ body {
 
 .dashboard-content {
   flex: 1;
-  padding: 2rem;
+  padding: .5rem;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  outline: 1px solid red;
 }
 
 /* === NAVIGATION === */
@@ -179,5 +180,14 @@ body {
       0 2px 4px rgba(0, 0, 0, 0.08),
       0 6px 16px rgba(0, 0, 0, 0.12);
 
+  }
+
+  .dashboard-content {
+    padding: 1rem;
+  }
+
+  .dashboard-card {
+    width: 100% !important;
+    margin: 0 auto;
   }
 }
