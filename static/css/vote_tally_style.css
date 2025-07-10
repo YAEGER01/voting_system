@@ -1,0 +1,148 @@
+.control-buttons {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  background-color: #007BFF;
+  border: none;
+  padding: 8px 16px;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #b52a37;
+}
+
+.candidate-block {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.position-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.candidate-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.candidate-table th,
+.candidate-table td {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+.loading {
+  font-size: 1.1rem;
+  font-style: italic;
+  margin: 1rem 0;
+  color: #555;
+}
+
+#voteModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+
+.modal-content {
+  aspect-ratio: 4 / 3;
+  width: 80vw;
+  max-width: 900px;
+  max-height: 90vh;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-content h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.5rem;
+}
+
+.close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+}
+
+#modalLoading {
+  font-style: italic;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+/* Table inside modal */
+#voteBreakdownTable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+#voteBreakdownTable th,
+#voteBreakdownTable td {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+#voteBreakdownTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Indentation */
+#voteBreakdownTable td.pad-20 {
+  padding-left: 20px;
+}
+
+#voteBreakdownTable td.pad-40 {
+  padding-left: 40px;
+}
+
+#voteBreakdownTable td.pad-60 {
+  padding-left: 60px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95vw;
+    aspect-ratio: auto;
+    height: 85vh;
+  }
+}

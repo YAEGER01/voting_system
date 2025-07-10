@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UNIVOTE: ADMIN DASHBOARD</title>
   <link rel="stylesheet" href="static/css/admin_dash.css">
+  <link rel="stylesheet" href="static/css/vote_tally_style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     .dashboard-content {
@@ -64,186 +65,30 @@
       margin-bottom: 0.25rem;
     }
 
-    .progress-container {
-      height: 8px;
-      background-color: #e0e0e0;
-      border-radius: 4px;
-      margin: 0.5rem 0;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background-color: var(--primary);
-      border-radius: 4px;
-    }
-
-    .position-stats {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: var(--text);
-    }
-
-    /* Department Activity */
-    .department-chart {
-      height: 200px;
-      margin: 1rem 0;
+    .user-card {
+      width: 100%;
+      /*max-width: 400px;*/
+      max-height: 700px;
+      background: var(--card-bg);
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px var(--shadow);
+      overflow: auto;
+      scrollbar-width: none;
+      /* Firefox */
+      -ms-overflow-style: none;
+      /* IE/Edge */
       position: relative;
     }
 
-    .department-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1rem;
+    /* WebKit browsers */
+    .user-card::-webkit-scrollbar {
+      display: none;
     }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      font-size: 0.8rem;
-    }
-
-    .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-      margin-right: 0.5rem;
-    }
-
-    /* Voting Timeline */
-    .timeline-container {
-      margin: 1rem 0;
-    }
-
-    .time-remaining {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--primary-dark);
-      margin: 1rem 0;
-      text-align: center;
-    }
-
-    .time-progress {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-    }
-
-    .time-label {
-      font-size: 0.85rem;
-    }
-
-    /* Activity Feed */
-    .activity-feed {
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .activity-item {
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .activity-time {
-      font-size: 0.75rem;
-      color: #888;
-      margin-bottom: 0.25rem;
-    }
-
-    .activity-text {
-      font-size: 0.9rem;
-    }
-
-    /* Flagged Issues */
-    .issues-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-
-    .issues-table th,
-    .issues-table td {
-      padding: 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .issues-table th {
-      background-color: var(--primary-light);
-      color: var(--text-light);
-    }
-
-    .issue-type {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: bold;
-    }
-
-    .issue-critical {
-      background-color: var(--danger);
-      color: white;
-    }
-
-    .issue-warning {
-      background-color: var(--warning);
-      color: var(--text);
-    }
-
-    .issue-info {
-      background-color: var(--info);
-      color: white;
-    }
-
-    /* Export Controls */
-    .export-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    .export-btn {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      background-color: var(--primary);
-      color: var(--text-light);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .export-btn:hover {
-      background-color: var(--primary-dark);
-    }
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .nav-list {
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-    }
-
-    .user-card {
-      width: 300px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
     }
 
     .card-header {
-      background: white;
+      background: var(--card-bg);
       color: green;
       padding: 15px;
       font-size: 18px;
@@ -276,7 +121,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #666;
+      color: var(--text);
       font-weight: bold;
     }
 
@@ -291,6 +136,113 @@
       background-color: #4caf50;
       margin-left: auto;
     }
+
+    .candidates-container {
+      max-width: 900px;
+      margin: 32px auto;
+      background: var(--card-bg);
+      border-radius: 14px;
+      box-shadow: 0 4px 24px var(--shadow);
+      padding: 32px 28px 24px 28px;
+    }
+
+    .position-block {
+      margin-bottom: 32px;
+    }
+
+    .candidate-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+
+    .candidate-card {
+      background: #f9f9f9;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 18px;
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s, transform 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      border: 2px solid transparent;
+    }
+
+    .candidate-card:hover {
+      box-shadow: 0 6px 20px rgba(33, 83, 42, 0.13);
+      transform: translateY(-4px) scale(1.03);
+      border: 2px solid var(--primary);
+    }
+
+    .candidate-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    .candidate-name {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+    }
+
+    .candidate-campaign {
+      font-size: 0.98em;
+      color: #444;
+      text-align: center;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 24px;
+      padding: 12px 28px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: background 0.2s;
+      position: relative;
+      top: 0;
+      left: 0;
+    }
+
+    .back-btn:hover,
+    .back-btn:focus {
+      background: var(--primary-dark);
+      color: #fff;
+    }
+
+    .note {
+      max-width: 900px;
+      margin: 0 auto 18px auto;
+      padding: 10px 20px 10px 20px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: 8px;
+      font-size: 1.05em;
+    }
+
+    @media (max-width: 700px) {
+      .candidate-list {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .candidate-card {
+        width: 95%;
+      }
   </style>
 </head>
 
@@ -306,23 +258,25 @@
     </header>
 
     <nav class="dashboard-nav">
-      <ul class="nav-list">
-        <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}" class="active">Home</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_settings') }}">Manage Voting Settings</a></li>
-        <li class="nav-item"><a href="{{ url_for('logout') }}"
-            onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-        <li class="nav-item"><a href="#">Help</a></li>
-      </ul>
+      <div class="nav-container">
+        <button class="nav-toggle" onclick="toggleNav()">☰</button>
+        <ul class="nav-list" id="navMenu">
+          <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}" class="active">Home</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_settings') }}">Manage Voting Settings</a></li>
+          <li class="nav-item"><a href="{{ url_for('logout') }}"
+              onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+          <li class="nav-item"><a href="#">Help</a></li>
+        </ul>
+      </div>
     </nav>
 
     <main class="dashboard-content">
-      <!-- Position Participation Card -->
       <div class="dashboard-card">
         <div class="user-card">
-          <div class="card-header">Active Users ({{ active_users|length }})</div>
+          <div class="card-header">Active Accounts ({{ active_users|length }})</div>
           <ul class="user-list">
             {% for user in active_users %}
             <li class="user-item">
@@ -331,9 +285,7 @@
               </div>
               <span class="user-name">
                 {{ user.first_name }} {{ user.last_name }}
-                {% if user.school_id == admin.school_id %}
-                (You)
-                {% endif %}
+                ({{ user.role }}{% if user.school_id == admin.school_id %}, You{% endif %})
               </span>
               <div class="status-indicator"></div>
             </li>
@@ -342,30 +294,60 @@
         </div>
       </div>
 
+
       <br>
       <hr>
       <br>
 
-      <!-- Export Controls Card -->
+
       <div class="dashboard-card">
-        <div class="card-header">
-          <h2 class="card-title">📁 Export / Download Controls</h2>
-          <span class="card-icon"><i class="fas fa-download"></i></span>
+
+        <h1>Welcome Department Administrator, {{ admin.first_name }} {{ admin.last_name }} .
+        </h1>
+        <p>
+          you can view the votes breakdown below, <br>
+          Just click the start button to load the candidates and their votes.<br>
+          Restart button will reload the candidates and their votes.<br>
+          End button will hide candidates table.
+        </p>
+        <br>
+        <hr>
+        <br>
+
+        <!-- START / RESTART / END buttons -->
+        <div class="control-buttons">
+          <button id="startBtn" class="btn">Start</button>
+          <button id="restartBtn" class="btn">Restart</button>
+          <button id="endBtn" class="btn btn-danger">End</button>
         </div>
-        <div class="export-controls">
-          <button class="export-btn">
-            <i class="fas fa-file-csv"></i> Export Votes (CSV)
-          </button>
-          <button class="export-btn">
-            <i class="fas fa-file-excel"></i> Voter Turnout Summary
-          </button>
-          <button class="export-btn">
-            <i class="fas fa-database"></i> System Backup
-          </button>
-          <button class="export-btn">
-            <i class="fas fa-archive"></i> Archive Election
-          </button>
+
+
+        <!-- Candidate Table Container -->
+        <div id="candidatetablecontainer">
+          <div id="loadingCandidates" class="loading" style="display: none;">Loading candidates...</div>
+
+          <div id="candidateTables"></div>
         </div>
+
+        <!-- Hidden Toast -->
+        <div id="toast"
+          style="display:none; position:fixed; top:20px; right:20px; background:#ff4444; color:white; padding:10px; border-radius:5px; z-index:9999;">
+          <span id="toastMessage"></span>
+        </div>
+
+        <!-- Modal -->
+        <div id="voteModal" class="modal">
+          <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalLoading" style="display:none;">Loading...</div>
+            <div id="voteBreakdownTable"></div>
+          </div>
+        </div>
+
+
+
+
       </div>
 
     </main>
@@ -398,6 +380,128 @@
         localStorage.setItem('theme', theme);
       });
     });
+  </script>
+  <script>
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toastMessage").innerText = message;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    document.getElementById("startBtn").addEventListener("click", async () => {
+      const loading = document.getElementById("loadingCandidates");
+      const container = document.getElementById("candidateTables");
+
+      container.innerHTML = '';
+      loading.style.display = 'block';
+
+      try {
+        const res = await fetch("/fetch_candidates");
+        const data = await res.json();
+        renderCandidateTables(data);
+      } catch (err) {
+        showToast("Failed to load candidates.");
+      } finally {
+        loading.style.display = 'none';
+      }
+    });
+
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      document.getElementById("startBtn").click();
+    });
+
+    document.getElementById("endBtn").addEventListener("click", () => {
+      document.getElementById("candidateTables").innerHTML = '';
+    });
+
+    function renderCandidateTables(data) {
+      const container = document.getElementById("candidateTables");
+      container.innerHTML = '';
+      data.forEach(block => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+        <div class="candidate-block">
+          <h2 class="position-title">${block.position.name}</h2>
+          <table class="candidate-table">
+            <thead>
+              <tr><th>Name</th><th>Votes</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              ${block.candidates.map(c => `
+                <tr>
+                  <td>${c.name}</td>
+                  <td>${c.vote_count}</td>
+                  <td><button class="btn" onclick="openVoteDetails('${c.id}', '${c.name}', '${block.position.name}')">View Vote Breakdown</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>`;
+
+        container.appendChild(div);
+      });
+    }
+    function openVoteDetails(candidate_id, candidate_name, position_name) {
+      const loading = document.getElementById("modalLoading");
+      const table = document.getElementById("voteBreakdownTable");
+      const modalTitle = document.getElementById("modalTitle");
+
+      table.innerHTML = '';
+      loading.style.display = 'block';
+      modalTitle.innerText = `Vote Breakdown for ${candidate_name} (${position_name})`;
+
+      fetch(`/vote_breakdown/${candidate_id}`)
+        .then(res => res.json())
+        .then(data => {
+          const nested = data.nested;
+          const total = data.total_votes;
+
+          let html = '<table border="1">';
+          for (const year in nested) {
+            html += `<tr><td colspan="5"><strong>${year}</strong></td></tr>`;
+            const depts = nested[year];
+            for (const dept in depts) {
+              html += `<tr><td colspan="5" style="padding-left:20px;"><strong>${dept}</strong></td></tr>`;
+              const courses = depts[dept];
+              for (const course in courses) {
+                html += `<tr><td colspan="5" style="padding-left:40px;"><strong>${course}</strong></td></tr>`;
+                const tracks = courses[course];
+                for (const track in tracks) {
+                  html += `<tr>
+                    <td style="padding-left:60px;">${track}</td>
+                    <td>${tracks[track]}</td>
+                  </tr>`;
+                }
+              }
+            }
+          }
+          html += `<tr><td colspan="2"><strong>Total Votes: ${total}</strong></td></tr>`;
+          html += '</table>';
+          table.innerHTML = html;
+          showModal();
+        })
+        .catch(() => {
+          showToast("Failed to load vote details.");
+        })
+        .finally(() => {
+          loading.style.display = 'none';
+        });
+    }
+
+
+    function showModal() {
+      document.getElementById("voteModal").style.display = "flex";
+    }
+    function closeModal() {
+      document.getElementById("voteModal").style.display = "none";
+    }
+
+  </script>
+  <script>
+    function toggleNav() {
+      document.getElementById('navMenu').classList.toggle('show');
+    }
   </script>
 </body>
 

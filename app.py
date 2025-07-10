@@ -1,4 +1,3 @@
-#HELLO WORLD TANG INA MO PAUL BADING SI RUDY
 from flask import Flask, render_template, request, redirect, url_for, flash, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -12,7 +11,6 @@ import platform
 import hashlib
 import uuid
 import requests
-#import secrets
 import random
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
@@ -20,6 +18,7 @@ import base64
 import json
 import time
 import threading
+from flask import jsonify
 
 PH_TZ = timezone(timedelta(hours=8))
 
@@ -679,13 +678,25 @@ def login():
             if check_password_hash(user['password_hash'], password):
                 session['school_id'] = user['school_id']
                 session['role'] = user['role']
+
+                # Update active status
+                supabase.table('user').update({
+                    'active': 'ACTIVE'
+                }).eq('school_id', school_id).execute()
+
                 # Show redirecting message before dashboard
                 if user['role'] == 'admin':
                     return render_template(
                         'redirecting.html',
                         target=url_for('admin_dashboard'),
                         message="REDIRECTING to ADMIN DASHBOARD...")
-                else:
+                elif user['role'] == 'SysAdmin':  # New condition for sysAdmin
+                    return render_template(
+                        'redirecting.html',
+                        target=url_for(
+                            'system_admin'),  # Make sure this route exists
+                        message="REDIRECTING to SYSTEM ADMIN DASHBOARD...")
+                else:  # Default role (e.g., regular user)
                     return render_template(
                         'redirecting.html',
                         target=url_for('dashboard'),
@@ -998,6 +1009,11 @@ def register_admin():
 
 @app.route('/logout')
 def logout():
+    school_id = session.get('school_id')
+    if school_id:
+        supabase.table('user').update({
+            'active': 'OFFLINE'
+        }).eq('school_id', school_id).execute()
     session.clear()
     return redirect(url_for('login'))
 
@@ -1061,6 +1077,8 @@ def dashboard():
                         int(position_id),
                         'candidate_id':
                         encrypted_candidate_id,
+                        'candidate_ref':
+                        int(candidate_id),
                         'department':
                         user.get('department', user.get('course', ''))
                     }).execute()
@@ -1150,10 +1168,174 @@ def admin_dashboard():
         return redirect(url_for('login'))
 
     school_id = session['school_id']
+
+    # Get admin info
     admin_resp = supabase.table('user').select('*').eq(
         'school_id', school_id).single().execute()
     admin = admin_resp.data
-    return render_template('admin_dash.html', admin=admin)
+    department = admin['department']
+
+    # Get active users in same department
+    active_users_resp = supabase.table('user').select('*')\
+        .eq('active', 'ACTIVE').eq('department', department).execute()
+    active_users = active_users_resp.data
+
+    return render_template('admin_dash.html',
+                           admin=admin,
+                           active_users=active_users)
+
+
+@app.route('/fetch_candidates')
+def fetch_candidates():
+    if 'school_id' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'unauthorized'}), 403
+
+    school_id = session['school_id']
+    admin = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute().data
+    department = admin.get('department', admin.get('course', ''))
+
+    positions = supabase.table('positions').select('*').eq(
+        'department', department).order('name').execute().data or []
+
+    result = []
+    for pos in positions:
+        cands = supabase.table('candidates').select('id, name').eq(
+            'position_id', pos['id']).execute().data or []
+        for cand in cands:
+            cid = cand['id']
+            votes = supabase.table('votes').select('id')\
+                .eq('candidate_ref', int(cid)).execute().data
+            cand['vote_count'] = len(votes)
+        result.append({'position': pos, 'candidates': cands})
+
+    return jsonify(result)
+
+
+@app.route('/vote_breakdown/<candidate_id>')
+def vote_breakdown(candidate_id):
+    vote_records = supabase.table('votes') \
+        .select('student_id') \
+        .eq('candidate_ref', int(candidate_id)) \
+        .execute().data
+
+    student_ids = [v['student_id'] for v in vote_records]
+    if not student_ids:
+        return jsonify([])
+
+    users = supabase.table('user') \
+        .select('year_level, department, course, track') \
+        .in_('school_id', student_ids) \
+        .execute().data
+
+    breakdown = {}
+    total = 0
+
+    for u in users:
+        y = u['year_level']
+        d = u['department']
+        c = u['course']
+        t = u['track']
+        if not all([y, d, c, t]):
+            continue
+        breakdown.setdefault(y, {}).setdefault(d, {}).setdefault(
+            c, {}).setdefault(t, 0)
+        breakdown[y][d][c][t] += 1
+        total += 1
+
+    return jsonify({'nested': breakdown, 'total_votes': total})
+
+
+@app.route('/vote_tally')
+def vote_tally():
+    if 'school_id' not in session or session.get('role') != 'admin':
+        flash("You must be an admin to view the vote tally.", "danger")
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    admin = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute().data
+    department = admin.get('department', admin.get('course', ''))
+
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', department).execute()
+    positions = positions_resp.data or []
+
+    # Final data container per position
+    tally_by_position = []
+
+    for pos in positions:
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates = cands_resp.data or []
+
+        position_table = []
+
+        for cand in candidates:
+            # Get all votes for this candidate
+            # Get all votes under this position
+            votes_resp = supabase.table('votes').select('*').eq(
+                'position_id', pos['id']).execute()
+            votes = votes_resp.data or []
+
+            # Now filter only those votes that match the current candidate after decrypting
+            relevant_votes = []
+            for v in votes:
+                try:
+                    decrypted_cid = int(decrypt_vote(v['candidate_id']))
+                    if decrypted_cid == cand['id']:
+                        relevant_votes.append(v)
+                except:
+                    continue
+            votes = votes_resp.data or []
+
+            # Breakdown holder: {(year, course, track): count}
+            breakdown = {}
+
+            for v in relevant_votes:
+                student_id = v.get('student_id')
+                if not student_id:
+                    continue
+                user_resp = supabase.table('user').select(
+                    'year_level', 'course', 'track',
+                    'department').eq('school_id',
+                                     student_id).single().execute()
+                user = user_resp.data
+                if not user or user.get('department') != department:
+                    continue
+
+                key = (user.get('year_level',
+                                'N/A'), user.get('course', 'N/A'),
+                       user.get('track', 'N/A'))
+                breakdown[key] = breakdown.get(key, 0) + 1
+
+            # Add all rows from breakdown
+            for (year, course, track), count in breakdown.items():
+                position_table.append({
+                    'candidate': cand['name'],
+                    'year': year,
+                    'course': course,
+                    'track': track,
+                    'votes': count
+                })
+
+            # ✅ Ensure at least one row if candidate has no votes
+            if not breakdown:
+                position_table.append({
+                    'candidate': cand['name'],
+                    'year': '—',
+                    'course': '—',
+                    'track': '—',
+                    'votes': 0
+                })
+
+        tally_by_position.append({
+            'position': pos['name'],
+            'rows': position_table
+        })
+
+    return render_template('vote_tally.html',
+                           tally_by_position=tally_by_position)
 
 
 @app.route('/candidates')
@@ -1414,6 +1596,7 @@ def manage_poll():
                                                          '')) if admin else ''
     message = ""
 
+    # Add position
     if request.method == 'POST' and 'position_name' in request.form:
         position_name = request.form.get('position_name', '').strip()
         if position_name:
@@ -1423,10 +1606,22 @@ def manage_poll():
             }).execute()
             message = "Position added successfully!"
 
+    # Add candidate with all new fields
     if request.method == 'POST' and 'candidate_name' in request.form and 'position_id' in request.form:
         candidate_name = request.form.get('candidate_name', '').strip()
         position_id = request.form.get('position_id')
         campaign_message = request.form.get('campaign_message', '').strip()
+        year_level = request.form.get('year_level', '').strip()
+        course = request.form.get('course', '').strip()
+        skills = request.form.get('skills', '').strip()
+        platform = request.form.get('platform', '').strip()
+        goals = request.form.get('goals', '').strip()
+        sg_years = request.form.get('sg_years', '').strip()
+        previous_role = request.form.get('previous_role', '').strip()
+        experience = request.form.get('experience', '').strip()
+        achievements = request.form.get('achievements', '').strip()
+        slogan = request.form.get('slogan', '').strip()
+        note = request.form.get('note', '').strip()
         image_path = ''
 
         file = request.files.get('candidate_image')
@@ -1445,20 +1640,26 @@ def manage_poll():
                                               'uploads', 'candidates',
                                               filename)
                 file.save(full_save_path)
-            if candidate_name and position_id and not message:
-                supabase.table('candidates').insert({
-                    'position_id':
-                    int(position_id),
-                    'name':
-                    candidate_name,
-                    'image':
-                    image_path,
-                    'campaign_message':
-                    campaign_message,
-                    'department':
-                    admin_department  # add this line
-                }).execute()
-                message = "Candidate added successfully!"
+        if candidate_name and position_id and not message:
+            supabase.table('candidates').insert({
+                'position_id': int(position_id),
+                'name': candidate_name,
+                'image': image_path,
+                'campaign_message': campaign_message,
+                'department': admin_department,
+                'year_level': year_level,
+                'course': course,
+                'skills': skills,
+                'platform': platform,
+                'goals': goals,
+                'sg_years': sg_years,
+                'previous_role': previous_role,
+                'experience': experience,
+                'achievements': achievements,
+                'slogan': slogan,
+                'note': note
+            }).execute()
+            message = "Candidate added successfully!"
 
     positions_resp = supabase.table('positions').select('*').eq(
         'department', admin_department).execute()
@@ -1501,6 +1702,17 @@ def manage_candidates():
         name = request.form.get('name', '').strip()
         position_id = request.form.get('position_id')
         campaign_message = request.form.get('campaign_message', '').strip()
+        year_level = request.form.get('year_level', '').strip()
+        course = request.form.get('course', '').strip()
+        skills = request.form.get('skills', '').strip()
+        platform = request.form.get('platform', '').strip()
+        goals = request.form.get('goals', '').strip()
+        sg_years = request.form.get('sg_years', '').strip()
+        previous_role = request.form.get('previous_role', '').strip()
+        experience = request.form.get('experience', '').strip()
+        achievements = request.form.get('achievements', '').strip()
+        slogan = request.form.get('slogan', '').strip()
+        note = request.form.get('note', '').strip()
         image_path = None
 
         file = request.files.get('image')
@@ -1517,7 +1729,18 @@ def manage_candidates():
             'name': name,
             'image': image_path,
             'campaign_message': campaign_message,
-            'department': department  # ensure this field exists in the table
+            'department': department,
+            'year_level': year_level,
+            'course': course,
+            'skills': skills,
+            'platform': platform,
+            'goals': goals,
+            'sg_years': sg_years,
+            'previous_role': previous_role,
+            'experience': experience,
+            'achievements': achievements,
+            'slogan': slogan,
+            'note': note
         }).execute()
 
         flash("Candidate added successfully!", "success")
@@ -1558,6 +1781,17 @@ def edit_candidate(id):
         name = request.form.get('name', '').strip()
         position_id = request.form.get('position_id')
         campaign_message = request.form.get('campaign_message', '').strip()
+        year_level = request.form.get('year_level', '').strip()
+        course = request.form.get('course', '').strip()
+        skills = request.form.get('skills', '').strip()
+        platform = request.form.get('platform', '').strip()
+        goals = request.form.get('goals', '').strip()
+        sg_years = request.form.get('sg_years', '').strip()
+        previous_role = request.form.get('previous_role', '').strip()
+        experience = request.form.get('experience', '').strip()
+        achievements = request.form.get('achievements', '').strip()
+        slogan = request.form.get('slogan', '').strip()
+        note = request.form.get('note', '').strip()
         image_path = candidate['image']
 
         file = request.files.get('image')
@@ -1577,7 +1811,18 @@ def edit_candidate(id):
             'name': name,
             'position_id': int(position_id),
             'campaign_message': campaign_message,
-            'image': image_path
+            'image': image_path,
+            'year_level': year_level,
+            'course': course,
+            'skills': skills,
+            'platform': platform,
+            'goals': goals,
+            'sg_years': sg_years,
+            'previous_role': previous_role,
+            'experience': experience,
+            'achievements': achievements,
+            'slogan': slogan,
+            'note': note
         }).eq('id', id).execute()
         flash("Candidate updated successfully!", "success")
         return redirect(url_for('manage_candidates'))

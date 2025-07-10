@@ -2,10 +2,10 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UNIVOTE: ADMIN MANAGE USERS</title>
-  <link rel="stylesheet" href="static/css/admin_dash.css">
+  <link rel="stylesheet" href="static/css/admin_dash.css" />
   <style>
     .card {
       background-color: var(--card-bg);
@@ -56,21 +56,6 @@
       border-radius: 4px;
     }
 
-    .actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn.approve {
-      background-color: var(--primary);
-      color: white;
-    }
-
-    .btn.reject {
-      background-color: var(--danger);
-      color: white;
-    }
-
     .btn {
       padding: 8px 12px;
       border: none;
@@ -83,10 +68,142 @@
       opacity: 0.9;
     }
 
+    .btn.approve {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn.reject {
+      background-color: var(--danger);
+      color: white;
+    }
+
     .no-data {
       text-align: center;
       padding: 2rem;
       color: var(--text);
+    }
+
+    /* Modal UI */
+    .modal {
+      position: fixed;
+      z-index: 9999;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      background-color: rgba(0, 0, 0, 0.4);
+      display: none;
+      padding: 2rem;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      max-width: 600px;
+      margin: auto;
+      padding: 2rem;
+      border-radius: 10px;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      margin-bottom: 1.2rem;
+      color: #333;
+      text-align: center;
+    }
+
+    .modal-details p {
+      margin: 0.5rem 0;
+      color: #444;
+    }
+
+    .modal-details p strong {
+      display: inline-block;
+      width: 120px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .modal-details img {
+      margin-top: 5px;
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      transition: 0.3s ease;
+      cursor: pointer;
+    }
+
+    .modal-details img:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      gap: 10px;
+    }
+
+    .modal .btn {
+      flex: 1;
+      font-size: 1rem;
+    }
+
+    .close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 26px;
+      font-weight: bold;
+      color: #aaa;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    /* Image Zoom Modal Styling */
+    #imgZoomModal .close {
+      position: absolute;
+      right: 30px;
+      top: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #fff;
+      z-index: 10001;
+    }
+
+    #imgZoomModal .close:hover {
+      color: #ffdddd;
+    }
+
+    .modal-zoom-img {
+      display: block;
+      max-width: 90%;
+      max-height: 90vh;
+      margin: 5% auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      z-index: 10000;
     }
   </style>
 </head>
@@ -103,22 +220,24 @@
     </header>
 
     <nav class="dashboard-nav">
-      <ul class="nav-list">
-        <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
-        <li class="nav-item"><a href="{{ url_for('manage_settings') }}">Manage Voting Settings</a></li>
-        <li class="nav-item"><a href="{{ url_for('logout') }}"
-            onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-        <li class="nav-item"><a href="#">Help</a></li>
-      </ul>
+      <div class="nav-container">
+        <button class="nav-toggle" onclick="toggleNav()">☰</button>
+        <ul class="nav-list" id="navMenu">
+          <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_students') }}" class="active">Manage Students</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_poll') }}">Manage Poll</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_candidates') }}">Manage Candidates</a></li>
+          <li class="nav-item"><a href="{{ url_for('manage_settings') }}">Manage Voting Settings</a></li>
+          <li class="nav-item"><a href="{{ url_for('logout') }}"
+              onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+          <li class="nav-item"><a href="#">Help</a></li>
+        </ul>
+      </div>
     </nav>
 
     <main class="dashboard-content">
       <div class="card">
         <h2>Pending Student Approvals</h2>
-
         <div class="table-container">
           <table>
             <thead>
@@ -142,29 +261,16 @@
                 <td>{{ user.course }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.phone }}</td>
-                <td>
-                  <a href="{{ user.id_photo_front }}" target="_blank">
-                    <img src="{{ user.id_photo_front }}" alt="Front ID" class="preview">
-                  </a>
-                </td>
-                <td>
-                  <a href="{{ user.id_photo_back }}" target="_blank">
-                    <img src="{{ user.id_photo_back }}" alt="Back ID" class="preview">
-                  </a>
-                </td>
+                <td><img src="{{ user.id_photo_front }}" alt="Front ID" class="preview"></td>
+                <td><img src="{{ user.id_photo_back }}" alt="Back ID" class="preview"></td>
                 <td>{{ user.submitted_at }}</td>
                 <td class="actions">
-                  <form action="{{ url_for('approve_user', user_id=user.id) }}" method="post">
-                    <button type="submit" class="btn approve">Approve</button>
-                  </form>
-                  <form action="{{ url_for('reject_user', user_id=user.id) }}" method="post">
-                    <button type="submit" class="btn reject">Reject</button>
-                  </form>
+                  <button class="btn approve" onclick='openModal({{ user | tojson | safe }})'>Review</button>
                 </td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="9" style="text-align:center;">No pending registrations.</td>
+                <td colspan="9" class="no-data">No pending registrations.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -173,13 +279,37 @@
       </div>
     </main>
   </div>
-  <script> document.addEventListener('DOMContentLoaded', () => {
+
+  <!-- User Review Modal -->
+  <div id="userModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 class="modal-title">Review Student Details</h2>
+      <div id="modal-details" class="modal-details"></div>
+      <div class="modal-actions">
+        <form id="approveForm" method="post">
+          {% if csrf_token %}{{ csrf_token() }}{% endif %}
+          <button type="submit" class="btn approve">✅ Approve</button>
+        </form>
+        <form id="rejectForm" method="post">
+          {% if csrf_token %}{{ csrf_token() }}{% endif %}
+          <button type="submit" class="btn reject">❌ Reject</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Zoom Modal -->
+  <div id="imgZoomModal" class="modal" onclick="closeImageModal()">
+    <span class="close" onclick="closeImageModal()">&times;</span>
+    <img id="zoomedImage" class="modal-zoom-img" alt="Zoomed ID">
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
       const themeToggle = document.getElementById('theme-toggle');
       const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-
-      // Check for saved theme or use preferred color scheme
-      const currentTheme = localStorage.getItem('theme') ||
-        (prefersDarkScheme.matches ? 'dark' : 'light');
+      const currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark' : 'light');
 
       if (currentTheme === 'dark') {
         document.body.setAttribute('data-theme', 'dark');
@@ -200,6 +330,62 @@
         localStorage.setItem('theme', theme);
       });
     });
+
+    function openModal(user) {
+      const modal = document.getElementById('userModal');
+      const details = document.getElementById('modal-details');
+      const approveForm = document.getElementById('approveForm');
+      const rejectForm = document.getElementById('rejectForm');
+
+      approveForm.action = `/approve_user/${user.id}`;
+      rejectForm.action = `/reject_user/${user.id}`;
+
+      details.innerHTML = `
+        <p><strong>School ID:</strong> ${user.school_id}</p>
+        <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
+        <p><strong>Course:</strong> ${user.course}</p>
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>Phone:</strong> ${user.phone}</p>
+        <p><strong>Submitted At:</strong> ${user.submitted_at}</p>
+        <p><strong>ID Front:</strong><br>
+          <img src="${user.id_photo_front}" alt="Front ID" onclick="zoomImage('${user.id_photo_front}')">
+        </p>
+        <p><strong>ID Back:</strong><br>
+          <img src="${user.id_photo_back}" alt="Back ID" onclick="zoomImage('${user.id_photo_back}')">
+        </p>
+      `;
+      modal.style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('userModal').style.display = 'none';
+    }
+
+    function zoomImage(src) {
+      const imgModal = document.getElementById("imgZoomModal");
+      const zoomedImg = document.getElementById("zoomedImage");
+      zoomedImg.src = src;
+      imgModal.style.display = "block";
+    }
+
+    function closeImageModal() {
+      document.getElementById("imgZoomModal").style.display = "none";
+    }
+
+    window.onclick = function (event) {
+      const modal = document.getElementById('userModal');
+      const imgModal = document.getElementById("imgZoomModal");
+      if (event.target === modal) {
+        closeModal();
+      } else if (event.target === imgModal) {
+        closeImageModal();
+      }
+    };
+  </script>
+  <script>
+    function toggleNav() {
+      document.getElementById('navMenu').classList.toggle('show');
+    }
   </script>
 </body>
 

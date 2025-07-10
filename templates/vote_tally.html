@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Vote Tally</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f3f3f3;
+    }
+
+    h2 {
+      margin-top: 40px;
+      background: #e0f7e9;
+      padding: 10px;
+      border-left: 8px solid #2ecc71;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Vote Tally Results</h1>
+  <div style="margin-bottom: 20px;">
+    <h2>Export Options:</h2>
+    <button onclick="exportAllTables('csv')">Download CSV</button>
+    <button onclick="exportAllTables('xlsx')">Download Excel</button>
+  </div>
+
+  {% for group in tally_by_position %}
+  <h2>{{ group.position|upper }}</h2>
+  {% if group.rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>Candidate</th>
+        <th>Year</th>
+        <th>Course</th>
+        <th>Track</th>
+        <th>Total Votes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in group.rows %}
+      <tr>
+        <td>{{ row.candidate }}</td>
+        <td>{{ row.year }}</td>
+        <td>{{ row.course }}</td>
+        <td>{{ row.track }}</td>
+        <td>{{ row.votes }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No votes recorded for this position.</p>
+  {% endif %}
+  {% endfor %}
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    function exportAllTables(type) {
+      const tables = document.querySelectorAll("table");
+      const wb = XLSX.utils.book_new();
+
+      tables.forEach((table, idx) => {
+        const ws = XLSX.utils.table_to_sheet(table);
+        const sheetName = "Position" + (idx + 1);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      });
+
+      XLSX.writeFile(wb, "vote_tally_export." + type);
+    }
+  </script>
+
+</body>
+
+</html>

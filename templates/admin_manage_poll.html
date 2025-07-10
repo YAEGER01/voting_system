@@ -43,7 +43,6 @@
     }
 
     button[type="submit"] {
-      /*background: linear-gradient(90deg, #25c18c 60%, #21532a 100%);*/
       background-color: var(--header-bg);
       color: #fff;
       border: none;
@@ -58,7 +57,6 @@
 
     button[type="submit"]:hover {
       background-color: var(--primary-dark);
-      /*background: linear-gradient(90deg, #21532a 60%, #25c18c 100%);*/
     }
 
     hr {
@@ -66,8 +64,6 @@
       border: none;
       border-top: 2px solid #e0e0e0;
     }
-
-
 
     img {
       border-radius: 6px;
@@ -151,6 +147,17 @@
             </select>
             <input type="text" name="candidate_name" placeholder="Candidate Name" required>
             <textarea name="campaign_message" placeholder="Campaign Message" required></textarea>
+            <input type="text" name="year_level" placeholder="Year Level">
+            <input type="text" name="course" placeholder="Course">
+            <input type="text" name="skills" placeholder="Core Skills">
+            <textarea name="platform" placeholder="Platform"></textarea>
+            <textarea name="goals" placeholder="Goals"></textarea>
+            <input type="text" name="sg_years" placeholder="Student Gov Years">
+            <input type="text" name="previous_role" placeholder="Previous Role">
+            <textarea name="experience" placeholder="Leadership Experience"></textarea>
+            <textarea name="achievements" placeholder="Achievements & Recognition"></textarea>
+            <input type="text" name="slogan" placeholder="Campaign Slogan">
+            <textarea name="note" placeholder="Candidate's Note"></textarea>
             <input type="file" name="candidate_image" accept="image/*" required>
             <button type="submit">Add Candidate</button>
           </form>
@@ -172,12 +179,27 @@
                 {{ cand.campaign_message | nl2br }}
               </span>
               {% endif %}
+              {% if cand.year_level or cand.course or cand.skills or cand.platform or cand.goals or cand.sg_years or
+              cand.previous_role or cand.experience or cand.achievements or cand.slogan or cand.note %}
+              <div style="font-size:0.95em; color:#444; margin-top:4px;">
+                {% if cand.year_level %}<b>Year:</b> {{ cand.year_level }} {% endif %}
+                {% if cand.course %}<b>Course:</b> {{ cand.course }} {% endif %}
+                {% if cand.skills %}<b>Skills:</b> {{ cand.skills }} {% endif %}
+                {% if cand.platform %}<b>Platform:</b> {{ cand.platform }} {% endif %}
+                {% if cand.goals %}<b>Goals:</b> {{ cand.goals }} {% endif %}
+                {% if cand.sg_years %}<b>SG Years:</b> {{ cand.sg_years }} {% endif %}
+                {% if cand.previous_role %}<b>Prev Role:</b> {{ cand.previous_role }} {% endif %}
+                {% if cand.experience %}<b>Experience:</b> {{ cand.experience }} {% endif %}
+                {% if cand.achievements %}<b>Achievements:</b> {{ cand.achievements }} {% endif %}
+                {% if cand.slogan %}<b>Slogan:</b> {{ cand.slogan }} {% endif %}
+                {% if cand.note %}<b>Note:</b> {{ cand.note }} {% endif %}
+              </div>
+              {% endif %}
             </li>
             {% endfor %}
           </ul>
           {% endfor %}
         </div>
-
       </div>
     </main>
   </div>
@@ -185,16 +207,12 @@
     document.addEventListener('DOMContentLoaded', () => {
       const themeToggle = document.getElementById('theme-toggle');
       const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-
-      // Check for saved theme or use preferred color scheme
       const currentTheme = localStorage.getItem('theme') ||
         (prefersDarkScheme.matches ? 'dark' : 'light');
-
       if (currentTheme === 'dark') {
         document.body.setAttribute('data-theme', 'dark');
         themeToggle.textContent = '☀️ Light Mode';
       }
-
       themeToggle.addEventListener('click', () => {
         let theme;
         if (document.body.getAttribute('data-theme') === 'dark') {
@@ -209,7 +227,6 @@
         localStorage.setItem('theme', theme);
       });
     });
-
   </script>
 </body>
 
