@@ -307,5 +307,29 @@
     },
     "previous_hash": "6829f4e0e030fdd9bf0197e8eac02891ebe83159a376a0de0b154ed347b4f703",
     "hash": "707adba66061fa588aca63d42c95b1bdca9689567be5f1ca61ab5877c695342a"
+  },
+  {
+    "index": 26,
+    "timestamp": "1752204977.486104",
+    "data": {
+      "student_id": "3e8270980c90ac2643eba3dc0cfe9672bb3d477bec62e33a0b6f62e45130d32b",
+      "position_id": 15,
+      "candidate_id": "JwaKKfrDJEMVmSFCsqGRN1YayjgW+RHQhd0OEz1AaCE=",
+      "timestamp": "1752204977.4860945"
+    },
+    "previous_hash": "707adba66061fa588aca63d42c95b1bdca9689567be5f1ca61ab5877c695342a",
+    "hash": "e82b1cd0b318b1bcd5168f7630a6eb3f5cae28c9a9025438470cde22ac930f8c"
+  },
+  {
+    "index": 27,
+    "timestamp": "1752204978.2662935",
+    "data": {
+      "student_id": "3e8270980c90ac2643eba3dc0cfe9672bb3d477bec62e33a0b6f62e45130d32b",
+      "position_id": 16,
+      "candidate_id": "KIo4byHfFxUgOy5YEUQO/mDpL9sg4FoeNVHP2q3JF0M=",
+      "timestamp": "1752204978.266283"
+    },
+    "previous_hash": "e82b1cd0b318b1bcd5168f7630a6eb3f5cae28c9a9025438470cde22ac930f8c",
+    "hash": "4deb5dd04abc1d914d27ce522b502627be30cefd156dd297341f3a357f12c559"
   }
 ]

@@ -23,6 +23,35 @@ from flask import jsonify
 PH_TZ = timezone(timedelta(hours=8))
 
 
+# Place this ONCE in your app
+def log_activity(user_id,
+                 action,
+                 target,
+                 table_name,
+                 query_type,
+                 new_data=None,
+                 old_data=None):
+    log_data = {
+        "user_id": user_id,
+        "action": action,
+        "target": target,
+        "table_name": table_name,
+        "query_type": query_type,
+        "new_data": json.dumps(new_data) if new_data else None,
+        "old_data": json.dumps(old_data) if old_data else None,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+    try:
+        result = supabase.table("logs").insert([log_data]).execute()
+        print(f"[LOGGING ✅] Action: {action} | Target: {target}")
+    except Exception as e:
+        print(f"[LOGGING ❌] Failed to insert log entry.")
+        print(f"  ➤ Action: {action}")
+        print(f"  ➤ Target: {target}")
+        print(f"  ➤ Error: {getattr(e, 'message', str(e))}")
+
+
 class Block:
 
     def __init__(self, index, timestamp, data, previous_hash):
@@ -499,6 +528,17 @@ def forgot_password():
             'reset_otp': otp,
             'reset_otp_expiry': expiry.isoformat()
         }).eq('id', user['id']).execute()
+
+        log_activity(user_id=user['id'],
+                     action="GENERATED OTP",
+                     target=user['email'],
+                     table_name="user",
+                     query_type="UPDATE",
+                     new_data={
+                         "reset_otp": otp,
+                         "reset_otp_expiry": expiry.isoformat()
+                     })
+
         send_otp_email(email, otp)
         flash("An OTP has been sent to your email.", "info")
         return redirect(url_for('verify_otp', email=email))
@@ -515,6 +555,7 @@ def verify_otp():
         otp = request.form.get('otp', '').strip()
         resp = supabase.table('user').select('*').eq('email',
                                                      email).single().execute()
+
         user = resp.data
         if not user or not user.get('reset_otp') or not user.get(
                 'reset_otp_expiry'):
@@ -527,6 +568,13 @@ def verify_otp():
         if otp != user['reset_otp']:
             flash("Incorrect OTP. Please try again.", "danger")
             return render_template('verify_otp.html', email=email)
+        log_activity(
+            user_id=user['id'],
+            action="VERIFIED OTP",
+            target=user['email'],
+            table_name="user",
+            query_type="VERIFY",  # Custom label, not UPDATE/INSERT/DELETE
+            new_data={"verified_otp": otp})
         # OTP is correct
         return redirect(url_for('reset_password_otp', email=email))
     return render_template('verify_otp.html', email=email)
@@ -538,19 +586,38 @@ def resend_otp():
     if not email:
         flash("Missing email.", "danger")
         return redirect(url_for('forgot_password'))
+
     resp = supabase.table('user').select('*').eq('email',
                                                  email).single().execute()
     user = resp.data
+
     if not user:
         flash("No account found with that email.", "danger")
         return redirect(url_for('forgot_password'))
+
     otp = generate_otp()
     expiry = datetime.now(UTC) + timedelta(minutes=10)
+
+    # ✅ Update reset_otp and expiry
     supabase.table('user').update({
         'reset_otp': otp,
         'reset_otp_expiry': expiry.isoformat()
     }).eq('id', user['id']).execute()
+
+    # ✅ Log the resend
+    log_activity(user_id=user['id'],
+                 action="RESENT OTP",
+                 target=user['email'],
+                 table_name="user",
+                 query_type="UPDATE",
+                 new_data={
+                     "reset_otp": otp,
+                     "reset_otp_expiry": expiry.isoformat()
+                 })
+
+    # ✅ Send the OTP email
     send_otp_email(email, otp)
+
     flash("A new OTP has been sent to your email.", "info")
     return redirect(url_for('verify_otp', email=email))
 
@@ -561,9 +628,11 @@ def reset_password_otp():
     if not email:
         flash("Missing email.", "danger")
         return redirect(url_for('forgot_password'))
+
     if request.method == 'POST':
         password = request.form.get('password', '')
         confirm = request.form.get('confirm_password', '')
+
         if not password or not confirm:
             flash("Please fill in all fields.", "danger")
             return render_template('reset_password_otp.html', email=email)
@@ -575,23 +644,34 @@ def reset_password_otp():
                 password):
             flash("Password does not meet requirements.", "danger")
             return render_template('reset_password_otp.html', email=email)
+
         resp = supabase.table('user').select('*').eq('email',
                                                      email).single().execute()
         user = resp.data
         if not user:
             flash("No account found.", "danger")
             return redirect(url_for('forgot_password'))
-        # Clear OTP and set new password
-        supabase.table('user').update({
-            'password_hash':
-            generate_password_hash(password),
-            'reset_otp':
-            None,
-            'reset_otp_expiry':
-            None
-        }).eq('id', user['id']).execute()
+
+        # Perform password reset
+        update_data = {
+            'password_hash': generate_password_hash(password),
+            'reset_otp': None,
+            'reset_otp_expiry': None
+        }
+        supabase.table('user').update(update_data).eq('id',
+                                                      user['id']).execute()
+
+        # Log the password reset
+        log_activity(user_id=user['id'],
+                     action="RESET PASSWORD",
+                     target=email,
+                     table_name="user",
+                     query_type="UPDATE",
+                     new_data={"password_hash": "[HASHED]"})
+
         flash("Your password has been reset. Please log in.", "success")
         return redirect(url_for('login'))
+
     return render_template('reset_password_otp.html', email=email)
 
 
@@ -678,11 +758,20 @@ def login():
             if check_password_hash(user['password_hash'], password):
                 session['school_id'] = user['school_id']
                 session['role'] = user['role']
+                session['id'] = user['id']
 
                 # Update active status
                 supabase.table('user').update({
                     'active': 'ACTIVE'
                 }).eq('school_id', school_id).execute()
+
+                # ✅ Log successful login
+                log_activity(user_id=user['id'],
+                             action="LOGIN",
+                             target=user['school_id'],
+                             table_name="user",
+                             query_type="UPDATE",
+                             new_data={"active": "ACTIVE"})
 
                 # Show redirecting message before dashboard
                 if user['role'] == 'admin':
@@ -690,13 +779,12 @@ def login():
                         'redirecting.html',
                         target=url_for('admin_dashboard'),
                         message="REDIRECTING to ADMIN DASHBOARD...")
-                elif user['role'] == 'SysAdmin':  # New condition for sysAdmin
+                elif user['role'] == 'SysAdmin':
                     return render_template(
                         'redirecting.html',
-                        target=url_for(
-                            'system_admin'),  # Make sure this route exists
+                        target=url_for('system_admin'),
                         message="REDIRECTING to SYSTEM ADMIN DASHBOARD...")
-                else:  # Default role (e.g., regular user)
+                else:
                     return render_template(
                         'redirecting.html',
                         target=url_for('dashboard'),
@@ -744,7 +832,16 @@ def reset_password(token):
             'reset_token_expiry':
             None
         }).eq('id', user['id']).execute()
-
+        # ✅ Add log
+        log_activity(user_id=user['id'],
+                     action="PASSWORD RESET (TOKEN)",
+                     target=user['email'],
+                     table_name="user",
+                     query_type="UPDATE",
+                     new_data={
+                         "reset_token": None,
+                         "reset_token_expiry": None
+                     })
         flash("Your password has been reset. Please log in.", "success")
         return redirect(url_for('login'))
 
@@ -835,6 +932,27 @@ def register():
             'id_photo_front': front_path,
             'id_photo_back': back_path
         }).execute()
+
+        log_activity(
+            user_id=school_id,  # Treat school_id as provisional identifier
+            action="USER REGISTRATION SUBMITTED",
+            target=email,
+            table_name="pending_users",
+            query_type="INSERT",
+            new_data={
+                'school_id': school_id,
+                'department': department,
+                'course': course,
+                'course_code': course_code,
+                'track': track,
+                'year_level': year_level,
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name,
+                'phone': phone,
+                'id_photo_front': front_path,
+                'id_photo_back': back_path
+            })
 
         # Send registration confirmation email
         send_registration_email(email, first_name)
@@ -1001,26 +1119,67 @@ def register_admin():
             'id_photo_back': 'N/A'
         }).execute()
 
+        log_activity(user_id=school_id,
+                     action="ADMIN REGISTRATION",
+                     target=email,
+                     table_name="user",
+                     query_type="INSERT",
+                     new_data={
+                         'school_id': school_id,
+                         'course': course,
+                         'email': email,
+                         'role': 'admin',
+                         'first_name': first_name,
+                         'last_name': last_name,
+                         'phone': fake_phone,
+                         'id_photo_front': 'N/A',
+                         'id_photo_back': 'N/A'
+                     })
+
         flash("Admin registered successfully!", "success")
         return redirect(url_for('register_admin'))
 
     return render_template('register_admin.html')
-
-
 @app.route('/logout')
 def logout():
     school_id = session.get('school_id')
     if school_id:
+        # Set user as offline
         supabase.table('user').update({
             'active': 'OFFLINE'
         }).eq('school_id', school_id).execute()
+
+        # Fetch user ID for logging
+        resp = supabase.table('user').select('id').eq('school_id', school_id).single().execute()
+        user = resp.data
+
+        if user:
+            log_activity(
+                user_id=user['id'],  # Correct: integer ID
+                action="LOGOUT",
+                target=school_id,
+                table_name="user",
+                query_type="UPDATE",
+                new_data={"active": "OFFLINE"}
+            )
+
     session.clear()
     return redirect(url_for('login'))
 
-
 @app.route('/system_admin')
 def system_admin():
-    return render_template('sysadmin.html')
+    log_resp = supabase.table('logs').select('*').order('timestamp', desc=True).execute()
+    logs = log_resp.data or []
+
+        # Attach user info to each log entry
+    for log in logs:
+        user_id = log.get('user_id')
+        if user_id:
+            user_resp = supabase.table('user').select('school_id, first_name, last_name, department, course, track').eq('id', user_id).single().execute()
+            log['user'] = user_resp.data if user_resp.data else {}
+        else:
+            log['user'] = {}
+        return render_template("system_admin.html", logs=logs)
 
 
 # --- FINAL FIXED ROUTE (Python) ---
@@ -1070,27 +1229,44 @@ def dashboard():
                                                 int(position_id)).execute()
                 if not vote_resp.data:
                     encrypted_candidate_id = encrypt_vote(str(candidate_id))
+
                     supabase.table('votes').insert({
-                        'student_id':
-                        school_id,
-                        'position_id':
-                        int(position_id),
-                        'candidate_id':
-                        encrypted_candidate_id,
-                        'candidate_ref':
-                        int(candidate_id),
-                        'department':
-                        user.get('department', user.get('course', ''))
+                        'student_id': school_id,
+                        'position_id': int(position_id),
+                        'candidate_id': encrypted_candidate_id,
+                        'candidate_ref': int(candidate_id),
+                        'department': user.get('department', user.get('course', ''))
                     }).execute()
-                    # Hash the student_id before adding to blockchain
-                    hashed_student_id = hashlib.sha256(
-                        school_id.encode()).hexdigest()
+
+                    # Add to blockchain
+                    hashed_student_id = hashlib.sha256(school_id.encode()).hexdigest()
                     vote_blockchain.add_block({
                         "student_id": hashed_student_id,
                         "position_id": int(position_id),
                         "candidate_id": encrypted_candidate_id,
                         "timestamp": str(time.time())
                     })
+
+                    # Log decrypted vote
+                    try:
+                        decrypted_candidate_id = decrypt_vote(encrypted_candidate_id)
+                    except Exception:
+                        decrypted_candidate_id = "DECRYPTION_FAILED"
+
+                    log_activity(
+                        user_id=user['id'],
+                        action="SUBMITTED VOTE",
+                        target=f"Position ID {position_id}",
+                        table_name="votes",
+                        query_type="INSERT",
+                        new_data={
+                            "student_id": school_id,
+                            "position_id": int(position_id),
+                            "candidate_id": decrypted_candidate_id,
+                            "department": user.get('department', user.get('course', ''))
+                        }
+                    )
+
         flash('Your vote has been submitted successfully!', 'success')
         return redirect(url_for('dashboard'))
 
@@ -1984,6 +2160,17 @@ def manage_settings():
                            admin_department=admin_department,
                            current_deadline=current_deadline,
                            message=message)
+
+
+@app.route('/get_logs')
+def get_logs():
+    try:
+        response = supabase.table('logs').select('*').order(
+            'timestamp', desc=True).limit(100).execute()
+        logs = response.data or []
+        return jsonify(logs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/pyinfo')
