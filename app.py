@@ -30,7 +30,8 @@ def log_activity(user_id,
                  table_name,
                  query_type,
                  new_data=None,
-                 old_data=None):
+                 old_data=None,
+                 user_meta=None):
     log_data = {
         "user_id": user_id,
         "action": action,
@@ -39,6 +40,7 @@ def log_activity(user_id,
         "query_type": query_type,
         "new_data": json.dumps(new_data) if new_data else None,
         "old_data": json.dumps(old_data) if old_data else None,
+        "user_meta": json.dumps(user_meta) if user_meta else None,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
@@ -771,7 +773,15 @@ def login():
                              target=user['school_id'],
                              table_name="user",
                              query_type="UPDATE",
-                             new_data={"active": "ACTIVE"})
+                             new_data={"active": "ACTIVE"},
+                             user_meta={
+                                 "school_id": user.get('school_id'),
+                                 "first_name": user.get('first_name'),
+                                 "last_name": user.get('last_name'),
+                                 "department": user.get('department'),
+                                 "course": user.get('course'),
+                                 "track": user.get('track')
+                             })
 
                 # Show redirecting message before dashboard
                 if user['role'] == 'admin':
@@ -1134,6 +1144,14 @@ def register_admin():
                          'phone': fake_phone,
                          'id_photo_front': 'N/A',
                          'id_photo_back': 'N/A'
+                     },
+                     user_meta={
+                         "school_id": school_id,
+                         "first_name": first_name,
+                         "last_name": last_name,
+                         "department": course,
+                         "course": course,
+                         "track": None
                      })
 
         flash("Admin registered successfully!", "success")
@@ -1160,7 +1178,15 @@ def logout():
                 target=school_id,
                 table_name="user",
                 query_type="UPDATE",
-                new_data={"active": "OFFLINE"}
+                new_data={"active": "OFFLINE"},
+                user_meta={
+                    "school_id": user.get('school_id'),
+                    "first_name": user.get('first_name'),
+                    "last_name": user.get('last_name'),
+                    "department": user.get('department'),
+                    "course": user.get('course'),
+                    "track": user.get('track')
+                }
             )
 
     session.clear()
@@ -1781,6 +1807,27 @@ def manage_poll():
                 'department': admin_department
             }).execute()
             message = "Position added successfully!"
+            
+            # Log position creation
+            log_activity(
+                user_id=admin['id'],
+                action="POSITION CREATED",
+                target=position_name,
+                table_name="positions",
+                query_type="INSERT",
+                new_data={
+                    'name': position_name,
+                    'department': admin_department
+                },
+                user_meta={
+                    "school_id": admin.get('school_id'),
+                    "first_name": admin.get('first_name'),
+                    "last_name": admin.get('last_name'),
+                    "department": admin.get('department'),
+                    "course": admin.get('course'),
+                    "track": admin.get('track')
+                }
+            )
 
     # Add candidate with all new fields
     if request.method == 'POST' and 'candidate_name' in request.form and 'position_id' in request.form:
@@ -1836,6 +1883,28 @@ def manage_poll():
                 'note': note
             }).execute()
             message = "Candidate added successfully!"
+            
+            # Log candidate creation
+            log_activity(
+                user_id=admin['id'],
+                action="CANDIDATE CREATED",
+                target=candidate_name,
+                table_name="candidates",
+                query_type="INSERT",
+                new_data={
+                    'position_id': int(position_id),
+                    'name': candidate_name,
+                    'department': admin_department
+                },
+                user_meta={
+                    "school_id": admin.get('school_id'),
+                    "first_name": admin.get('first_name'),
+                    "last_name": admin.get('last_name'),
+                    "department": admin.get('department'),
+                    "course": admin.get('course'),
+                    "track": admin.get('track')
+                }
+            )
 
     positions_resp = supabase.table('positions').select('*').eq(
         'department', admin_department).execute()
@@ -1919,6 +1988,31 @@ def manage_candidates():
             'note': note
         }).execute()
 
+        # Get admin info for logging
+        admin_data = supabase.table('user').select('*').eq('school_id', admin_school_id).single().execute().data
+        
+        # Log candidate creation
+        log_activity(
+            user_id=admin_data['id'],
+            action="CANDIDATE CREATED",
+            target=name,
+            table_name="candidates",
+            query_type="INSERT",
+            new_data={
+                'position_id': int(position_id),
+                'name': name,
+                'department': department
+            },
+            user_meta={
+                "school_id": admin_data.get('school_id'),
+                "first_name": admin_data.get('first_name'),
+                "last_name": admin_data.get('last_name'),
+                "department": admin_data.get('department'),
+                "course": admin_data.get('course'),
+                "track": admin_data.get('track')
+            }
+        )
+
         flash("Candidate added successfully!", "success")
         return redirect(url_for('manage_candidates'))
 
@@ -2000,6 +2094,33 @@ def edit_candidate(id):
             'slogan': slogan,
             'note': note
         }).eq('id', id).execute()
+        
+        # Get admin info for logging
+        admin_school_id = session.get('school_id')
+        admin_data = supabase.table('user').select('*').eq('school_id', admin_school_id).single().execute().data
+        
+        # Log candidate update
+        log_activity(
+            user_id=admin_data['id'],
+            action="CANDIDATE UPDATED",
+            target=name,
+            table_name="candidates",
+            query_type="UPDATE",
+            new_data={
+                'name': name,
+                'position_id': int(position_id),
+                'campaign_message': campaign_message
+            },
+            user_meta={
+                "school_id": admin_data.get('school_id'),
+                "first_name": admin_data.get('first_name'),
+                "last_name": admin_data.get('last_name'),
+                "department": admin_data.get('department'),
+                "course": admin_data.get('course'),
+                "track": admin_data.get('track')
+            }
+        )
+        
         flash("Candidate updated successfully!", "success")
         return redirect(url_for('manage_candidates'))
 
@@ -2022,6 +2143,32 @@ def delete_candidate(id):
             image_path = os.path.join('static', candidate['image'])
             if os.path.exists(image_path):
                 os.remove(image_path)
+        # Get admin info for logging
+        admin_school_id = session.get('school_id')
+        admin_data = supabase.table('user').select('*').eq('school_id', admin_school_id).single().execute().data
+        
+        # Log candidate deletion
+        log_activity(
+            user_id=admin_data['id'],
+            action="CANDIDATE DELETED",
+            target=candidate['name'],
+            table_name="candidates",
+            query_type="DELETE",
+            old_data={
+                'id': candidate['id'],
+                'name': candidate['name'],
+                'position_id': candidate['position_id']
+            },
+            user_meta={
+                "school_id": admin_data.get('school_id'),
+                "first_name": admin_data.get('first_name'),
+                "last_name": admin_data.get('last_name'),
+                "department": admin_data.get('department'),
+                "course": admin_data.get('course'),
+                "track": admin_data.get('track')
+            }
+        )
+        
         supabase.table('candidates').delete().eq('id', id).execute()
         flash("Candidate deleted successfully!", "success")
     else:
@@ -2089,6 +2236,31 @@ def approve_user(user_id):
     # Send approval email
     send_approval_email(user['email'], user.get('first_name', ''))
 
+    # Log user approval
+    log_activity(
+        user_id=user['school_id'],
+        action="USER APPROVED",
+        target=user['email'],
+        table_name="user",
+        query_type="INSERT",
+        new_data={
+            'school_id': user['school_id'],
+            'department': user.get('department', ''),
+            'course': user['course'],
+            'email': user['email'],
+            'first_name': user['first_name'],
+            'last_name': user['last_name']
+        },
+        user_meta={
+            "school_id": user['school_id'],
+            "first_name": user.get('first_name'),
+            "last_name": user.get('last_name'),
+            "department": user.get('department'),
+            "course": user.get('course'),
+            "track": user.get('track')
+        }
+    )
+
     supabase.table('pending_users').delete().eq('id', user_id).execute()
     return redirect(url_for('manage_students'))
 
@@ -2100,6 +2272,32 @@ def reject_user(user_id):
     if user:
         # Send rejection email
         send_rejection_email(user['email'], user.get('first_name', ''))
+        
+        # Log user rejection
+        log_activity(
+            user_id=user['school_id'],
+            action="USER REJECTED",
+            target=user['email'],
+            table_name="pending_users",
+            query_type="DELETE",
+            old_data={
+                'school_id': user['school_id'],
+                'department': user.get('department', ''),
+                'course': user['course'],
+                'email': user['email'],
+                'first_name': user['first_name'],
+                'last_name': user['last_name']
+            },
+            user_meta={
+                "school_id": user['school_id'],
+                "first_name": user.get('first_name'),
+                "last_name": user.get('last_name'),
+                "department": user.get('department'),
+                "course": user.get('course'),
+                "track": user.get('track')
+            }
+        )
+    
     supabase.table('pending_users').delete().eq('id', user_id).execute()
     return redirect(url_for('manage_students'))
 
@@ -2136,6 +2334,27 @@ def manage_settings():
                 }).execute()
                 current_deadline = dt
                 message = f"Voting deadline updated for {admin_department}!"
+                
+                # Log voting deadline update
+                log_activity(
+                    user_id=admin['id'],
+                    action="VOTING DEADLINE SET",
+                    target=admin_department,
+                    table_name="settings",
+                    query_type="INSERT",
+                    new_data={
+                        'department': admin_department,
+                        'voting_deadline': dt.isoformat()
+                    },
+                    user_meta={
+                        "school_id": admin.get('school_id'),
+                        "first_name": admin.get('first_name'),
+                        "last_name": admin.get('last_name'),
+                        "department": admin.get('department'),
+                        "course": admin.get('course'),
+                        "track": admin.get('track')
+                    }
+                )
             except Exception:
                 current_deadline = None
                 message = "Invalid date format."
