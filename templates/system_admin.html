@@ -30,6 +30,7 @@
       line-height: 1.6;
     }
 
+    /* Header and Navigation */
     .header {
       background-color: var(--primary-color);
       color: var(--text-color);
@@ -46,77 +47,26 @@
       font-weight: bold;
     }
 
-    .desktop-nav ul {
-      display: flex;
-      list-style: none;
-    }
-
-    .desktop-nav li {
-      position: relative;
-      margin-left: 1.5rem;
-    }
-
-    .desktop-nav a {
-      color: var(--text-color);
+    .nav-direct a {
+      background-color: #e74c3c;
+      color: white;
       text-decoration: none;
       padding: 0.5rem 1rem;
-      display: flex;
-      align-items: center;
-      transition: color 0.3s;
+      border-radius: 4px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
     }
 
-    .desktop-nav a:hover {
-      color: var(--accent-color);
+    .nav-direct a:hover {
+      background-color: #c0392b;
     }
 
-    .mobile-menu-btn {
-      display: none;
-      background: none;
-      border: none;
-      color: var(--text-color);
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-
-    .mobile-nav {
-      position: fixed;
-      top: 0;
-      left: -100%;
-      width: 80%;
-      max-width: 300px;
-      height: 100vh;
-      background-color: var(--primary-color);
-      padding: 2rem;
-      transition: left 0.3s;
-      z-index: 1000;
-      overflow-y: auto;
-    }
-
-    .mobile-nav.active {
-      left: 0;
-    }
-
-    .mobile-nav ul {
-      list-style: none;
-    }
-
-    .mobile-nav li {
-      margin-bottom: 1rem;
-    }
-
-    .mobile-nav a {
-      color: var(--text-color);
-      text-decoration: none;
-      display: block;
-      padding: 0.5rem 0;
-    }
-
+    /* Content Area */
     .content {
       padding: 2rem;
     }
 
     .card-grid {
-      outline: 1px solid red;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
       gap: 1.5rem;
@@ -124,7 +74,6 @@
 
     .card {
       background-color: var(--card-bg);
-      outline: 1px dashed purple;
       border-radius: 8px;
       box-shadow: var(--shadow);
       overflow: hidden;
@@ -154,6 +103,7 @@
       margin-bottom: 0.5rem;
     }
 
+    /* Form Container */
     .form-container {
       padding: 1rem;
     }
@@ -192,29 +142,40 @@
       background-color: #2980b9;
     }
 
+    /* Responsive Layout */
     @media (max-width: 992px) {
-      .desktop-nav {
-        display: none;
+      .card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
       }
 
-      .mobile-menu-btn {
-        display: block;
+      .nav-direct a {
+        font-size: 0.95rem;
+        padding: 0.5rem 0.75rem;
       }
     }
 
     @media (max-width: 768px) {
-      .card-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      }
-    }
-
-    @media (max-width: 576px) {
       .content {
         padding: 1rem;
       }
 
       .card-grid {
         grid-template-columns: 1fr;
+      }
+
+      .logo {
+        font-size: 1.3rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .nav-direct a {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.9rem;
+      }
+
+      .card-content {
+        padding: 0.75rem;
       }
     }
   </style>
@@ -224,19 +185,13 @@
 <body>
   <header class="header">
     <div class="logo">System Admin</div>
-    <nav class="desktop-nav">
+
+    <nav class="nav-direct">
       <a href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
     </nav>
-    <button class="mobile-menu-btn">
-      <i class="fas fa-bars"></i>
-    </button>
-    <nav class="mobile-nav">
-      <ul>
-        <li><a href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
-        </li>
-      </ul>
-    </nav>
   </header>
+
+
 
   <main class="content">
     <div class="card-grid">
@@ -293,58 +248,94 @@
           <h3>User Activity Logs</h3>
         </div>
         <div class="card-content">
-          <div class="log-card"
-            style="background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; max-height: 400px; overflow-y: auto; font-family: 'Segoe UI', sans-serif;">
-            <h2 style="margin-top: 0; font-size: 20px; color: #333;">📝 User Activity Details</h2>
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-              <thead>
-                <tr style="background-color: #f4f4f4;">
-                  <th style="padding: 8px;">Timestamp</th>
-                  <th style="padding: 8px;">School ID</th>
-                  <th style="padding: 8px;">Name</th>
-                  <th style="padding: 8px;">Department</th>
-                  <th style="padding: 8px;">Course</th>
-                  <th style="padding: 8px;">Track</th>
-                  <th style="padding: 8px;">Action</th>
-                  <th style="padding: 8px;">Target</th>
-                  <th style="padding: 8px;">Table</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for log in logs %}
-                <tr>
-                  <td style="padding: 6px;">{{ log.timestamp }}</td>
-                  <td style="padding: 6px;">{{ log.user['school_id'] if log.user and 'school_id' in log.user else 'N/A' }}</td>
-                  <td style="padding: 6px;">
-                    {{ log.user['first_name'] if log.user and 'first_name' in log.user else 'N/A' }}
-                    {{ log.user['last_name'] if log.user and 'last_name' in log.user else '' }}
-                  </td>
-                  <td style="padding: 6px;">{{ log.user['department'] if log.user and 'department' in log.user else 'N/A' }}</td>
-                  <td style="padding: 6px;">{{ log.user['course'] if log.user and 'course' in log.user else 'N/A' }}</td>
-                  <td style="padding: 6px;">{{ log.user['track'] if log.user and 'track' in log.user else 'N/A' }}</td>
-                  <td style="padding: 6px;">{{ log.action }}</td>
-                  <td style="padding: 6px;">{{ log.target }}</td>
-                  <td style="padding: 6px;">{{ log.table_name }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+          <div class="log-controls"
+            style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <button id="loadBtn" onclick="loadLogs()"
+              style="background-color:#3498db; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
+              Load Logs
+            </button>
+
+            <button id="reloadBtn" onclick="reloadLogs()"
+              style="display:none; background-color:#27ae60; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
+              Reload Logs
+            </button>
+
+            <button id="endBtn" onclick="endLogs()"
+              style="display:none; background-color:#e74c3c; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
+              End View
+            </button>
+
+            <select id="sortOrder" onchange="filterLogs()"
+              style="padding:8px; border:1px solid #ccc; border-radius:5px;">
+              <option value="desc">Sort: Newest First</option>
+              <option value="asc">Sort: Oldest First</option>
+            </select>
+
+            <input type="text" id="logSearch" placeholder="Search by School ID, Name, or Role" oninput="filterLogs()"
+              style="flex-grow:1; padding:8px; border:1px solid #ccc; border-radius:5px; min-width:200px;">
+          </div>
+
+
+          <div id="logTerminal"
+            style="display:none; background:#000; color:#fff; font-family:monospace; padding:5px; margin-top:5px; border-radius:8px; max-height:300px; overflow-y:auto; white-space:pre-wrap; -ms-overflow-style: none; scrollbar-width: none;">
+
+            <div id="logOutput">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VOTE TALLY TERMINAL VIEW -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Vote Tally (Terminal View)</h3>
+        </div>
+        <div class="card-content">
+          <div class="log-controls"
+            style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 15px;">
+
+            <button id="startTallyBtn" onclick="loadTally()"
+              style="background-color:#3498db; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
+              Start
+            </button>
+
+            <button id="reloadTallyBtn" onclick="reloadTally()"
+              style="display:none; background-color:#27ae60; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
+              Reload
+            </button>
+
+            <button id="endTallyBtn" onclick="endTally()"
+              style="display:none; background-color:#e74c3c; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
+              End View
+            </button>
+
+            <input type="text" id="tallySearch" placeholder="Search by position, dept, candidate..."
+              oninput="filterTally()"
+              style="flex-grow:1; padding:8px; border:1px solid #ccc; border-radius:5px; min-width:200px;">
+
+            <button onclick="exportTally('txt')"
+              style="background-color:#8e44ad; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
+              Export TXT
+            </button>
+
+            <button onclick="exportTally('json')"
+              style="background-color:#f39c12; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
+              Export JSON
+            </button>
+          </div>
+
+          <div id="tallyTerminal"
+            style="display:none; background:#000; color:#fff; font-family:monospace; padding:5px; margin-top:5px; border-radius:8px; max-height:300px; overflow-y:auto; white-space:pre-wrap; scrollbar-width: none;">
+            <div id="tallyOutput">Vote tally not loaded.</div>
           </div>
         </div>
       </div>
 
 
 
-      <div class="card">
-        <div class="card-header">
-          <h3>Recent Alerts</h3>
-        </div>
-        <div class="card-content">
-          <p>No critical alerts</p>
-          <p>2 warnings</p>
-          <p>5 notifications</p>
-        </div>
-      </div>
+
+
+
+
     </div>
   </main>
 
@@ -367,25 +358,232 @@
 
   </script>
   <script>
-    fetch('/get_logs')  // adjust to your route
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.getElementById('logTableBody');
-        tbody.innerHTML = "";
-        data.forEach(log => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td style="padding: 8px;">${log.timestamp}</td>
-            <td style="padding: 8px;">${log.user_id}</td>
-            <td style="padding: 8px;">${log.action}</td>
-            <td style="padding: 8px;">${log.target}</td>
-            <td style="padding: 8px;">${log.table_name}</td>
-          `;
-          tbody.appendChild(row);
+    let allLogs = [];
+
+    function loadLogs() {
+      const terminal = document.getElementById("logTerminal");
+      const output = document.getElementById("logOutput");
+      const loadBtn = document.getElementById("loadBtn");
+      const reloadBtn = document.getElementById("reloadBtn");
+      const endBtn = document.getElementById("endBtn");
+
+      terminal.style.display = "block";
+      output.textContent = "Loading logs...";
+
+      fetch('/get_data_logs')
+        .then(res => res.json())
+        .then(data => {
+          allLogs = sortLogs(data);
+          filterLogs();
+
+          loadBtn.style.display = "none";
+          reloadBtn.style.display = "inline-block";
+          endBtn.style.display = "inline-block";
+        })
+        .catch(() => {
+          output.textContent = "Error loading logs.";
         });
+    }
+
+    function reloadLogs() {
+      const output = document.getElementById("logOutput");
+      output.textContent = "Reloading logs...";
+
+      fetch('/get_data_logs')
+        .then(res => res.json())
+        .then(data => {
+          allLogs = sortLogs(data);
+          filterLogs();
+        })
+        .catch(() => {
+          output.textContent = "Error reloading logs.";
+        });
+    }
+
+    function endLogs() {
+      const terminal = document.getElementById("logTerminal");
+      const output = document.getElementById("logOutput");
+      const loadBtn = document.getElementById("loadBtn");
+      const reloadBtn = document.getElementById("reloadBtn");
+      const endBtn = document.getElementById("endBtn");
+
+      terminal.style.display = "block";
+      output.textContent = "Log viewing ended.";
+
+      loadBtn.style.display = "inline-block";
+      reloadBtn.style.display = "none";
+      endBtn.style.display = "none";
+      allLogs = [];
+    }
+
+    function filterLogs() {
+      const output = document.getElementById("logOutput");
+      const search = document.getElementById("logSearch").value.toLowerCase();
+      const filtered = allLogs.filter(log => {
+        const sid = (log.school_id || "").toLowerCase();
+        const name = `${log.first_name || ""} ${log.last_name || ""}`.toLowerCase();
+        const role = (log.role || "").toLowerCase();
+        return sid.includes(search) || name.includes(search) || role.includes(search);
       });
+
+      const rendered = filtered.map(log => {
+        return `[${log.timestamp}]
+    USER: ${log.school_id || 'N/A'} | ${log.first_name || 'N/A'} ${log.last_name || ''} | ${log.course || 'N/A'} | ${log.year_level || 'N/A'}
+    → ACTION: ${log.action || 'N/A'} on ${log.table_name || 'N/A'} (${log.query_type || 'N/A'})
+    → TARGET: ${log.target || 'N/A'}
+    → NEW: ${log.new_data || 'N/A'}\n`;
+      }).join("\n");
+
+      output.textContent = rendered || "No matching logs found.";
+    }
+
+    function sortLogs(logs) {
+      const sortOrder = document.getElementById("sortOrder").value;
+      return logs.sort((a, b) => {
+        const aTime = new Date(a.timestamp);
+        const bTime = new Date(b.timestamp);
+        return sortOrder === 'asc' ? aTime - bTime : bTime - aTime;
+      });
+    }
+  </script>
+  <script>
+    let allTallyData = [];
+    let currentTallyRender = "";
+
+    function loadTally() {
+      const term = document.getElementById("tallyTerminal");
+      const out = document.getElementById("tallyOutput");
+      const start = document.getElementById("startTallyBtn");
+      const reload = document.getElementById("reloadTallyBtn");
+      const end = document.getElementById("endTallyBtn");
+
+      term.style.display = "block";
+      out.textContent = "Fetching vote tally data...";
+
+      fetch("/fetch_candidates")
+        .then(res => res.json())
+        .then(async data => {
+          allTallyData = [];
+
+          for (const block of data) {
+            for (const candidate of block.candidates) {
+              const breakdown = await fetch(`/vote_breakdown/${candidate.id}`).then(r => r.json()).catch(() => null);
+              allTallyData.push({
+                candidate,
+                position: block.position.name,
+                department: block.position.department || 'N/A',
+                breakdown
+              });
+            }
+          }
+
+          start.style.display = "none";
+          reload.style.display = "inline-block";
+          end.style.display = "inline-block";
+
+          filterTally();
+        })
+        .catch(() => {
+          out.textContent = "Error loading tally.";
+        });
+    }
+
+    function reloadTally() {
+      document.getElementById("tallyOutput").textContent = "Reloading tally...";
+      loadTally();
+    }
+
+    function endTally() {
+      document.getElementById("tallyTerminal").style.display = "block";
+      document.getElementById("tallyOutput").textContent = "Tally viewing ended.";
+
+      document.getElementById("startTallyBtn").style.display = "inline-block";
+      document.getElementById("reloadTallyBtn").style.display = "none";
+      document.getElementById("endTallyBtn").style.display = "none";
+
+      allTallyData = [];
+      currentTallyRender = "";
+    }
+
+    function filterTally() {
+      const query = document.getElementById("tallySearch").value.toLowerCase().trim();
+      const out = document.getElementById("tallyOutput");
+
+      const terms = query.split(/\s+/);
+      const matches = allTallyData.filter(entry => {
+        const str = `${entry.candidate.name} ${entry.position} ${entry.department}`.toLowerCase();
+        return terms.every(term => str.includes(term));
+      });
+
+      const rendered = matches.map(entry => {
+        const {candidate, position, department, breakdown} = entry;
+        let line = `[${position.toUpperCase()} - ${department.toUpperCase()}]\n  → ${candidate.name}: ${candidate.vote_count} vote${candidate.vote_count !== 1 ? 's' : ''}`;
+
+        if (!breakdown || !breakdown.nested) {
+          line += `\n     ↳ No breakdown available`;
+          return line;
+        }
+
+        for (const year in breakdown.nested) {
+          line += `\n     • Year: ${year}`;
+          for (const dept in breakdown.nested[year]) {
+            line += `\n       Dept: ${dept}`;
+            for (const course in breakdown.nested[year][dept]) {
+              line += `\n         Course: ${course}`;
+              for (const track in breakdown.nested[year][dept][course]) {
+                const votes = breakdown.nested[year][dept][course][track];
+                line += `\n           → ${track}: ${votes}`;
+              }
+            }
+          }
+        }
+
+        line += `\n     ↳ Total: ${breakdown.total_votes} votes`;
+        return line;
+      });
+
+      currentTallyRender = rendered.join("\n\n");
+      out.textContent = currentTallyRender || "No matching candidates.";
+    }
+
+    function exportTally(type) {
+      if (!currentTallyRender) {
+        alert("No data to export. Load and filter first.");
+        return;
+      }
+
+      let blob, filename;
+
+      if (type === 'txt') {
+        blob = new Blob([currentTallyRender], {type: "text/plain"});
+        filename = "vote_tally.txt";
+      } else if (type === 'json') {
+        const jsonExport = allTallyData.map(e => ({
+          candidate: e.candidate.name,
+          position: e.position,
+          department: e.department,
+          votes: e.candidate.vote_count,
+          breakdown: e.breakdown.nested || {},
+          total_votes: e.breakdown.total_votes || 0
+        }));
+        blob = new Blob([JSON.stringify(jsonExport, null, 2)], {type: "application/json"});
+        filename = "vote_tally.json";
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   </script>
 
+  <script>
+    function toggleNav() {
+      document.getElementById('navMenu').classList.toggle('show');
+    }
+  </script>
 </body>
 
 </html>

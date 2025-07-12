@@ -23,37 +23,6 @@ from flask import jsonify
 PH_TZ = timezone(timedelta(hours=8))
 
 
-# Place this ONCE in your app
-def log_activity(user_id,
-                 action,
-                 target,
-                 table_name,
-                 query_type,
-                 new_data=None,
-                 old_data=None,
-                 user_meta=None):
-    log_data = {
-        "user_id": user_id,
-        "action": action,
-        "target": target,
-        "table_name": table_name,
-        "query_type": query_type,
-        "new_data": json.dumps(new_data) if new_data else None,
-        "old_data": json.dumps(old_data) if old_data else None,
-        "user_meta": json.dumps(user_meta) if user_meta else None,
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
-
-    try:
-        result = supabase.table("logs").insert([log_data]).execute()
-        print(f"[LOGGING ✅] Action: {action} | Target: {target}")
-    except Exception as e:
-        print(f"[LOGGING ❌] Failed to insert log entry.")
-        print(f"  ➤ Action: {action}")
-        print(f"  ➤ Target: {target}")
-        print(f"  ➤ Error: {getattr(e, 'message', str(e))}")
-
-
 class Block:
 
     def __init__(self, index, timestamp, data, previous_hash):
@@ -531,16 +500,6 @@ def forgot_password():
             'reset_otp_expiry': expiry.isoformat()
         }).eq('id', user['id']).execute()
 
-        log_activity(user_id=user['id'],
-                     action="GENERATED OTP",
-                     target=user['email'],
-                     table_name="user",
-                     query_type="UPDATE",
-                     new_data={
-                         "reset_otp": otp,
-                         "reset_otp_expiry": expiry.isoformat()
-                     })
-
         send_otp_email(email, otp)
         flash("An OTP has been sent to your email.", "info")
         return redirect(url_for('verify_otp', email=email))
@@ -570,13 +529,7 @@ def verify_otp():
         if otp != user['reset_otp']:
             flash("Incorrect OTP. Please try again.", "danger")
             return render_template('verify_otp.html', email=email)
-        log_activity(
-            user_id=user['id'],
-            action="VERIFIED OTP",
-            target=user['email'],
-            table_name="user",
-            query_type="VERIFY",  # Custom label, not UPDATE/INSERT/DELETE
-            new_data={"verified_otp": otp})
+
         # OTP is correct
         return redirect(url_for('reset_password_otp', email=email))
     return render_template('verify_otp.html', email=email)
@@ -605,17 +558,6 @@ def resend_otp():
         'reset_otp': otp,
         'reset_otp_expiry': expiry.isoformat()
     }).eq('id', user['id']).execute()
-
-    # ✅ Log the resend
-    log_activity(user_id=user['id'],
-                 action="RESENT OTP",
-                 target=user['email'],
-                 table_name="user",
-                 query_type="UPDATE",
-                 new_data={
-                     "reset_otp": otp,
-                     "reset_otp_expiry": expiry.isoformat()
-                 })
 
     # ✅ Send the OTP email
     send_otp_email(email, otp)
@@ -662,14 +604,6 @@ def reset_password_otp():
         }
         supabase.table('user').update(update_data).eq('id',
                                                       user['id']).execute()
-
-        # Log the password reset
-        log_activity(user_id=user['id'],
-                     action="RESET PASSWORD",
-                     target=email,
-                     table_name="user",
-                     query_type="UPDATE",
-                     new_data={"password_hash": "[HASHED]"})
 
         flash("Your password has been reset. Please log in.", "success")
         return redirect(url_for('login'))
@@ -767,23 +701,25 @@ def login():
                     'active': 'ACTIVE'
                 }).eq('school_id', school_id).execute()
 
-                # ✅ Log successful login
-                log_activity(user_id=user['id'],
-                             action="LOGIN",
-                             target=user['school_id'],
-                             table_name="user",
-                             query_type="UPDATE",
-                             new_data={"active": "ACTIVE"},
-                             user_meta={
-                                 "school_id": user.get('school_id'),
-                                 "first_name": user.get('first_name'),
-                                 "last_name": user.get('last_name'),
-                                 "department": user.get('department'),
-                                 "course": user.get('course'),
-                                 "track": user.get('track')
-                             })
+                # Log the login action
+                supabase.table('logs').insert({
+                    'user_id':
+                    user['id'],
+                    'action':
+                    'LOGIN_SUCCESS',
+                    'table_name':
+                    'user',
+                    'query_type':
+                    'SYSTEM',
+                    'target':
+                    f'Login from IP {request.remote_addr} with role {user["role"]}',
+                    'new_data':
+                    'active=ACTIVE',
+                    'timestamp':
+                    datetime.now().isoformat()
+                }).execute()
 
-                # Show redirecting message before dashboard
+                # Redirect based on role
                 if user['role'] == 'admin':
                     return render_template(
                         'redirecting.html',
@@ -842,16 +778,7 @@ def reset_password(token):
             'reset_token_expiry':
             None
         }).eq('id', user['id']).execute()
-        # ✅ Add log
-        log_activity(user_id=user['id'],
-                     action="PASSWORD RESET (TOKEN)",
-                     target=user['email'],
-                     table_name="user",
-                     query_type="UPDATE",
-                     new_data={
-                         "reset_token": None,
-                         "reset_token_expiry": None
-                     })
+
         flash("Your password has been reset. Please log in.", "success")
         return redirect(url_for('login'))
 
@@ -942,27 +869,6 @@ def register():
             'id_photo_front': front_path,
             'id_photo_back': back_path
         }).execute()
-
-        log_activity(
-            user_id=school_id,  # Treat school_id as provisional identifier
-            action="USER REGISTRATION SUBMITTED",
-            target=email,
-            table_name="pending_users",
-            query_type="INSERT",
-            new_data={
-                'school_id': school_id,
-                'department': department,
-                'course': course,
-                'course_code': course_code,
-                'track': track,
-                'year_level': year_level,
-                'email': email,
-                'first_name': first_name,
-                'last_name': last_name,
-                'phone': phone,
-                'id_photo_front': front_path,
-                'id_photo_back': back_path
-            })
 
         # Send registration confirmation email
         send_registration_email(email, first_name)
@@ -1129,83 +1035,84 @@ def register_admin():
             'id_photo_back': 'N/A'
         }).execute()
 
-        log_activity(user_id=school_id,
-                     action="ADMIN REGISTRATION",
-                     target=email,
-                     table_name="user",
-                     query_type="INSERT",
-                     new_data={
-                         'school_id': school_id,
-                         'course': course,
-                         'email': email,
-                         'role': 'admin',
-                         'first_name': first_name,
-                         'last_name': last_name,
-                         'phone': fake_phone,
-                         'id_photo_front': 'N/A',
-                         'id_photo_back': 'N/A'
-                     },
-                     user_meta={
-                         "school_id": school_id,
-                         "first_name": first_name,
-                         "last_name": last_name,
-                         "department": course,
-                         "course": course,
-                         "track": None
-                     })
-
         flash("Admin registered successfully!", "success")
         return redirect(url_for('register_admin'))
 
     return render_template('register_admin.html')
+
+
 @app.route('/logout')
 def logout():
     school_id = session.get('school_id')
+
     if school_id:
-        # Set user as offline
+        # Set user as OFFLINE in database
         supabase.table('user').update({
             'active': 'OFFLINE'
         }).eq('school_id', school_id).execute()
 
         # Fetch user ID for logging
-        resp = supabase.table('user').select('id').eq('school_id', school_id).single().execute()
+        resp = supabase.table('user').select('id').eq(
+            'school_id', school_id).single().execute()
         user = resp.data
 
         if user:
-            log_activity(
-                user_id=user['id'],  # Correct: integer ID
-                action="LOGOUT",
-                target=school_id,
-                table_name="user",
-                query_type="UPDATE",
-                new_data={"active": "OFFLINE"},
-                user_meta={
-                    "school_id": user.get('school_id'),
-                    "first_name": user.get('first_name'),
-                    "last_name": user.get('last_name'),
-                    "department": user.get('department'),
-                    "course": user.get('course'),
-                    "track": user.get('track')
-                }
-            )
+            supabase.table('logs').insert({
+                'user_id':
+                user['id'],
+                'action':
+                'LOGOUT',
+                'target':
+                f'Logout from IP {request.remote_addr}',
+                'table_name':
+                'user',
+                'query_type':
+                'UPDATE',
+                'new_data':
+                'active=OFFLINE',
+                'timestamp':
+                datetime.now().isoformat()
+            }).execute()
 
     session.clear()
     return redirect(url_for('login'))
 
+
 @app.route('/system_admin')
 def system_admin():
-    log_resp = supabase.table('logs').select('*').order('timestamp', desc=True).execute()
-    logs = log_resp.data or []
+    print("Session role:", session.get('role'))  # Debug only
 
-        # Attach user info to each log entry
-    for log in logs:
-        user_id = log.get('user_id')
-        if user_id:
-            user_resp = supabase.table('user').select('school_id, first_name, last_name, department, course, track').eq('id', user_id).single().execute()
-            log['user'] = user_resp.data if user_resp.data else {}
-        else:
-            log['user'] = {}
-        return render_template("system_admin.html", logs=logs)
+    if session.get('role') != 'SysAdmin':
+        return redirect(url_for('login'))
+
+    return render_template("system_admin.html")
+
+
+@app.route('/get_data_logs')
+def get_data_logs():
+    if session.get("role") != "SysAdmin":
+        return jsonify([])
+
+    logs_data = supabase.table("logs").select("*").order(
+        "timestamp", desc=True).execute().data
+    users_data = supabase.table("user").select(
+        "id, school_id, first_name, last_name, department, course, track, year_level"
+    ).execute().data
+
+    user_map = {u["id"]: u for u in users_data}
+    for log in logs_data:
+        user = user_map.get(log["user_id"], {})
+        log.update({
+            "school_id": user.get("school_id", "N/A"),
+            "first_name": user.get("first_name", "N/A"),
+            "last_name": user.get("last_name", "N/A"),
+            "department": user.get("department", "N/A"),
+            "course": user.get("course", "N/A"),
+            "track": user.get("track", "N/A"),
+            "year_level": user.get("year_level", "N/A"),
+        })
+
+    return jsonify(logs_data)
 
 
 # --- FINAL FIXED ROUTE (Python) ---
@@ -1257,41 +1164,27 @@ def dashboard():
                     encrypted_candidate_id = encrypt_vote(str(candidate_id))
 
                     supabase.table('votes').insert({
-                        'student_id': school_id,
-                        'position_id': int(position_id),
-                        'candidate_id': encrypted_candidate_id,
-                        'candidate_ref': int(candidate_id),
-                        'department': user.get('department', user.get('course', ''))
+                        'student_id':
+                        school_id,
+                        'position_id':
+                        int(position_id),
+                        'candidate_id':
+                        encrypted_candidate_id,
+                        'candidate_ref':
+                        int(candidate_id),
+                        'department':
+                        user.get('department', user.get('course', ''))
                     }).execute()
 
                     # Add to blockchain
-                    hashed_student_id = hashlib.sha256(school_id.encode()).hexdigest()
+                    hashed_student_id = hashlib.sha256(
+                        school_id.encode()).hexdigest()
                     vote_blockchain.add_block({
                         "student_id": hashed_student_id,
                         "position_id": int(position_id),
                         "candidate_id": encrypted_candidate_id,
                         "timestamp": str(time.time())
                     })
-
-                    # Log decrypted vote
-                    try:
-                        decrypted_candidate_id = decrypt_vote(encrypted_candidate_id)
-                    except Exception:
-                        decrypted_candidate_id = "DECRYPTION_FAILED"
-
-                    log_activity(
-                        user_id=user['id'],
-                        action="SUBMITTED VOTE",
-                        target=f"Position ID {position_id}",
-                        table_name="votes",
-                        query_type="INSERT",
-                        new_data={
-                            "student_id": school_id,
-                            "position_id": int(position_id),
-                            "candidate_id": decrypted_candidate_id,
-                            "department": user.get('department', user.get('course', ''))
-                        }
-                    )
 
         flash('Your vote has been submitted successfully!', 'success')
         return redirect(url_for('dashboard'))
@@ -1386,19 +1279,21 @@ def admin_dashboard():
                            admin=admin,
                            active_users=active_users)
 
-
 @app.route('/fetch_candidates')
 def fetch_candidates():
-    if 'school_id' not in session or session.get('role') != 'admin':
+    if 'school_id' not in session or session.get('role') not in ['admin', 'SysAdmin']:
         return jsonify({'error': 'unauthorized'}), 403
 
+    role = session['role']
     school_id = session['school_id']
-    admin = supabase.table('user').select('*').eq(
-        'school_id', school_id).single().execute().data
-    department = admin.get('department', admin.get('course', ''))
+    user = supabase.table('user').select('*').eq('school_id', school_id).single().execute().data
 
-    positions = supabase.table('positions').select('*').eq(
-        'department', department).order('name').execute().data or []
+    if role == 'admin':
+        department = user.get('department', user.get('course', ''))
+        positions = supabase.table('positions').select('*').eq(
+            'department', department).order('name').execute().data or []
+    else:  # SysAdmin: unrestricted
+        positions = supabase.table('positions').select('*').order('name').execute().data or []
 
     result = []
     for pos in positions:
@@ -1406,7 +1301,7 @@ def fetch_candidates():
             'position_id', pos['id']).execute().data or []
         for cand in cands:
             cid = cand['id']
-            votes = supabase.table('votes').select('id')\
+            votes = supabase.table('votes').select('id') \
                 .eq('candidate_ref', int(cid)).execute().data
             cand['vote_count'] = len(votes)
         result.append({'position': pos, 'candidates': cands})
@@ -1416,17 +1311,25 @@ def fetch_candidates():
 
 @app.route('/vote_breakdown/<candidate_id>')
 def vote_breakdown(candidate_id):
+    if 'school_id' not in session or session.get('role') not in ['admin', 'SysAdmin']:
+        return jsonify({'error': 'unauthorized'}), 403
+
+    role = session['role']
+    school_id = session['school_id']
+    user = supabase.table('user').select('*').eq('school_id', school_id).single().execute().data
+    department = user.get('department', user.get('course', ''))
+
     vote_records = supabase.table('votes') \
         .select('student_id') \
         .eq('candidate_ref', int(candidate_id)) \
         .execute().data
 
-    student_ids = [v['student_id'] for v in vote_records]
+    student_ids = [v['student_id'] for v in vote_records if v.get('student_id')]
     if not student_ids:
         return jsonify([])
 
     users = supabase.table('user') \
-        .select('year_level, department, course, track') \
+        .select('year_level, department, course, track, school_id') \
         .in_('school_id', student_ids) \
         .execute().data
 
@@ -1434,14 +1337,16 @@ def vote_breakdown(candidate_id):
     total = 0
 
     for u in users:
+        if role == 'admin' and u.get('department') != department:
+            continue  # filter out votes outside admin’s department
+
         y = u['year_level']
         d = u['department']
         c = u['course']
         t = u['track']
         if not all([y, d, c, t]):
             continue
-        breakdown.setdefault(y, {}).setdefault(d, {}).setdefault(
-            c, {}).setdefault(t, 0)
+        breakdown.setdefault(y, {}).setdefault(d, {}).setdefault(c, {}).setdefault(t, 0)
         breakdown[y][d][c][t] += 1
         total += 1
 
@@ -1450,7 +1355,7 @@ def vote_breakdown(candidate_id):
 
 @app.route('/vote_tally')
 def vote_tally():
-    if 'school_id' not in session or session.get('role') != 'admin':
+    if 'school_id' not in session or session.get('role') != 'SysAdmin':
         flash("You must be an admin to view the vote tally.", "danger")
         return redirect(url_for('login'))
 
@@ -1807,27 +1712,6 @@ def manage_poll():
                 'department': admin_department
             }).execute()
             message = "Position added successfully!"
-            
-            # Log position creation
-            log_activity(
-                user_id=admin['id'],
-                action="POSITION CREATED",
-                target=position_name,
-                table_name="positions",
-                query_type="INSERT",
-                new_data={
-                    'name': position_name,
-                    'department': admin_department
-                },
-                user_meta={
-                    "school_id": admin.get('school_id'),
-                    "first_name": admin.get('first_name'),
-                    "last_name": admin.get('last_name'),
-                    "department": admin.get('department'),
-                    "course": admin.get('course'),
-                    "track": admin.get('track')
-                }
-            )
 
     # Add candidate with all new fields
     if request.method == 'POST' and 'candidate_name' in request.form and 'position_id' in request.form:
@@ -1883,28 +1767,6 @@ def manage_poll():
                 'note': note
             }).execute()
             message = "Candidate added successfully!"
-            
-            # Log candidate creation
-            log_activity(
-                user_id=admin['id'],
-                action="CANDIDATE CREATED",
-                target=candidate_name,
-                table_name="candidates",
-                query_type="INSERT",
-                new_data={
-                    'position_id': int(position_id),
-                    'name': candidate_name,
-                    'department': admin_department
-                },
-                user_meta={
-                    "school_id": admin.get('school_id'),
-                    "first_name": admin.get('first_name'),
-                    "last_name": admin.get('last_name'),
-                    "department": admin.get('department'),
-                    "course": admin.get('course'),
-                    "track": admin.get('track')
-                }
-            )
 
     positions_resp = supabase.table('positions').select('*').eq(
         'department', admin_department).execute()
@@ -1988,31 +1850,6 @@ def manage_candidates():
             'note': note
         }).execute()
 
-        # Get admin info for logging
-        admin_data = supabase.table('user').select('*').eq('school_id', admin_school_id).single().execute().data
-        
-        # Log candidate creation
-        log_activity(
-            user_id=admin_data['id'],
-            action="CANDIDATE CREATED",
-            target=name,
-            table_name="candidates",
-            query_type="INSERT",
-            new_data={
-                'position_id': int(position_id),
-                'name': name,
-                'department': department
-            },
-            user_meta={
-                "school_id": admin_data.get('school_id'),
-                "first_name": admin_data.get('first_name'),
-                "last_name": admin_data.get('last_name'),
-                "department": admin_data.get('department'),
-                "course": admin_data.get('course'),
-                "track": admin_data.get('track')
-            }
-        )
-
         flash("Candidate added successfully!", "success")
         return redirect(url_for('manage_candidates'))
 
@@ -2094,33 +1931,6 @@ def edit_candidate(id):
             'slogan': slogan,
             'note': note
         }).eq('id', id).execute()
-        
-        # Get admin info for logging
-        admin_school_id = session.get('school_id')
-        admin_data = supabase.table('user').select('*').eq('school_id', admin_school_id).single().execute().data
-        
-        # Log candidate update
-        log_activity(
-            user_id=admin_data['id'],
-            action="CANDIDATE UPDATED",
-            target=name,
-            table_name="candidates",
-            query_type="UPDATE",
-            new_data={
-                'name': name,
-                'position_id': int(position_id),
-                'campaign_message': campaign_message
-            },
-            user_meta={
-                "school_id": admin_data.get('school_id'),
-                "first_name": admin_data.get('first_name'),
-                "last_name": admin_data.get('last_name'),
-                "department": admin_data.get('department'),
-                "course": admin_data.get('course'),
-                "track": admin_data.get('track')
-            }
-        )
-        
         flash("Candidate updated successfully!", "success")
         return redirect(url_for('manage_candidates'))
 
@@ -2143,32 +1953,6 @@ def delete_candidate(id):
             image_path = os.path.join('static', candidate['image'])
             if os.path.exists(image_path):
                 os.remove(image_path)
-        # Get admin info for logging
-        admin_school_id = session.get('school_id')
-        admin_data = supabase.table('user').select('*').eq('school_id', admin_school_id).single().execute().data
-        
-        # Log candidate deletion
-        log_activity(
-            user_id=admin_data['id'],
-            action="CANDIDATE DELETED",
-            target=candidate['name'],
-            table_name="candidates",
-            query_type="DELETE",
-            old_data={
-                'id': candidate['id'],
-                'name': candidate['name'],
-                'position_id': candidate['position_id']
-            },
-            user_meta={
-                "school_id": admin_data.get('school_id'),
-                "first_name": admin_data.get('first_name'),
-                "last_name": admin_data.get('last_name'),
-                "department": admin_data.get('department'),
-                "course": admin_data.get('course'),
-                "track": admin_data.get('track')
-            }
-        )
-        
         supabase.table('candidates').delete().eq('id', id).execute()
         flash("Candidate deleted successfully!", "success")
     else:
@@ -2236,31 +2020,6 @@ def approve_user(user_id):
     # Send approval email
     send_approval_email(user['email'], user.get('first_name', ''))
 
-    # Log user approval
-    log_activity(
-        user_id=user['school_id'],
-        action="USER APPROVED",
-        target=user['email'],
-        table_name="user",
-        query_type="INSERT",
-        new_data={
-            'school_id': user['school_id'],
-            'department': user.get('department', ''),
-            'course': user['course'],
-            'email': user['email'],
-            'first_name': user['first_name'],
-            'last_name': user['last_name']
-        },
-        user_meta={
-            "school_id": user['school_id'],
-            "first_name": user.get('first_name'),
-            "last_name": user.get('last_name'),
-            "department": user.get('department'),
-            "course": user.get('course'),
-            "track": user.get('track')
-        }
-    )
-
     supabase.table('pending_users').delete().eq('id', user_id).execute()
     return redirect(url_for('manage_students'))
 
@@ -2272,32 +2031,6 @@ def reject_user(user_id):
     if user:
         # Send rejection email
         send_rejection_email(user['email'], user.get('first_name', ''))
-        
-        # Log user rejection
-        log_activity(
-            user_id=user['school_id'],
-            action="USER REJECTED",
-            target=user['email'],
-            table_name="pending_users",
-            query_type="DELETE",
-            old_data={
-                'school_id': user['school_id'],
-                'department': user.get('department', ''),
-                'course': user['course'],
-                'email': user['email'],
-                'first_name': user['first_name'],
-                'last_name': user['last_name']
-            },
-            user_meta={
-                "school_id": user['school_id'],
-                "first_name": user.get('first_name'),
-                "last_name": user.get('last_name'),
-                "department": user.get('department'),
-                "course": user.get('course'),
-                "track": user.get('track')
-            }
-        )
-    
     supabase.table('pending_users').delete().eq('id', user_id).execute()
     return redirect(url_for('manage_students'))
 
@@ -2334,27 +2067,6 @@ def manage_settings():
                 }).execute()
                 current_deadline = dt
                 message = f"Voting deadline updated for {admin_department}!"
-                
-                # Log voting deadline update
-                log_activity(
-                    user_id=admin['id'],
-                    action="VOTING DEADLINE SET",
-                    target=admin_department,
-                    table_name="settings",
-                    query_type="INSERT",
-                    new_data={
-                        'department': admin_department,
-                        'voting_deadline': dt.isoformat()
-                    },
-                    user_meta={
-                        "school_id": admin.get('school_id'),
-                        "first_name": admin.get('first_name'),
-                        "last_name": admin.get('last_name'),
-                        "department": admin.get('department'),
-                        "course": admin.get('course'),
-                        "track": admin.get('track')
-                    }
-                )
             except Exception:
                 current_deadline = None
                 message = "Invalid date format."
