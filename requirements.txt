@@ -13,4 +13,4 @@ requests
 sendgrid
 flask-mail
 Crypto
-PyCryptodome==3.20.0# <-- Changed from 'crypto' to 'pycryptodome'
+PyCryptodome==3.20.0    # <-- Changed from 'crypto' to 'pycryptodome'
