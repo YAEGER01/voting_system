@@ -169,8 +169,8 @@ CANDIDATE_UPLOAD_FOLDER = os.path.join('static', 'uploads', 'candidates')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-RECAPTCHA_SITE_KEY = "6LdsDXgrAAAAAJzPuLgwtx1aw0F4Bb4Vnx2o-1sa"
-RECAPTCHA_SECRET_KEY = "6LdsDXgrAAAAAGNoHmLuPtv3a6Z_ZhEFy7EvQnga"
+RECAPTCHA_SITE_KEY = "6LfFx4ArAAAAAJJ3BqXudTcbFLA-m-thgKxyIIbb"
+RECAPTCHA_SECRET_KEY = "6LfFx4ArAAAAAMNz8oGkH4bpf02hLjv6zO8mnfSE"
 
 
 def verify_recaptcha(response_token):
@@ -1279,21 +1279,26 @@ def admin_dashboard():
                            admin=admin,
                            active_users=active_users)
 
+
 @app.route('/fetch_candidates')
 def fetch_candidates():
-    if 'school_id' not in session or session.get('role') not in ['admin', 'SysAdmin']:
+    if 'school_id' not in session or session.get('role') not in [
+            'admin', 'SysAdmin'
+    ]:
         return jsonify({'error': 'unauthorized'}), 403
 
     role = session['role']
     school_id = session['school_id']
-    user = supabase.table('user').select('*').eq('school_id', school_id).single().execute().data
+    user = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute().data
 
     if role == 'admin':
         department = user.get('department', user.get('course', ''))
         positions = supabase.table('positions').select('*').eq(
             'department', department).order('name').execute().data or []
     else:  # SysAdmin: unrestricted
-        positions = supabase.table('positions').select('*').order('name').execute().data or []
+        positions = supabase.table('positions').select('*').order(
+            'name').execute().data or []
 
     result = []
     for pos in positions:
@@ -1311,12 +1316,15 @@ def fetch_candidates():
 
 @app.route('/vote_breakdown/<candidate_id>')
 def vote_breakdown(candidate_id):
-    if 'school_id' not in session or session.get('role') not in ['admin', 'SysAdmin']:
+    if 'school_id' not in session or session.get('role') not in [
+            'admin', 'SysAdmin'
+    ]:
         return jsonify({'error': 'unauthorized'}), 403
 
     role = session['role']
     school_id = session['school_id']
-    user = supabase.table('user').select('*').eq('school_id', school_id).single().execute().data
+    user = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute().data
     department = user.get('department', user.get('course', ''))
 
     vote_records = supabase.table('votes') \
@@ -1324,7 +1332,9 @@ def vote_breakdown(candidate_id):
         .eq('candidate_ref', int(candidate_id)) \
         .execute().data
 
-    student_ids = [v['student_id'] for v in vote_records if v.get('student_id')]
+    student_ids = [
+        v['student_id'] for v in vote_records if v.get('student_id')
+    ]
     if not student_ids:
         return jsonify([])
 
@@ -1346,7 +1356,8 @@ def vote_breakdown(candidate_id):
         t = u['track']
         if not all([y, d, c, t]):
             continue
-        breakdown.setdefault(y, {}).setdefault(d, {}).setdefault(c, {}).setdefault(t, 0)
+        breakdown.setdefault(y, {}).setdefault(d, {}).setdefault(
+            c, {}).setdefault(t, 0)
         breakdown[y][d][c][t] += 1
         total += 1
 
