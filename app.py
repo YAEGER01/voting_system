@@ -1611,10 +1611,19 @@ def candidates():
             'candidates': candidates
         })
 
+    supabase.table('logs').insert({
+        'user_id': user['id'],
+        'action': 'VIEW_CANDIDATES',
+        'table_name': 'candidates',
+        'query_type': 'READ',
+        'target': f"Department: {department}",
+        'new_data': f"{len(positions_with_candidates)} positions accessed",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
     return render_template('candidates.html',
                            department=department,
                            positions_with_candidates=positions_with_candidates)
-
 
 @app.route('/contacts')
 def contacts():
@@ -1638,6 +1647,19 @@ def candidate_details(id):
         'id', candidate['position_id']).single().execute()
     position_name = pos_resp.data['name'] if pos_resp.data else ''
 
+    # Log candidate detail view
+    user_resp = supabase.table('user').select('id').eq(
+        'school_id', session['school_id']).single().execute()
+    if user_resp.data:
+        supabase.table('logs').insert({
+            'user_id': user_resp.data['id'],
+            'action': 'VIEW_CANDIDATE_DETAILS',
+            'table_name': 'candidates',
+            'query_type': 'READ',
+            'target': f"Candidate ID: {id}, Position: {position_name}",
+            'new_data': 'N/A',
+            'timestamp': datetime.now().isoformat()
+        }).execute()
     return render_template('candidate_details.html',
                            candidate=candidate,
                            position_name=position_name)
@@ -1693,6 +1715,18 @@ def view_results():
         # Sort candidates by vote_count descending (leading candidate first)
         candidate_list.sort(key=lambda x: x['vote_count'], reverse=True)
         results.append({'position': pos, 'candidates': candidate_list})
+
+    # Log view results access
+    if user_resp.data:
+        supabase.table('logs').insert({
+            'user_id': user_resp.data['id'],
+            'action': 'VIEW_ELECTION_RESULTS',
+            'table_name': 'votes',
+            'query_type': 'READ',
+            'target': f"Department: {department}",
+            'new_data': 'Decrypted and tallied vote counts per position',
+            'timestamp': datetime.now().isoformat()
+        }).execute()
 
     return render_template('view_results.html',
                            department=department,
@@ -1812,6 +1846,17 @@ def vote_receipt():
                         f"{school_id}:{pos_id}:skipped".encode()).hexdigest()
                 })
 
+    # Log vote receipt access
+    supabase.table("logs").insert({
+        "user_id": user_resp.data['school_id'],
+        "action": "VIEW_VOTE_RECEIPT",
+        "table_name": "votes",
+        "query_type": "READ",
+        "target": f"Department: {department}",
+        "new_data": f"Vote hashes: {[v['hash'] for v in vote_entries]}",
+        "timestamp": datetime.now().isoformat()
+    }).execute()
+
     return render_template(
         "receipts_page.html",
         masked_first=masked_first,
@@ -1847,6 +1892,15 @@ def manage_poll():
             supabase.table('positions').insert({
                 'name': position_name,
                 'department': admin_department
+            }).execute()
+            supabase.table('logs').insert({
+                'user_id': admin['id'],
+                'action': 'ADD_POSITION',
+                'table_name': 'positions',
+                'query_type': 'INSERT',
+                'target': position_name,
+                'new_data': f"Department: {admin_department}",
+                'timestamp': datetime.now().isoformat()
             }).execute()
             message = "Position added successfully!"
 
@@ -1903,7 +1957,19 @@ def manage_poll():
                 'slogan': slogan,
                 'note': note
             }).execute()
+
+            supabase.table('logs').insert({
+                'user_id': admin['id'],
+                'action': 'ADD_CANDIDATE',
+                'table_name': 'candidates',
+                'query_type': 'INSERT',
+                'target': f"Position ID: {position_id}",
+                'new_data': f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
+                'timestamp': datetime.now().isoformat()
+            }).execute()
             message = "Candidate added successfully!"
+
+   
 
     positions_resp = supabase.table('positions').select('*').eq(
         'department', admin_department).execute()
@@ -1985,6 +2051,16 @@ def manage_candidates():
             'achievements': achievements,
             'slogan': slogan,
             'note': note
+        }).execute()
+         # ✅ Log the candidate insertion
+        supabase.table('logs').insert({
+            'user_id': admin_school_id,
+            'action': 'ADD_CANDIDATE',
+            'table_name': 'candidates',
+            'query_type': 'INSERT',
+            'target': name,
+            'new_data': f"Position ID: {position_id}, Department: {department}",
+            'timestamp': datetime.now().isoformat()
         }).execute()
 
         flash("Candidate added successfully!", "success")
@@ -2068,6 +2144,17 @@ def edit_candidate(id):
             'slogan': slogan,
             'note': note
         }).eq('id', id).execute()
+
+        supabase.table('logs').insert({
+            'user_id': session['school_id'],
+            'action': 'EDIT_CANDIDATE',
+            'table_name': 'candidates',
+            'query_type': 'UPDATE',
+            'target': name,
+            'new_data': f"Candidate ID: {id}, New Position ID: {position_id}",
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
         flash("Candidate updated successfully!", "success")
         return redirect(url_for('manage_candidates'))
 
@@ -2091,6 +2178,16 @@ def delete_candidate(id):
             if os.path.exists(image_path):
                 os.remove(image_path)
         supabase.table('candidates').delete().eq('id', id).execute()
+        supabase.table('logs').insert({
+            'user_id': session['school_id'],
+            'action': 'DELETE_CANDIDATE',
+            'table_name': 'candidates',
+            'query_type': 'DELETE',
+            'target': f"Candidate ID: {id}",
+            'new_data': f"Name: {candidate['name']}",
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
         flash("Candidate deleted successfully!", "success")
     else:
         flash("Candidate not found.", "danger")
@@ -2154,10 +2251,30 @@ def approve_user(user_id):
         'role': 'user'
     }).execute()
 
+    supabase.table('logs').insert({
+        'user_id': session['school_id'],
+        'action': 'APPROVE_USER',
+        'table_name': 'user',
+        'query_type': 'INSERT',
+        'target': f"Pending User ID: {user_id}",
+        'new_data': f"School ID: {user['school_id']}, Email: {user['email']}",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
     # Send approval email
     send_approval_email(user['email'], user.get('first_name', ''))
 
     supabase.table('pending_users').delete().eq('id', user_id).execute()
+    supabase.table('logs').insert({
+        'user_id': session['school_id'],
+        'action': 'DELETE_PENDING_USER',
+        'table_name': 'pending_users',
+        'query_type': 'DELETE',
+        'target': f"Pending User ID: {user_id}",
+        'new_data': f"Reason: approved",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
     return redirect(url_for('manage_students'))
 
 
@@ -2169,6 +2286,16 @@ def reject_user(user_id):
         # Send rejection email
         send_rejection_email(user['email'], user.get('first_name', ''))
     supabase.table('pending_users').delete().eq('id', user_id).execute()
+    supabase.table('logs').insert({
+        'user_id': session['school_id'],
+        'action': 'REJECT_USER',
+        'table_name': 'pending_users',
+        'query_type': 'DELETE',
+        'target': f"Pending User ID: {user_id}",
+        'new_data': f"Email: {user['email'] if user else 'unknown'}",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
     return redirect(url_for('manage_students'))
 
 
@@ -2202,6 +2329,16 @@ def manage_settings():
                     'voting_deadline':
                     dt.isoformat()
                 }).execute()
+                supabase.table('logs').insert({
+                    'user_id': admin['id'],
+                    'action': 'UPDATE_VOTING_DEADLINE',
+                    'table_name': 'settings',
+                    'query_type': 'INSERT',
+                    'target': f"Department: {admin_department}",
+                    'new_data': f"Deadline set to: {dt.isoformat()}",
+                    'timestamp': datetime.now().isoformat()
+                }).execute()
+
                 current_deadline = dt
                 message = f"Voting deadline updated for {admin_department}!"
             except Exception:
@@ -2236,6 +2373,16 @@ def get_logs():
         response = supabase.table('logs').select('*').order(
             'timestamp', desc=True).limit(100).execute()
         logs = response.data or []
+        supabase.table('logs').insert({
+            'user_id': session.get('school_id', 'UNKNOWN'),
+            'action': 'FETCH_LOGS',
+            'table_name': 'logs',
+            'query_type': 'SELECT',
+            'target': 'Last 100 log entries',
+            'new_data': '',
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
         return jsonify(logs)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
