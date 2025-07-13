@@ -500,6 +500,17 @@ def forgot_password():
             'reset_otp_expiry': expiry.isoformat()
         }).eq('id', user['id']).execute()
 
+        # Log the OTP request
+        supabase.table('logs').insert({
+            'user_id': user['id'],
+            'action': 'FORGOT_PASSWORD_REQUEST',
+            'table_name': 'user',
+            'query_type': 'SYSTEM',
+            'target': f"Email: {email}",
+            'new_data': f"OTP set with expiry {expiry.isoformat()}",
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
         send_otp_email(email, otp)
         flash("An OTP has been sent to your email.", "info")
         return redirect(url_for('verify_otp', email=email))
@@ -530,6 +541,17 @@ def verify_otp():
             flash("Incorrect OTP. Please try again.", "danger")
             return render_template('verify_otp.html', email=email)
 
+        # Log OTP verification success
+        supabase.table('logs').insert({
+            'user_id': user['id'],
+            'action': 'OTP_VERIFIED',
+            'table_name': 'user',
+            'query_type': 'SYSTEM',
+            'target': f"Email: {email}",
+            'new_data': 'OTP matched successfully',
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
         # OTP is correct
         return redirect(url_for('reset_password_otp', email=email))
     return render_template('verify_otp.html', email=email)
@@ -558,6 +580,17 @@ def resend_otp():
         'reset_otp': otp,
         'reset_otp_expiry': expiry.isoformat()
     }).eq('id', user['id']).execute()
+
+    # Log OTP resend
+    supabase.table('logs').insert({
+        'user_id': user['id'],
+        'action': 'RESEND_OTP',
+        'table_name': 'user',
+        'query_type': 'SYSTEM',
+        'target': f"Email: {email}",
+        'new_data': f"OTP resent with new expiry {expiry.isoformat()}",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
 
     # ✅ Send the OTP email
     send_otp_email(email, otp)
@@ -604,6 +637,17 @@ def reset_password_otp():
         }
         supabase.table('user').update(update_data).eq('id',
                                                       user['id']).execute()
+
+        # Log password reset
+        supabase.table('logs').insert({
+            'user_id': user['id'],
+            'action': 'PASSWORD_RESET',
+            'table_name': 'user',
+            'query_type': 'UPDATE',
+            'target': f"Email: {email}",
+            'new_data': 'Password updated, OTP cleared',
+            'timestamp': datetime.now().isoformat()
+        }).execute()
 
         flash("Your password has been reset. Please log in.", "success")
         return redirect(url_for('login'))
@@ -779,6 +823,17 @@ def reset_password(token):
             None
         }).eq('id', user['id']).execute()
 
+        # Log token-based password reset
+        supabase.table('logs').insert({
+            'user_id': user['id'],
+            'action': 'PASSWORD_RESET_LINK',
+            'table_name': 'user',
+            'query_type': 'UPDATE',
+            'target': f"Email: {user['email']}",
+            'new_data': 'Password updated, reset token cleared',
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
         flash("Your password has been reset. Please log in.", "success")
         return redirect(url_for('login'))
 
@@ -868,6 +923,16 @@ def register():
             'phone': phone,
             'id_photo_front': front_path,
             'id_photo_back': back_path
+        }).execute()
+
+        supabase.table('logs').insert({
+            'user_id': None,
+            'action': 'REGISTRATION_REQUEST',
+            'table_name': 'pending_users',
+            'query_type': 'INSERT',
+            'target': f"School ID: {school_id}, Email: {email}",
+            'new_data': 'Registration submitted for approval',
+            'timestamp': datetime.now().isoformat()
         }).execute()
 
         # Send registration confirmation email
@@ -1035,6 +1100,16 @@ def register_admin():
             'id_photo_back': 'N/A'
         }).execute()
 
+        supabase.table('logs').insert({
+            'user_id': None,
+            'action': 'ADMIN_REGISTRATION',
+            'table_name': 'user',
+            'query_type': 'INSERT',
+            'target': f"Admin School ID: {school_id}",
+            'new_data': f"Email: {email}, Role: admin",
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
         flash("Admin registered successfully!", "success")
         return redirect(url_for('register_admin'))
 
@@ -1175,6 +1250,16 @@ def dashboard():
                         'department':
                         user.get('department', user.get('course', ''))
                     }).execute()
+                    supabase.table('logs').insert({
+                        'user_id': user['id'],
+                        'action': 'CAST_VOTE',
+                        'table_name': 'votes',
+                        'query_type': 'INSERT',
+                        'target': f"Position ID: {position_id}",
+                        'new_data': f"Encrypted Candidate ID: {encrypted_candidate_id}",
+                        'timestamp': datetime.now().isoformat()
+                    }).execute()
+
 
                     # Add to blockchain
                     hashed_student_id = hashlib.sha256(
@@ -1275,6 +1360,16 @@ def admin_dashboard():
         .eq('active', 'ACTIVE').eq('department', department).execute()
     active_users = active_users_resp.data
 
+    supabase.table('logs').insert({
+        'user_id': admin['id'],
+        'action': 'VIEW_ADMIN_DASHBOARD',
+        'table_name': 'user',
+        'query_type': 'READ',
+        'target': f"Department: {department}",
+        'new_data': f"Fetched {len(active_users)} active users",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
     return render_template('admin_dash.html',
                            admin=admin,
                            active_users=active_users)
@@ -1310,6 +1405,17 @@ def fetch_candidates():
                 .eq('candidate_ref', int(cid)).execute().data
             cand['vote_count'] = len(votes)
         result.append({'position': pos, 'candidates': cands})
+
+    # Insert log here
+    supabase.table('logs').insert({
+        'user_id': user['id'],
+        'action': 'FETCH_CANDIDATES',
+        'table_name': 'candidates',
+        'query_type': 'READ',
+        'target': f"Role: {role}",
+        'new_data': f"{len(positions)} positions fetched",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
 
     return jsonify(result)
 
@@ -1361,6 +1467,15 @@ def vote_breakdown(candidate_id):
         breakdown[y][d][c][t] += 1
         total += 1
 
+    supabase.table('logs').insert({
+        'user_id': user['id'],
+        'action': 'VIEW_VOTE_BREAKDOWN',
+        'table_name': 'votes',
+        'query_type': 'READ',
+        'target': f"Candidate ID: {candidate_id}",
+        'new_data': f"{total} votes analyzed",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
     return jsonify({'nested': breakdown, 'total_votes': total})
 
 
@@ -1452,9 +1567,20 @@ def vote_tally():
             'rows': position_table
         })
 
+    # ... after tally_by_position is built
+
+    supabase.table('logs').insert({
+        'user_id': admin['id'],
+        'action': 'VIEW_VOTE_TALLY',
+        'table_name': 'votes',
+        'query_type': 'READ',
+        'target': f"Department: {department}",
+        'new_data': f"Tally generated for {len(tally_by_position)} positions",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
     return render_template('vote_tally.html',
                            tally_by_position=tally_by_position)
-
 
 @app.route('/candidates')
 def candidates():
