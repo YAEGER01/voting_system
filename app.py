@@ -738,7 +738,7 @@ def login():
             if check_password_hash(user['password_hash'], password):
                 session['school_id'] = user['school_id']
                 session['role'] = user['role']
-                session['id'] = user['id']
+                session['user_id'] = user['id']  # Store numeric user ID
 
                 # Update active status
                 supabase.table('user').update({
@@ -2074,7 +2074,7 @@ def manage_candidates():
         }).execute()
         # ✅ Log the candidate insertion
         supabase.table('logs').insert({
-            'user_id': admin_school_id,
+            'user_id': session.get('user_id'),
             'action': 'ADD_CANDIDATE',
             'table_name': 'candidates',
             'query_type': 'INSERT',
@@ -2167,7 +2167,7 @@ def edit_candidate(id):
         }).eq('id', id).execute()
 
         supabase.table('logs').insert({
-            'user_id': session['school_id'],
+            'user_id': session.get('user_id'),
             'action': 'EDIT_CANDIDATE',
             'table_name': 'candidates',
             'query_type': 'UPDATE',
@@ -2200,7 +2200,7 @@ def delete_candidate(id):
                 os.remove(image_path)
         supabase.table('candidates').delete().eq('id', id).execute()
         supabase.table('logs').insert({
-            'user_id': session['school_id'],
+            'user_id': session.get('user_id'),
             'action': 'DELETE_CANDIDATE',
             'table_name': 'candidates',
             'query_type': 'DELETE',
@@ -2273,7 +2273,7 @@ def approve_user(user_id):
     }).execute()
 
     supabase.table('logs').insert({
-        'user_id': session['school_id'],
+        'user_id': session.get('user_id'),
         'action': 'APPROVE_USER',
         'table_name': 'user',
         'query_type': 'INSERT',
@@ -2287,7 +2287,7 @@ def approve_user(user_id):
 
     supabase.table('pending_users').delete().eq('id', user_id).execute()
     supabase.table('logs').insert({
-        'user_id': session['school_id'],
+        'user_id': session.get('user_id'),
         'action': 'DELETE_PENDING_USER',
         'table_name': 'pending_users',
         'query_type': 'DELETE',
@@ -2308,7 +2308,7 @@ def reject_user(user_id):
         send_rejection_email(user['email'], user.get('first_name', ''))
     supabase.table('pending_users').delete().eq('id', user_id).execute()
     supabase.table('logs').insert({
-        'user_id': session['school_id'],
+        'user_id': session.get('user_id'),
         'action': 'REJECT_USER',
         'table_name': 'pending_users',
         'query_type': 'DELETE',
@@ -2403,7 +2403,7 @@ def get_logs():
         logs = response.data or []
         supabase.table('logs').insert({
             'user_id':
-            session.get('school_id', 'UNKNOWN'),
+            session.get('user_id'),
             'action':
             'FETCH_LOGS',
             'table_name':
