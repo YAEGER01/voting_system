@@ -2402,20 +2402,13 @@ def get_logs():
             'timestamp', desc=True).limit(100).execute()
         logs = response.data or []
         supabase.table('logs').insert({
-            'user_id':
-            session.get('user_id'),
-            'action':
-            'FETCH_LOGS',
-            'table_name':
-            'logs',
-            'query_type':
-            'SELECT',
-            'target':
-            'Last 100 log entries',
-            'new_data':
-            '',
-            'timestamp':
-            datetime.now().isoformat()
+            'user_id': session.get('user_id'),
+            'action': 'FETCH_LOGS',
+            'table_name': 'logs',
+            'query_type': 'SELECT',
+            'target': 'Last 100 log entries',
+            'new_data': '',
+            'timestamp': datetime.now().isoformat()
         }).execute()
 
         return jsonify(logs)
