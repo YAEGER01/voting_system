@@ -1084,8 +1084,8 @@ def register_admin():
 
         password_hash = generate_password_hash(password)
 
-        short_uuid = str(uuid.uuid4())[:8]
-        fake_phone = f"admin-{short_uuid}"
+        short_uuid = str(uuid.uuid4())[:6]  # Shorter to ensure under 20 chars
+        fake_phone = f"adm-{short_uuid}"  # Shortened prefix
 
         supabase.table('user').insert({
             'school_id': school_id,
@@ -1232,21 +1232,27 @@ def dashboard():
     if request.method == 'POST' and not voting_closed:
         for position_id, candidate_id in request.form.items():
             if position_id.isdigit() and candidate_id.isdigit():
+                try:
+                    position_id_int = int(position_id)
+                    candidate_id_int = int(candidate_id)
+                except ValueError:
+                    continue  # Skip invalid entries
+                    
                 vote_resp = supabase.table('votes').select('*').eq(
                     'student_id', school_id).eq('position_id',
-                                                int(position_id)).execute()
+                                                position_id_int).execute()
                 if not vote_resp.data:
-                    encrypted_candidate_id = encrypt_vote(str(candidate_id))
+                    encrypted_candidate_id = encrypt_vote(str(candidate_id_int))
 
                     supabase.table('votes').insert({
                         'student_id':
                         school_id,
                         'position_id':
-                        int(position_id),
+                        position_id_int,
                         'candidate_id':
                         encrypted_candidate_id,
                         'candidate_ref':
-                        int(candidate_id),
+                        candidate_id_int,
                         'department':
                         user.get('department', user.get('course', ''))
                     }).execute()
@@ -1260,7 +1266,7 @@ def dashboard():
                         'query_type':
                         'INSERT',
                         'target':
-                        f"Position ID: {position_id}",
+                        f"Position ID: {position_id_int}",
                         'new_data':
                         f"Encrypted Candidate ID: {encrypted_candidate_id}",
                         'timestamp':
@@ -1272,7 +1278,7 @@ def dashboard():
                         school_id.encode()).hexdigest()
                     vote_blockchain.add_block({
                         "student_id": hashed_student_id,
-                        "position_id": int(position_id),
+                        "position_id": position_id_int,
                         "candidate_id": encrypted_candidate_id,
                         "timestamp": str(time.time())
                     })
@@ -1855,8 +1861,15 @@ def vote_receipt():
                 })
 
     # Log vote receipt access
+    user_id = None
+    if user_resp.data:
+        # Get the actual numeric user ID
+        user_lookup = supabase.table('user').select('id').eq('school_id', school_id).single().execute()
+        if user_lookup.data:
+            user_id = user_lookup.data['id']
+    
     supabase.table("logs").insert({
-        "user_id": user_resp.data['school_id'],
+        "user_id": user_id,
         "action": "VIEW_VOTE_RECEIPT",
         "table_name": "votes",
         "query_type": "READ",
