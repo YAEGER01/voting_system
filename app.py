@@ -2429,6 +2429,143 @@ def get_logs():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/activity')
+def activity():
+    if 'school_id' not in session:
+        flash("You must be logged in to view activity.", "danger")
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    role = session.get('role', 'user')
+
+    # Get current user info
+    user_resp = supabase.table('user').select('*').eq('school_id', school_id).single().execute()
+    current_user = user_resp.data
+    if not current_user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    department = current_user.get('department', current_user.get('course', ''))
+
+    # Fetch logs based on role
+    if role == 'admin':
+        # Admin sees user activity in their department
+        # Get all users in the same department
+        dept_users_resp = supabase.table('user').select('id, school_id, first_name, last_name').eq('department', department).execute()
+        dept_user_ids = [u['id'] for u in dept_users_resp.data if u.get('id')]
+
+        if dept_user_ids:
+            logs_resp = supabase.table('logs').select('*').in_('user_id', dept_user_ids).order('timestamp', desc=True).limit(50).execute()
+        else:
+            logs_resp = supabase.table('logs').select('*').eq('user_id', -1).execute()  # Empty result
+
+        activity_logs = logs_resp.data or []
+
+        # Create user lookup for names
+        user_lookup = {u['id']: u for u in dept_users_resp.data}
+
+        # Format logs for admin view
+        formatted_logs = []
+        for log in activity_logs:
+            user_info = user_lookup.get(log['user_id'], {})
+            user_name = f"{user_info.get('first_name', 'Unknown')} {user_info.get('last_name', '')}"
+            school_id_info = user_info.get('school_id', 'N/A')
+
+            # Create readable message based on action
+            if log['action'] == 'CAST_VOTE':
+                message = f"User {user_name} ({school_id_info}) cast a vote"
+            elif log['action'] == 'LOGIN_SUCCESS':
+                message = f"User {user_name} ({school_id_info}) logged in"
+            elif log['action'] == 'LOGOUT':
+                message = f"User {user_name} ({school_id_info}) logged out"
+            elif log['action'] == 'VIEW_CANDIDATES':
+                message = f"User {user_name} ({school_id_info}) viewed candidates"
+            elif log['action'] == 'VIEW_CANDIDATE_DETAILS':
+                message = f"User {user_name} ({school_id_info}) viewed candidate details"
+            elif log['action'] == 'VIEW_ELECTION_RESULTS':
+                message = f"User {user_name} ({school_id_info}) viewed election results"
+            elif log['action'] == 'VIEW_VOTE_RECEIPT':
+                message = f"User {user_name} ({school_id_info}) viewed vote receipt"
+            elif log['action'] == 'PASSWORD_RESET':
+                message = f"User {user_name} ({school_id_info}) reset their password"
+            else:
+                message = f"User {user_name} ({school_id_info}) performed: {log['action']}"
+
+            formatted_logs.append({
+                'timestamp': log['timestamp'],
+                'message': message,
+                'action': log['action']
+            })
+
+    else:
+        # User sees admin activity in their department
+        # Get all admins in the same department
+        dept_admins_resp = supabase.table('user').select('id, school_id, first_name, last_name').eq('department', department).eq('role', 'admin').execute()
+        dept_admin_ids = [a['id'] for a in dept_admins_resp.data if a.get('id')]
+
+        if dept_admin_ids:
+            logs_resp = supabase.table('logs').select('*').in_('user_id', dept_admin_ids).order('timestamp', desc=True).limit(50).execute()
+        else:
+            logs_resp = supabase.table('logs').select('*').eq('user_id', -1).execute()  # Empty result
+
+        activity_logs = logs_resp.data or []
+
+        # Create admin lookup for names
+        admin_lookup = {a['id']: a for a in dept_admins_resp.data}
+
+        # Format logs for user view
+        formatted_logs = []
+        for log in activity_logs:
+            admin_info = admin_lookup.get(log['user_id'], {})
+            admin_name = f"{admin_info.get('first_name', 'Unknown')} {admin_info.get('last_name', '')}"
+
+            # Create readable message based on action
+            if log['action'] == 'ADD_POSITION':
+                message = f"Admin {admin_name} added a new position: {log.get('target', 'Unknown')}"
+            elif log['action'] == 'ADD_CANDIDATE':
+                candidate_name = log.get('new_data', '').split('Name: ')[1].split(',')[0] if 'Name: ' in log.get('new_data', '') else 'Unknown'
+                message = f"Admin {admin_name} added candidate: {candidate_name}"
+            elif log['action'] == 'EDIT_CANDIDATE':
+                message = f"Admin {admin_name} edited candidate: {log.get('target', 'Unknown')}"
+            elif log['action'] == 'DELETE_CANDIDATE':
+                candidate_name = log.get('new_data', '').split('Name: ')[1] if 'Name: ' in log.get('new_data', '') else 'Unknown'
+                message = f"Admin {admin_name} deleted candidate: {candidate_name}"
+            elif log['action'] == 'APPROVE_USER':
+                message = f"Admin {admin_name} approved a new user registration"
+            elif log['action'] == 'REJECT_USER':
+                message = f"Admin {admin_name} rejected a user registration"
+            elif log['action'] == 'UPDATE_VOTING_DEADLINE':
+                deadline = log.get('new_data', '').split('Deadline set to: ')[1] if 'Deadline set to: ' in log.get('new_data', '') else 'Unknown'
+                message = f"Admin {admin_name} updated voting deadline"
+            elif log['action'] == 'VIEW_ADMIN_DASHBOARD':
+                message = f"Admin {admin_name} accessed admin dashboard"
+            else:
+                message = f"Admin {admin_name} performed: {log['action']}"
+
+            formatted_logs.append({
+                'timestamp': log['timestamp'],
+                'message': message,
+                'action': log['action']
+            })
+
+    # Log this activity view
+    supabase.table('logs').insert({
+        'user_id': current_user['id'],
+        'action': 'VIEW_ACTIVITY_LOGS',
+        'table_name': 'logs',
+        'query_type': 'READ',
+        'target': f"Role: {role}, Department: {department}",
+        'new_data': f"Viewed {len(formatted_logs)} activity logs",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
+    return render_template('activity.html', 
+                         logs=formatted_logs, 
+                         role=role, 
+                         department=department,
+                         user_name=f"{current_user.get('first_name', '')} {current_user.get('last_name', '')}")
+
+
 @app.route('/pyinfo')
 def pyinfo():
     info = [

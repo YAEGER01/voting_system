@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Logs - UNIVOTE</title>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-light: #81C784;
+            --primary-dark: #388E3C;
+            --text: #333;
+            --bg: #f5f5f5;
+            --card-bg: #fff;
+            --border: #ddd;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --info: #2196F3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .back-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .activity-container {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            min-height: 400px;
+        }
+
+        .activity-header {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .activity-header h2 {
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+        }
+
+        .activity-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            border-left: 4px solid var(--primary);
+            background-color: #f9f9f9;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .activity-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .activity-message {
+            font-size: 1.1rem;
+            color: var(--text);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .activity-timestamp {
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .activity-action {
+            display: inline-block;
+            background-color: var(--primary-light);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .no-activity {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .no-activity i {
+            font-size: 4rem;
+            color: var(--border);
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .activity-container {
+                padding: 20px;
+            }
+
+            .activity-item {
+                padding: 12px 15px;
+            }
+
+            .activity-message {
+                font-size: 1rem;
+            }
+        }
+
+        /* Custom scrollbar */
+        .activity-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .activity-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .activity-list::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 4px;
+        }
+
+        .activity-list::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* Role-specific styling */
+        .admin-view .activity-item {
+            border-left-color: var(--info);
+        }
+
+        .admin-view .activity-action {
+            background-color: var(--info);
+        }
+
+        .user-view .activity-item {
+            border-left-color: var(--primary);
+        }
+
+        .user-view .activity-action {
+            background-color: var(--primary-light);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        {% if role == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}" class="back-button">← Back to Admin Dashboard</a>
+        {% else %}
+        <a href="{{ url_for('dashboard') }}" class="back-button">← Back to Dashboard</a>
+        {% endif %}
+
+        <div class="header">
+            <h1>🗳️ Activity Logs</h1>
+            <div class="subtitle">
+                {% if role == 'admin' %}
+                User Activity in {{ department }} Department
+                {% else %}
+                Admin Activity in {{ department }} Department
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="activity-container {{ 'admin-view' if role == 'admin' else 'user-view' }}">
+            <div class="activity-header">
+                <h2>
+                    {% if role == 'admin' %}
+                    Student & User Activity
+                    {% else %}
+                    Administrative Actions
+                    {% endif %}
+                </h2>
+                <p>Recent activity in your department ({{ department }})</p>
+            </div>
+
+            {% if logs %}
+            <div class="activity-list">
+                {% for log in logs %}
+                <div class="activity-item">
+                    <div class="activity-message">{{ log.message }}</div>
+                    <div class="activity-timestamp">
+                        {{ log.timestamp[:19].replace('T', ' ') }} UTC
+                    </div>
+                    <span class="activity-action">{{ log.action.replace('_', ' ').title() }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-activity">
+                <i>📝</i>
+                <div>No recent activity found</div>
+                <small>
+                    {% if role == 'admin' %}
+                    No user activity in your department yet.
+                    {% else %}
+                    No admin activity in your department yet.
+                    {% endif %}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000);
+
+        // Add smooth scrolling
+        document.addEventListener('DOMContentLoaded', function () {
+            const activityList = document.querySelector('.activity-list');
+            if (activityList) {
+                activityList.style.scrollBehavior = 'smooth';
+            }
+        });
+    </script>
+</body>
+
+</html>
