@@ -169,8 +169,8 @@ CANDIDATE_UPLOAD_FOLDER = os.path.join('static', 'uploads', 'candidates')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-RECAPTCHA_SITE_KEY = "6LfFx4ArAAAAAJJ3BqXudTcbFLA-m-thgKxyIIbb"
-RECAPTCHA_SECRET_KEY = "6LfFx4ArAAAAAMNz8oGkH4bpf02hLjv6zO8mnfSE"
+RECAPTCHA_SITE_KEY = "6Lf6ioErAAAAAMgfS8qXBOmQ-lMUJXoHEK544AEe"
+RECAPTCHA_SECRET_KEY = "6Lf6ioErAAAAAN9CgpFldNEwhmB3Z-vVyRgNrCLw"
 
 
 def verify_recaptcha(response_token):
@@ -1251,15 +1251,21 @@ def dashboard():
                         user.get('department', user.get('course', ''))
                     }).execute()
                     supabase.table('logs').insert({
-                        'user_id': user['id'],
-                        'action': 'CAST_VOTE',
-                        'table_name': 'votes',
-                        'query_type': 'INSERT',
-                        'target': f"Position ID: {position_id}",
-                        'new_data': f"Encrypted Candidate ID: {encrypted_candidate_id}",
-                        'timestamp': datetime.now().isoformat()
+                        'user_id':
+                        user['id'],
+                        'action':
+                        'CAST_VOTE',
+                        'table_name':
+                        'votes',
+                        'query_type':
+                        'INSERT',
+                        'target':
+                        f"Position ID: {position_id}",
+                        'new_data':
+                        f"Encrypted Candidate ID: {encrypted_candidate_id}",
+                        'timestamp':
+                        datetime.now().isoformat()
                     }).execute()
-
 
                     # Add to blockchain
                     hashed_student_id = hashlib.sha256(
@@ -1582,6 +1588,7 @@ def vote_tally():
     return render_template('vote_tally.html',
                            tally_by_position=tally_by_position)
 
+
 @app.route('/candidates')
 def candidates():
     if 'school_id' not in session:
@@ -1624,6 +1631,7 @@ def candidates():
     return render_template('candidates.html',
                            department=department,
                            positions_with_candidates=positions_with_candidates)
+
 
 @app.route('/contacts')
 def contacts():
@@ -1894,13 +1902,20 @@ def manage_poll():
                 'department': admin_department
             }).execute()
             supabase.table('logs').insert({
-                'user_id': admin['id'],
-                'action': 'ADD_POSITION',
-                'table_name': 'positions',
-                'query_type': 'INSERT',
-                'target': position_name,
-                'new_data': f"Department: {admin_department}",
-                'timestamp': datetime.now().isoformat()
+                'user_id':
+                admin['id'],
+                'action':
+                'ADD_POSITION',
+                'table_name':
+                'positions',
+                'query_type':
+                'INSERT',
+                'target':
+                position_name,
+                'new_data':
+                f"Department: {admin_department}",
+                'timestamp':
+                datetime.now().isoformat()
             }).execute()
             message = "Position added successfully!"
 
@@ -1959,17 +1974,22 @@ def manage_poll():
             }).execute()
 
             supabase.table('logs').insert({
-                'user_id': admin['id'],
-                'action': 'ADD_CANDIDATE',
-                'table_name': 'candidates',
-                'query_type': 'INSERT',
-                'target': f"Position ID: {position_id}",
-                'new_data': f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
-                'timestamp': datetime.now().isoformat()
+                'user_id':
+                admin['id'],
+                'action':
+                'ADD_CANDIDATE',
+                'table_name':
+                'candidates',
+                'query_type':
+                'INSERT',
+                'target':
+                f"Position ID: {position_id}",
+                'new_data':
+                f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
+                'timestamp':
+                datetime.now().isoformat()
             }).execute()
             message = "Candidate added successfully!"
-
-   
 
     positions_resp = supabase.table('positions').select('*').eq(
         'department', admin_department).execute()
@@ -2052,14 +2072,15 @@ def manage_candidates():
             'slogan': slogan,
             'note': note
         }).execute()
-         # ✅ Log the candidate insertion
+        # ✅ Log the candidate insertion
         supabase.table('logs').insert({
             'user_id': admin_school_id,
             'action': 'ADD_CANDIDATE',
             'table_name': 'candidates',
             'query_type': 'INSERT',
             'target': name,
-            'new_data': f"Position ID: {position_id}, Department: {department}",
+            'new_data':
+            f"Position ID: {position_id}, Department: {department}",
             'timestamp': datetime.now().isoformat()
         }).execute()
 
@@ -2330,13 +2351,20 @@ def manage_settings():
                     dt.isoformat()
                 }).execute()
                 supabase.table('logs').insert({
-                    'user_id': admin['id'],
-                    'action': 'UPDATE_VOTING_DEADLINE',
-                    'table_name': 'settings',
-                    'query_type': 'INSERT',
-                    'target': f"Department: {admin_department}",
-                    'new_data': f"Deadline set to: {dt.isoformat()}",
-                    'timestamp': datetime.now().isoformat()
+                    'user_id':
+                    admin['id'],
+                    'action':
+                    'UPDATE_VOTING_DEADLINE',
+                    'table_name':
+                    'settings',
+                    'query_type':
+                    'INSERT',
+                    'target':
+                    f"Department: {admin_department}",
+                    'new_data':
+                    f"Deadline set to: {dt.isoformat()}",
+                    'timestamp':
+                    datetime.now().isoformat()
                 }).execute()
 
                 current_deadline = dt
@@ -2374,13 +2402,20 @@ def get_logs():
             'timestamp', desc=True).limit(100).execute()
         logs = response.data or []
         supabase.table('logs').insert({
-            'user_id': session.get('school_id', 'UNKNOWN'),
-            'action': 'FETCH_LOGS',
-            'table_name': 'logs',
-            'query_type': 'SELECT',
-            'target': 'Last 100 log entries',
-            'new_data': '',
-            'timestamp': datetime.now().isoformat()
+            'user_id':
+            session.get('school_id', 'UNKNOWN'),
+            'action':
+            'FETCH_LOGS',
+            'table_name':
+            'logs',
+            'query_type':
+            'SELECT',
+            'target':
+            'Last 100 log entries',
+            'new_data':
+            '',
+            'timestamp':
+            datetime.now().isoformat()
         }).execute()
 
         return jsonify(logs)
