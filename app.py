@@ -1770,6 +1770,22 @@ def vote_results_report():
             'candidates': candidate_rows
         })
 
+    priority_order = [
+        "President",
+        "Vice President",
+        "Secretary",
+        "Treasurer",
+        "Auditor",
+        "PRO",
+        "Senator",
+        "Representative"
+    ]
+
+    def get_priority(pos_name):
+        return priority_order.index(pos_name) if pos_name in priority_order else len(priority_order)
+
+    report_data.sort(key=lambda block: get_priority(block['position']))
+
     return render_template('vote_results_report.html', report_data=report_data)
 
 

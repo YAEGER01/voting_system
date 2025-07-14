@@ -21,13 +21,15 @@
 
     .position-block {
       margin-bottom: 50px;
+      font-size: 25px;
     }
 
     .candidate-name {
       margin-top: 20px;
       font-weight: bold;
       font-size: 18px;
-      color: #1b4332;
+      color: blue;
+      /*color: #1b4332;*/
     }
 
     table {
@@ -173,8 +175,7 @@
   </style>
 
 
-  <h2>Official Voting Results</h2>
-
+  <h2>UNIVOTE Official Voting Results</h2>
   {% for block in report_data %}
   <div class="position-block">
     <h3>{{ block.position }}</h3>
@@ -182,6 +183,9 @@
     {% for cand in block.candidates %}
     <div class="candidate-name">{{ cand.name }} — Total Votes: {{ cand.vote_count }}</div>
 
+    {% if cand.vote_count == 0 %}
+    <p style="margin-left: 10px; color: #888;">This candidate has no votes.</p>
+    {% else %}
     <table>
       <thead>
         <tr>
@@ -210,9 +214,13 @@
         {% endfor %}
       </tbody>
     </table>
+    {% endif %}
+
+    <hr style="margin: 20px 0;">
     {% endfor %}
   </div>
   {% endfor %}
+
 
 </body>
 
