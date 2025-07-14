@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Official Vote Results</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5fdf7;
+      color: #1c3e2d;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 28px;
+      color: #2d6a4f;
+    }
+
+    .position-block {
+      margin-bottom: 50px;
+    }
+
+    .candidate-name {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #1b4332;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      background-color: #ffffff;
+    }
+
+    th,
+    td {
+      border: 1px solid #ced4da;
+      padding: 8px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: #d8f3dc;
+      color: #1c3e2d;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      background-color: #2d6a4f;
+      padding: 15px 40px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .nav-links a {
+      background-color: #52b788;
+      color: white;
+      padding: 8px 14px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .nav-links a:hover {
+      background-color: #40916c;
+    }
+
+    .nav-links .print-btn {
+      /* Treated as normal nav button */
+      background-color: #52b788;
+      position: static;
+      top: unset;
+      right: unset;
+      border: none;
+      cursor: pointer;
+    }
+
+    @media screen and (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .nav-links {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      table,
+      th,
+      td {
+        font-size: 13px;
+      }
+
+      .candidate-name {
+        font-size: 16px;
+      }
+
+      h2 {
+        font-size: 24px;
+      }
+    }
+
+    @media print {
+
+      .navbar,
+      .print-btn {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+        color: black;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        color: black;
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <!-- Navigation Bar -->
+  <div class="navbar">
+    <h1>Voting System</h1>
+    <div class="nav-links">
+      <a href="/admin_dashboard">Dashboard</a>
+
+      <a class="print-btn" onclick="window.print()">Print to PDF</a>
+      <a href="/vote_breakdown_export/csv">Export CSV</a>
+      <a href="/vote_breakdown_export/txt">Export TXT</a>
+
+
+
+      <a href="/logout">Logout</a>
+    </div>
+  </div>
+
+  <style>
+
+  </style>
+
+
+  <h2>Official Voting Results</h2>
+
+  {% for block in report_data %}
+  <div class="position-block">
+    <h3>{{ block.position }}</h3>
+
+    {% for cand in block.candidates %}
+    <div class="candidate-name">{{ cand.name }} — Total Votes: {{ cand.vote_count }}</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Year Level</th>
+          <th>Department</th>
+          <th>Course</th>
+          <th>Track</th>
+          <th>Votes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for y, depts in cand.breakdown.items() %}
+        {% for d, courses in depts.items() %}
+        {% for c, tracks in courses.items() %}
+        {% for t, count in tracks.items() %}
+        <tr>
+          <td>{{ y }}</td>
+          <td>{{ d }}</td>
+          <td>{{ c }}</td>
+          <td>{{ t }}</td>
+          <td>{{ count }}</td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+        {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+</body>
+
+</html>

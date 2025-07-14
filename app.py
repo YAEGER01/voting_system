@@ -1090,6 +1090,7 @@ def register_admin():
         supabase.table('user').insert({
             'school_id': school_id,
             'course': course,
+            'department': course,
             'email': email,
             'password_hash': password_hash,
             'first_name': first_name,
@@ -1113,7 +1114,7 @@ def register_admin():
         flash("Admin registered successfully!", "success")
         return redirect(url_for('register_admin'))
 
-    return render_template('register_admin.html')
+    return render_template('system_admin.html')
 
 
 @app.route('/logout')
@@ -1237,12 +1238,13 @@ def dashboard():
                     candidate_id_int = int(candidate_id)
                 except ValueError:
                     continue  # Skip invalid entries
-                    
+
                 vote_resp = supabase.table('votes').select('*').eq(
                     'student_id', school_id).eq('position_id',
                                                 position_id_int).execute()
                 if not vote_resp.data:
-                    encrypted_candidate_id = encrypt_vote(str(candidate_id_int))
+                    encrypted_candidate_id = encrypt_vote(
+                        str(candidate_id_int))
 
                     supabase.table('votes').insert({
                         'student_id':
@@ -1491,6 +1493,115 @@ def vote_breakdown(candidate_id):
     return jsonify({'nested': breakdown, 'total_votes': total})
 
 
+@app.route('/vote_breakdown_export/<format>')
+def vote_breakdown_export(format):
+    if 'school_id' not in session or session.get('role') not in [
+            'admin', 'SysAdmin'
+    ]:
+        return "Unauthorized", 403
+
+    school_id = session['school_id']
+    role = session['role']
+    user = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute().data
+    department = user.get('department', user.get('course', ''))
+
+    if role == 'admin':
+        positions = supabase.table('positions').select('*').eq(
+            'department', department).order('name').execute().data or []
+    else:
+        positions = supabase.table('positions').select('*').order(
+            'name').execute().data or []
+
+    result = []
+
+    for pos in positions:
+        cands = supabase.table('candidates').select('id, name').eq(
+            'position_id', pos['id']).execute().data or []
+        for cand in cands:
+            votes = supabase.table('votes').select('student_id') \
+                .eq('candidate_ref', int(cand['id'])).execute().data or []
+            student_ids = [
+                v['student_id'] for v in votes if v.get('student_id')
+            ]
+            breakdown = {}
+            vote_count = 0
+            if student_ids:
+                users = supabase.table('user') \
+                    .select('year_level, department, course, track') \
+                    .in_('school_id', student_ids).execute().data or []
+
+                for u in users:
+                    if role == 'admin' and u.get('department') != department:
+                        continue
+                    y, d, c, t = u.get('year_level'), u.get(
+                        'department'), u.get('course'), u.get('track')
+                    if not all([y, d, c, t]):
+                        continue
+                    breakdown.setdefault(y, {}).setdefault(d, {}).setdefault(
+                        c, {}).setdefault(t, 0)
+                    breakdown[y][d][c][t] += 1
+                    vote_count += 1
+            result.append({
+                'position': pos['name'],
+                'candidate': cand['name'],
+                'vote_count': vote_count,
+                'breakdown': breakdown
+            })
+
+    if format == 'csv':
+        import csv
+        import io
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            'Position', 'Candidate', 'Total Votes', 'Breakdown Path', 'Votes'
+        ])
+
+        for r in result:
+            writer.writerow(
+                [r['position'], r['candidate'], r['vote_count'], '', ''])
+            for y in r['breakdown']:
+                for d in r['breakdown'][y]:
+                    for c in r['breakdown'][y][d]:
+                        for t in r['breakdown'][y][d][c]:
+                            count = r['breakdown'][y][d][c][t]
+                            path = f"{y} > {d} > {c} > {t}"
+                            writer.writerow(['', '', '', path, count])
+
+        from flask import make_response
+        response = make_response(output.getvalue())
+        response.headers[
+            "Content-Disposition"] = "attachment; filename=vote_breakdown.csv"
+        response.headers["Content-Type"] = "text/csv"
+        return response
+
+    elif format == 'txt':
+        import io
+        output = io.StringIO()
+        for r in result:
+            output.write(f"Position: {r['position']}\n")
+            output.write(
+                f"  Candidate: {r['candidate']} - Votes: {r['vote_count']}\n")
+            for y in r['breakdown']:
+                for d in r['breakdown'][y]:
+                    for c in r['breakdown'][y][d]:
+                        for t in r['breakdown'][y][d][c]:
+                            count = r['breakdown'][y][d][c][t]
+                            output.write(
+                                f"    {y} > {d} > {c} > {t}: {count}\n")
+            output.write("\n")
+
+        from flask import make_response
+        response = make_response(output.getvalue())
+        response.headers[
+            "Content-Disposition"] = "attachment; filename=vote_breakdown.txt"
+        response.headers["Content-Type"] = "text/plain"
+        return response
+
+    return "Invalid format", 400
+
+
 @app.route('/vote_tally')
 def vote_tally():
     if 'school_id' not in session or session.get('role') != 'SysAdmin':
@@ -1593,6 +1704,73 @@ def vote_tally():
 
     return render_template('vote_tally.html',
                            tally_by_position=tally_by_position)
+
+
+@app.route('/vote_results_report')
+def vote_results_report():
+    if 'school_id' not in session or session.get('role') not in [
+            'admin', 'SysAdmin'
+    ]:
+        return "Unauthorized", 403
+
+    school_id = session['school_id']
+    role = session['role']
+    user = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute().data
+    department = user.get('department', user.get('course', ''))
+
+    if role == 'admin':
+        positions = supabase.table('positions').select('*').eq(
+            'department', department).order('name').execute().data or []
+    else:
+        positions = supabase.table('positions').select('*').order(
+            'name').execute().data or []
+
+    report_data = []
+
+    for pos in positions:
+        candidates = supabase.table('candidates').select('id, name').eq(
+            'position_id', pos['id']).execute().data or []
+
+        candidate_rows = []
+        for cand in candidates:
+            votes = supabase.table('votes').select('student_id') \
+                .eq('candidate_ref', int(cand['id'])).execute().data or []
+
+            student_ids = [
+                v['student_id'] for v in votes if v.get('student_id')
+            ]
+            vote_count = len(student_ids)
+
+            breakdown = {}
+            if student_ids:
+                users = supabase.table('user') \
+                    .select('year_level, department, course, track') \
+                    .in_('school_id', student_ids).execute().data or []
+
+                for u in users:
+                    if role == 'admin' and u.get('department') != department:
+                        continue
+                    y, d, c, t = u.get('year_level'), u.get(
+                        'department'), u.get('course'), u.get('track')
+                    if not all([y, d, c, t]):
+                        continue
+                    breakdown.setdefault(y, {}).setdefault(d, {}).setdefault(
+                        c, {}).setdefault(t, 0)
+                    breakdown[y][d][c][t] += 1
+
+            candidate_rows.append({
+                'name': cand['name'],
+                'vote_count': vote_count,
+                'breakdown': breakdown
+            })
+
+        report_data.append({
+            'position': pos['name'],
+            'candidates': candidate_rows
+        })
+
+    return render_template('vote_results_report.html', report_data=report_data)
 
 
 @app.route('/candidates')
@@ -1864,10 +2042,11 @@ def vote_receipt():
     user_id = None
     if user_resp.data:
         # Get the actual numeric user ID
-        user_lookup = supabase.table('user').select('id').eq('school_id', school_id).single().execute()
+        user_lookup = supabase.table('user').select('id').eq(
+            'school_id', school_id).single().execute()
         if user_lookup.data:
             user_id = user_lookup.data['id']
-    
+
     supabase.table("logs").insert({
         "user_id": user_id,
         "action": "VIEW_VOTE_RECEIPT",
@@ -2439,7 +2618,8 @@ def activity():
     role = session.get('role', 'user')
 
     # Get current user info
-    user_resp = supabase.table('user').select('*').eq('school_id', school_id).single().execute()
+    user_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
     current_user = user_resp.data
     if not current_user:
         flash("User not found.", "danger")
@@ -2451,13 +2631,18 @@ def activity():
     if role == 'admin':
         # Admin sees user activity in their department
         # Get all users in the same department
-        dept_users_resp = supabase.table('user').select('id, school_id, first_name, last_name').eq('department', department).execute()
+        dept_users_resp = supabase.table('user').select(
+            'id, school_id, first_name, last_name').eq('department',
+                                                       department).execute()
         dept_user_ids = [u['id'] for u in dept_users_resp.data if u.get('id')]
 
         if dept_user_ids:
-            logs_resp = supabase.table('logs').select('*').in_('user_id', dept_user_ids).order('timestamp', desc=True).limit(50).execute()
+            logs_resp = supabase.table('logs').select('*').in_(
+                'user_id', dept_user_ids).order('timestamp',
+                                                desc=True).limit(50).execute()
         else:
-            logs_resp = supabase.table('logs').select('*').eq('user_id', -1).execute()  # Empty result
+            logs_resp = supabase.table('logs').select('*').eq(
+                'user_id', -1).execute()  # Empty result
 
         activity_logs = logs_resp.data or []
 
@@ -2500,13 +2685,21 @@ def activity():
     else:
         # User sees admin activity in their department
         # Get all admins in the same department
-        dept_admins_resp = supabase.table('user').select('id, school_id, first_name, last_name').eq('department', department).eq('role', 'admin').execute()
-        dept_admin_ids = [a['id'] for a in dept_admins_resp.data if a.get('id')]
+        dept_admins_resp = supabase.table(
+            'user').select('id, school_id, first_name, last_name').eq(
+                'department', department).eq('role', 'admin').execute()
+        dept_admin_ids = [
+            a['id'] for a in dept_admins_resp.data if a.get('id')
+        ]
 
         if dept_admin_ids:
-            logs_resp = supabase.table('logs').select('*').in_('user_id', dept_admin_ids).order('timestamp', desc=True).limit(50).execute()
+            logs_resp = supabase.table('logs').select('*').in_(
+                'user_id',
+                dept_admin_ids).order('timestamp',
+                                      desc=True).limit(50).execute()
         else:
-            logs_resp = supabase.table('logs').select('*').eq('user_id', -1).execute()  # Empty result
+            logs_resp = supabase.table('logs').select('*').eq(
+                'user_id', -1).execute()  # Empty result
 
         activity_logs = logs_resp.data or []
 
@@ -2523,19 +2716,25 @@ def activity():
             if log['action'] == 'ADD_POSITION':
                 message = f"Admin {admin_name} added a new position: {log.get('target', 'Unknown')}"
             elif log['action'] == 'ADD_CANDIDATE':
-                candidate_name = log.get('new_data', '').split('Name: ')[1].split(',')[0] if 'Name: ' in log.get('new_data', '') else 'Unknown'
+                candidate_name = log.get('new_data', '').split(
+                    'Name: ')[1].split(',')[0] if 'Name: ' in log.get(
+                        'new_data', '') else 'Unknown'
                 message = f"Admin {admin_name} added candidate: {candidate_name}"
             elif log['action'] == 'EDIT_CANDIDATE':
                 message = f"Admin {admin_name} edited candidate: {log.get('target', 'Unknown')}"
             elif log['action'] == 'DELETE_CANDIDATE':
-                candidate_name = log.get('new_data', '').split('Name: ')[1] if 'Name: ' in log.get('new_data', '') else 'Unknown'
+                candidate_name = log.get(
+                    'new_data', '').split('Name: ')[1] if 'Name: ' in log.get(
+                        'new_data', '') else 'Unknown'
                 message = f"Admin {admin_name} deleted candidate: {candidate_name}"
             elif log['action'] == 'APPROVE_USER':
                 message = f"Admin {admin_name} approved a new user registration"
             elif log['action'] == 'REJECT_USER':
                 message = f"Admin {admin_name} rejected a user registration"
             elif log['action'] == 'UPDATE_VOTING_DEADLINE':
-                deadline = log.get('new_data', '').split('Deadline set to: ')[1] if 'Deadline set to: ' in log.get('new_data', '') else 'Unknown'
+                deadline = log.get('new_data', '').split(
+                    'Deadline set to: ')[1] if 'Deadline set to: ' in log.get(
+                        'new_data', '') else 'Unknown'
                 message = f"Admin {admin_name} updated voting deadline"
             elif log['action'] == 'VIEW_ADMIN_DASHBOARD':
                 message = f"Admin {admin_name} accessed admin dashboard"
@@ -2559,11 +2758,14 @@ def activity():
         'timestamp': datetime.now().isoformat()
     }).execute()
 
-    return render_template('activity.html', 
-                         logs=formatted_logs, 
-                         role=role, 
-                         department=department,
-                         user_name=f"{current_user.get('first_name', '')} {current_user.get('last_name', '')}")
+    return render_template(
+        'activity.html',
+        logs=formatted_logs,
+        role=role,
+        department=department,
+        user_name=
+        f"{current_user.get('first_name', '')} {current_user.get('last_name', '')}"
+    )
 
 
 @app.route('/pyinfo')

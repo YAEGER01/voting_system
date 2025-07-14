@@ -331,5 +331,17 @@
     },
     "previous_hash": "e82b1cd0b318b1bcd5168f7630a6eb3f5cae28c9a9025438470cde22ac930f8c",
     "hash": "4deb5dd04abc1d914d27ce522b502627be30cefd156dd297341f3a357f12c559"
+  },
+  {
+    "index": 28,
+    "timestamp": "1752463234.7470264",
+    "data": {
+      "student_id": "b6f0bbdad8965151ec83cd8f38b2213c38e5c3beba056750b6532f73db8d0ee8",
+      "position_id": 19,
+      "candidate_id": "a5SWtvJdnPrXtTz9e+6smYZlfPD4qCbvQOMah9lhh1c=",
+      "timestamp": "1752463234.7470176"
+    },
+    "previous_hash": "4deb5dd04abc1d914d27ce522b502627be30cefd156dd297341f3a357f12c559",
+    "hash": "dfb0093bf6170847a564c6b9ac0377429ba7cdf2801fcf614aa3c8d6e24bdb87"
   }
 ]

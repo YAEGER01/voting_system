@@ -331,14 +331,19 @@
         <br>
 
         <!-- START / RESTART / END buttons -->
-        <div class="control-buttons" style="padding:10px">
+        <div class="control-buttons">
 
           <button id="startBtn" class="btn">Start</button>
           <button id="restartBtn" class="btn">Restart</button>
           <button id="endBtn" class="btn btn-danger">End</button>
           <br>
           <hr><br>
-          <a style="text-decoration: none;" class="btn" href="/vote_results_report">View Official Results</a>
+          <button class="btn" onclick="window.open('/vote_breakdown_export/csv')">Export CSV</button>
+          <button class="btn" onclick="window.open('/vote_breakdown_export/txt')">Export TXT</button>
+
+          <button class="btn" onclick="window.open('/vote_results_report')">View Official Results</button>
+
+
         </div>
 
 
