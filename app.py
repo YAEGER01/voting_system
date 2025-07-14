@@ -4,6 +4,9 @@ from werkzeug.utils import secure_filename
 from supabase_client import supabase
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta, timezone
+from flask import render_template, session, make_response
+from xhtml2pdf import pisa
+import io
 import os
 import re
 import sys
@@ -1770,7 +1773,105 @@ def vote_results_report():
             'candidates': candidate_rows
         })
 
+    priority_order = [
+        "President",
+        "Vice President",
+        "Secretary",
+        "Treasurer",
+        "Auditor",
+        "PRO",
+        "Senator",
+        "Representative"
+    ]
+
+    def get_priority(pos_name):
+        return priority_order.index(pos_name) if pos_name in priority_order else len(priority_order)
+
+    report_data.sort(key=lambda block: get_priority(block['position']))
+
     return render_template('vote_results_report.html', report_data=report_data)
+
+
+
+@app.route('/vote_results_pdf')
+def vote_results_pdf():
+    if 'school_id' not in session or session.get('role') not in ['admin', 'SysAdmin']:
+        return "Unauthorized", 403
+
+    school_id = session['school_id']
+    role = session['role']
+    user = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute().data
+    department = user.get('department', user.get('course', ''))
+
+    if role == 'admin':
+        positions = supabase.table('positions').select('*').eq(
+            'department', department).order('name').execute().data or []
+    else:
+        positions = supabase.table('positions').select('*').order(
+            'name').execute().data or []
+
+    report_data = []
+
+    for pos in positions:
+        candidates = supabase.table('candidates').select('id, name').eq(
+            'position_id', pos['id']).execute().data or []
+
+        candidate_rows = []
+        for cand in candidates:
+            votes = supabase.table('votes').select('student_id') \
+                .eq('candidate_ref', int(cand['id'])).execute().data or []
+
+            student_ids = [v['student_id'] for v in votes if v.get('student_id')]
+            vote_count = len(student_ids)
+
+            breakdown = {}
+            if student_ids:
+                users = supabase.table('user') \
+                    .select('year_level, department, course, track') \
+                    .in_('school_id', student_ids).execute().data or []
+
+                for u in users:
+                    if role == 'admin' and u.get('department') != department:
+                        continue
+                    y, d, c, t = u.get('year_level'), u.get('department'), u.get('course'), u.get('track')
+                    if not all([y, d, c, t]):
+                        continue
+                    breakdown.setdefault(y, {}).setdefault(d, {}).setdefault(c, {}).setdefault(t, 0)
+                    breakdown[y][d][c][t] += 1
+
+            candidate_rows.append({
+                'name': cand['name'],
+                'vote_count': vote_count,
+                'breakdown': breakdown
+            })
+
+        report_data.append({
+            'position': pos['name'],
+            'candidates': candidate_rows
+        })
+
+    # Sort by logical hierarchy
+    priority_order = [
+        "President", "Vice President", "Secretary", "Treasurer",
+        "Auditor", "PRO", "Senator", "Representative"
+    ]
+    def get_priority(pos_name):
+        return priority_order.index(pos_name) if pos_name in priority_order else len(priority_order)
+    report_data.sort(key=lambda block: get_priority(block['position']))
+
+    # Render to HTML
+    html = render_template('vote_results_report.html', report_data=report_data)
+
+    # Generate PDF with xhtml2pdf (pisa)
+    result = io.BytesIO()
+    pisa.CreatePDF(io.StringIO(html), dest=result)
+
+    response = make_response(result.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=vote_results.pdf'
+    return response
+
 
 
 @app.route('/candidates')
