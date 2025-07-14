@@ -3,7 +3,6 @@ run = "python app.py"
 
 [nix]
 channel = "stable-24_05"
-packages = ["fontconfig", "ghostscript", "glib", "harfbuzz", "pango"]
 
 [deployment]
 run = ["sh", "-c", "python app.py"]

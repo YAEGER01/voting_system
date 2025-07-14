@@ -9,6 +9,5 @@ dependencies = [
     "werkzeug>=3.1.3",
     "pymysql",
     "psycopg2-binary",
-    "pycryptodome",
-    "weasyprint",
+    "pycryptodome",      # <-- Added for AES support
 ]

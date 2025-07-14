@@ -15,5 +15,3 @@ flask-mail
 Crypto
 PyCryptodome==3.20.0    # <-- Changed from 'crypto' to 'pycryptodome'
 gunicorn
-weasyprint
-xhtml2pdf
