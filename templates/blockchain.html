@@ -47,7 +47,8 @@
             background: var(--bg);
             min-height: 100vh;
             color: var(--text);
-            padding: 20px;
+            padding: 15px;
+            line-height: 1.4;
         }
 
         .container {
@@ -55,40 +56,71 @@
             margin: 0 auto;
         }
 
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 12px 24px;
+            background: var(--primary);
+            color: var(--text-light);
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            top: 0;
+            left: 0;
+        }
+
+        .back-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .back-button:active {
+            transform: translateY(0);
+        }
+
         .header {
             background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 25px;
+            margin-bottom: 25px;
             box-shadow: 0 10px 30px var(--shadow);
             border: 1px solid var(--border);
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             color: var(--primary-dark);
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             gap: 15px;
+            flex-wrap: wrap;
         }
 
         .security-badge {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: var(--text-light);
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 10px 18px;
+            border-radius: 25px;
             font-size: 0.9rem;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
+            box-shadow: 0 4px 12px var(--shadow);
+            white-space: nowrap;
         }
 
         .description {
             font-size: 1.1rem;
-            line-height: 1.6;
+            line-height: 1.7;
             color: var(--primary-dark);
             margin-bottom: 20px;
         }
@@ -106,26 +138,54 @@
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: var(--text-light);
             padding: 20px;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
+            text-align: center;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 800px;
         }
 
         th {
             background: var(--nav-bg);
             color: var(--text-light);
-            padding: 15px 12px;
+            padding: 18px 15px;
             font-weight: 600;
             text-align: left;
             border-bottom: 2px solid var(--primary-dark);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th:first-child {
+            min-width: 100px;
+        }
+
+        th:nth-child(2) {
+            min-width: 150px;
+        }
+
+        th:nth-child(3) {
+            min-width: 250px;
+        }
+
+        th:nth-child(4),
+        th:nth-child(5) {
+            min-width: 120px;
         }
 
         td {
-            padding: 15px 12px;
+            padding: 18px 15px;
             border-bottom: 1px solid var(--border);
             vertical-align: top;
         }
@@ -181,75 +241,258 @@
         .footer {
             text-align: center;
             margin-top: 30px;
-            padding: 20px;
+            padding: 25px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
+            border-radius: 20px;
             color: var(--primary-dark);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
         .integrity-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: var(--text-light);
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 12px 20px;
+            border-radius: 25px;
             font-size: 0.9rem;
             font-weight: 600;
-            margin-top: 10px;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px var(--shadow);
         }
 
+        .mobile-card {
+            display: none;
+        }
+
+        /* Mobile-first responsive design */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
             }
 
+            .container {
+                padding: 0 5px;
+            }
+
+            .back-button {
+                padding: 10px 20px;
+                font-size: 0.95rem;
+                margin-bottom: 15px;
+            }
+
+            .header {
+                padding: 20px;
+                margin-bottom: 20px;
+                border-radius: 15px;
+            }
+
             h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 12px;
+            }
+
+            .security-badge {
+                font-size: 0.8rem;
+                padding: 8px 14px;
+            }
+
+            .description {
+                font-size: 1rem;
+                line-height: 1.6;
+            }
+
+            .table-header {
+                font-size: 1.1rem;
+                padding: 15px;
+            }
+
+            /* Hide table on mobile, show cards instead */
+            .table-container {
+                display: none;
+            }
+
+            .mobile-card {
+                display: block;
+                background: var(--card-bg);
+                border-radius: 15px;
+                margin-bottom: 15px;
+                padding: 20px;
+                box-shadow: 0 4px 12px var(--shadow);
+                border: 1px solid var(--border);
+                border-left: 4px solid var(--primary);
+            }
+
+            .mobile-card h3 {
+                color: var(--primary-dark);
+                margin-bottom: 15px;
+                font-size: 1.2rem;
+                display: flex;
+                align-items: center;
                 gap: 10px;
             }
 
-            table {
+            .mobile-card .field {
+                margin-bottom: 12px;
+            }
+
+            .mobile-card .field-label {
+                font-weight: 600;
+                color: var(--primary-dark);
                 font-size: 0.9rem;
+                margin-bottom: 4px;
+            }
+
+            .mobile-card .field-value {
+                font-family: 'Courier New', monospace;
+                font-size: 0.85rem;
+                color: var(--text);
+                background: var(--bg);
+                padding: 8px 12px;
+                border-radius: 6px;
+                word-break: break-all;
+            }
+
+            .mobile-card .vote-details {
+                background: var(--bg);
+                border-radius: 8px;
+                padding: 12px;
+                border-left: 4px solid var(--primary);
+                overflow-x: auto;
+            }
+
+            .footer {
+                padding: 20px;
+                font-size: 0.9rem;
+            }
+
+            .integrity-badge {
+                font-size: 0.85rem;
+                padding: 10px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+            }
+
+            .security-badge {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+            }
+
+            .description {
+                font-size: 0.95rem;
+            }
+
+            .mobile-card {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+
+            .mobile-card h3 {
+                font-size: 1.1rem;
+            }
+
+            .mobile-card .field-value {
+                font-size: 0.8rem;
+            }
+
+            .footer {
+                padding: 15px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Landscape phone orientation */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .table-container {
+                display: block;
+            }
+
+            .mobile-card {
+                display: none;
+            }
+
+            table {
+                min-width: 600px;
             }
 
             th,
             td {
-                padding: 10px 8px;
+                padding: 12px 8px;
+                font-size: 0.85rem;
             }
 
             td:nth-child(3) {
                 max-width: 200px;
             }
         }
+
+        /* Tablet styles */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                padding: 0 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            table {
+                min-width: 700px;
+            }
+
+            th,
+            td {
+                padding: 15px 10px;
+            }
+
+            td:nth-child(3) {
+                max-width: 250px;
+            }
+        }
+
+        /* Enhanced hover effects for desktop */
+        @media (min-width: 1025px) {
+            .audit-table {
+                transition: all 0.3s ease;
+            }
+
+            .audit-table:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 15px 40px var(--shadow);
+            }
+
+            tr:hover td {
+                transform: scale(1.01);
+            }
+
+            .mobile-card {
+                display: none;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <a href="{{ url_for('dashboard') }}" style="
-        display: inline-block;
-        margin-bottom: 24px;
-        padding: 12px 28px;
-        background: var(--primary);
-        color: var(--text-light);
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        text-decoration: none;
-        box-shadow: 0 2px 8px var(--shadow);
-        transition: background 0.2s;
-        position: relative;
-        top: 0;
-        left: 0;
-    " onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
-        ← Back to Dashboard
-    </a>
     <div class="container">
+        <a href="{{ url_for('dashboard') }}" class="back-button">
+            ← Back to Dashboard
+        </a>
+
         <div class="header">
             <h1>
                 🗳️ Voting Records
@@ -267,30 +510,64 @@
             <div class="table-header">
                 📊 Voting Records Log
             </div>
-            <table>
-                <tr>
-                    <th>Record #</th>
-                    <th>Time</th>
-                    <th>Vote Details</th>
-                    <th>Previous Record (for security)
-                        <span title="Used to link records together for security.">🛈</span>
-                    </th>
-                    <th>Security Code
-                        <span title="A unique code that proves this record hasn't been changed.">🛈</span>
-                    </th>
-                </tr>
-                {% for block in chain %}
-                <tr>
-                    <td>{{ block.index }}</td>
-                    <td>{{ block.timestamp }}</td>
-                    <td>
+
+            <!-- Desktop/Tablet Table View -->
+            <div class="table-container">
+                <table>
+                    <tr>
+                        <th>Record #</th>
+                        <th>Time</th>
+                        <th>Vote Details</th>
+                        <th>Previous Record (for security)
+                            <span title="Used to link records together for security.">🛈</span>
+                        </th>
+                        <th>Security Code
+                            <span title="A unique code that proves this record hasn't been changed.">🛈</span>
+                        </th>
+                    </tr>
+                    {% for block in chain %}
+                    <tr>
+                        <td>{{ block.index }}</td>
+                        <td>{{ block.timestamp }}</td>
+                        <td>
+                            <pre>{{ block.data | tojson(indent=2) }}</pre>
+                        </td>
+                        <td title="Used to link records together for security.">{{ block.previous_hash[:8] }}...</td>
+                        <td title="A unique code that proves this record hasn't been changed.">{{ block.hash[:8] }}...
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <!-- Mobile Card View -->
+            {% for block in chain %}
+            <div class="mobile-card">
+                <h3>🔗 Record #{{ block.index }}</h3>
+
+                <div class="field">
+                    <div class="field-label">⏰ Time</div>
+                    <div class="field-value">{{ block.timestamp }}</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">🗳️ Vote Details</div>
+                    <div class="field-value vote-details">
                         <pre>{{ block.data | tojson(indent=2) }}</pre>
-                    </td>
-                    <td title="Used to link records together for security.">{{ block.previous_hash[:8] }}... </td>
-                    <td title="A unique code that proves this record hasn't been changed.">{{ block.hash[:8] }}... </td>
-                </tr>
-                {% endfor %}
-            </table>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">🔗 Previous Record</div>
+                    <div class="field-value">{{ block.previous_hash[:8] }}...</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">🔒 Security Code</div>
+                    <div class="field-value">{{ block.hash[:8] }}...</div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
 
         <div class="footer">

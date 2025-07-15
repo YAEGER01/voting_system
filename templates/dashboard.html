@@ -43,23 +43,38 @@
       </span>
       <hr>
     </div>
-    <a href="#" id="homeLink"><i class="fa-solid fa-house"></i><span>Home</span></a>
-    <a href="#" id="profileLink"><i class="fa-solid fa-user"></i><span>My Profile</span></a>
-    <a href="{{ url_for('vote_receipt') }}"><i class="fa-solid fa-receipt"></i><span>Receipt Tab</span></a>
-    <a href="{{ url_for('candidates') }}"><i class="fa-solid fa-users"></i><span>Candidates</span></a>
-    <a href="{{ url_for('view_results') }}"><i class="fa-solid fa-file-alt"></i><span>View Results</span></a>
-    <a href="{{ url_for('activity') }}"><i class="fa-solid fa-file-alt"></i><span>View Activities</span></a>
+    <a href="#" id="homeLink">
+      <i class="fa-solid fa-house"></i>
+      <span>Home</span>
+    </a>
+    <a href="#" id="profileLink">
+      <i class="fa-solid fa-user"></i>
+      <span>My Profile</span>
+    </a>
+    <a href="{{ url_for('vote_receipt') }}">
+      <i class="fa-solid fa-receipt"></i>
+      <span>Receipt Tab</span>
+    </a>
+    <a href="{{ url_for('candidates') }}">
+      <i class="fa-solid fa-users"></i>
+      <span>Candidates</span>
+    </a>
+    <a href="{{ url_for('view_results') }}">
+      <i class="fa-solid fa-chart-bar"></i>
+      <span>View Results</span>
+    </a>
+    <a href="{{ url_for('activity') }}">
+      <i class="fa-solid fa-list-check"></i>
+      <span>View Activities</span>
+    </a>
     <a href="{{ url_for('blockchain_html') }}">
-      <i class="fa-solid fa-shield-alt"></i>
+      <i class="fa-solid fa-shield-halved"></i>
       <span>Vote Audit Trail</span>
     </a>
-    <a href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?');"><i
-        class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
-    <div class="developer-note">
-      <div>Developed By:</div>
-      <div>Justin Von T. Vergara</div>
-      <div> BSIT 2A - NS </div>
-    </div>
+    <a href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?');">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      <span>Logout</span>
+    </a>
   </div>
 
   <div class="main-content">
@@ -145,113 +160,108 @@
         </div>
         <div class="profile-col">
           <div class="profile-col-title">Login Details |</div>
-          <div class="profile-row"><i class="fa-solid fa-id-card"></i><strong>School ID:</strong><span>{{ user.school_id
-              }}</span></div>
-          <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Email:</strong><span>{{ user.email
-              }}</span></div>
-          <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Password:</strong><span>(TO BE ADDED
-              SOON)</span></div>
-          <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Confirm Password:</strong><span>(TO BE
-              ADDED SOON)</span></div>
+          <div class="profile-row"><i class="fa-solid fa-id-card"></i><strong>School ID:</strong><span>{{
+              user.school_id}}</span></div>
+          <div class="profile-row"><i class="fa-solid fa-envelope"></i><strong>Email:</strong><span>{{
+              user.email}}</span></div>
         </div>
+        <button id="closeProfileBtn">Close</button>
       </div>
-      <button id="closeProfileBtn">Close</button>
     </div>
-  </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const profileLink = document.getElementById('profileLink');
-      const profileOverlay = document.getElementById('profileOverlay');
-      const closeProfileBtn = document.getElementById('closeProfileBtn');
-      if (profileLink && profileOverlay && closeProfileBtn) {
-        profileLink.addEventListener('click', function (e) {
-          e.preventDefault();
-          profileOverlay.style.display = 'block';
-        });
-        closeProfileBtn.addEventListener('click', function () {
-          profileOverlay.style.display = 'none';
-        });
-        profileOverlay.addEventListener('click', function (e) {
-          if (e.target === profileOverlay) {
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const profileLink = document.getElementById('profileLink');
+        const profileOverlay = document.getElementById('profileOverlay');
+        const closeProfileBtn = document.getElementById('closeProfileBtn');
+        if (profileLink && profileOverlay && closeProfileBtn) {
+          profileLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            profileOverlay.style.display = 'block';
+          });
+          closeProfileBtn.addEventListener('click', function () {
             profileOverlay.style.display = 'none';
-          }
-        });
-      }
-      const sidebar = document.querySelector('.sidebar');
-      const toggleBtn = document.getElementById('sidebarToggle');
-      if (toggleBtn && sidebar) {
-        toggleBtn.addEventListener('click', () => {
-          sidebar.classList.toggle('active');
-        });
-      }
-    });
-  </script>
-  <script>
-    // Parse the voting deadline from the server
-    const votingDeadlineStr = "{{ voting_deadline }}";
-    const votingClosed = {{voting_closed | tojson }};
-    let votingDeadline = null;
-
-    // Function to format date to words with Philippine time
-    function formatDateToWords(date) {
-      // Use toLocaleString with Asia/Manila time zone for correct PH time
-      return date.toLocaleString("en-US", {
-        timeZone: "Asia/Manila",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true
+          });
+          profileOverlay.addEventListener('click', function (e) {
+            if (e.target === profileOverlay) {
+              profileOverlay.style.display = 'none';
+            }
+          });
+        }
+        const sidebar = document.querySelector('.sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+          toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+          });
+        }
       });
-    }
+    </script>
+    <script>
+      // Parse the voting deadline from the server
+      const votingDeadlineStr = "{{ voting_deadline }}";
+      const votingClosed = {{voting_closed | tojson }};
+      let votingDeadline = null;
 
-    try {
-      // Parse the deadline string to Date object
-      votingDeadline = new Date(votingDeadlineStr);
-
-      // Format and display the deadline immediately
-      const deadlineDisplayElem = document.getElementById('deadlineDisplay');
-      if (deadlineDisplayElem && votingDeadlineStr) {
-        deadlineDisplayElem.textContent = formatDateToWords(votingDeadline);
+      // Function to format date to words with Philippine time
+      function formatDateToWords(date) {
+        // Use toLocaleString with Asia/Manila time zone for correct PH time
+        return date.toLocaleString("en-US", {
+          timeZone: "Asia/Manila",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true
+        });
       }
-    } catch (error) {
-      console.error('Error parsing voting deadline:', error);
-    }
 
-    // Live clock updater
-    const clockInterval = setInterval(function () {
-      const now = new Date();
-      const liveNowElem = document.getElementById('liveNow');
-      if (liveNowElem) {
-        liveNowElem.textContent = formatDateToWords(now);
+      try {
+        // Parse the deadline string to Date object
+        votingDeadline = new Date(votingDeadlineStr);
+
+        // Format and display the deadline immediately
+        const deadlineDisplayElem = document.getElementById('deadlineDisplay');
+        if (deadlineDisplayElem && votingDeadlineStr) {
+          deadlineDisplayElem.textContent = formatDateToWords(votingDeadline);
+        }
+      } catch (error) {
+        console.error('Error parsing voting deadline:', error);
       }
-    }, 1000);
 
-    // Deadline checker - separate from clock to avoid continuous checking after deadline
-    let deadlineChecker = null;
-
-    // Only set up deadline checker if voting is not already closed
-    if (!votingClosed && votingDeadline) {
-      deadlineChecker = setInterval(function () {
+      // Live clock updater
+      const clockInterval = setInterval(function () {
         const now = new Date();
-
-        // Check if voting deadline has been reached
-        if (now >= votingDeadline) {
-          console.log('Voting deadline reached. Refreshing page...');
-
-          // Clear both intervals to stop all checking
-          clearInterval(clockInterval);
-          clearInterval(deadlineChecker);
-
-          // Refresh the page
-          window.location.reload();
+        const liveNowElem = document.getElementById('liveNow');
+        if (liveNowElem) {
+          liveNowElem.textContent = formatDateToWords(now);
         }
       }, 1000);
-    }
-  </script>
+
+      // Deadline checker - separate from clock to avoid continuous checking after deadline
+      let deadlineChecker = null;
+
+      // Only set up deadline checker if voting is not already closed
+      if (!votingClosed && votingDeadline) {
+        deadlineChecker = setInterval(function () {
+          const now = new Date();
+
+          // Check if voting deadline has been reached
+          if (now >= votingDeadline) {
+            console.log('Voting deadline reached. Refreshing page...');
+
+            // Clear both intervals to stop all checking
+            clearInterval(clockInterval);
+            clearInterval(deadlineChecker);
+
+            // Refresh the page
+            window.location.reload();
+          }
+        }, 1000);
+      }
+    </script>
 </body>
 
 </html>

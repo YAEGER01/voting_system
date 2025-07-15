@@ -18,7 +18,7 @@
   top: 0;
   left: 0;
   z-index: 1000;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -46,7 +46,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .logo-wrapper .logo {
@@ -136,7 +136,7 @@
   margin: 0 auto;
   padding: 36px 32px 32px 32px;
   border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   border: 1.5px solid #e0e4e8;
   color: #222;
   display: flex;
@@ -164,7 +164,7 @@
   border-radius: 12px;
   padding: 18px 18px 12px 18px;
   margin-bottom: 18px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03);
   border: 1px solid #e6eaea;
 }
 
@@ -193,7 +193,7 @@
   padding: 18px 10px 14px 10px;
   margin: 0 auto;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -203,7 +203,7 @@
 }
 
 .candidate-result-card:hover {
-  box-shadow: 0 4px 16px rgba(37,193,140,0.13);
+  box-shadow: 0 4px 16px rgba(37, 193, 140, 0.13);
   border-color: #25c18c;
 }
 
@@ -251,7 +251,7 @@
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(37,193,140,0.07);
+  box-shadow: 0 2px 8px rgba(37, 193, 140, 0.07);
   transition: background 0.2s;
   letter-spacing: 1px;
 }
@@ -314,13 +314,14 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: none;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
+  transition: opacity 0.2s;
 }
 
 /* When modal is shown via JavaScript (display: block), force it to use flexbox */
@@ -331,23 +332,23 @@
 #profileContainer {
   background: #fff;
   border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  padding: 32px 38px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 85vh;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  margin: 20px;
+  animation: modalFadeIn 0.3s;
 }
 
 #profileContainer h2 {
   color: #25c18c;
-  margin-bottom: 24px;
-  font-size: 2rem;
+  margin-bottom: 18px;
+  font-size: 1.7rem;
   text-align: center;
   font-weight: bold;
   letter-spacing: 1px;
@@ -355,73 +356,79 @@
 
 .profile-columns {
   display: flex;
-  gap: 40px;
+  flex-direction: column;
+  gap: 18px;
   width: 100%;
-  justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .profile-col {
   background: #f8f8f8;
   border-radius: 10px;
-  padding: 18px 22px;
-  min-width: 220px;
-  flex: 1;
+  padding: 14px 18px;
+  width: 100%;
 }
 
 .profile-col-title {
   font-weight: bold;
   color: #25c18c;
-  margin-bottom: 14px;
-  font-size: 18px;
+  margin-bottom: 10px;
+  font-size: 17px;
+  border-bottom: 1px solid #e0e4e8;
+  padding-bottom: 4px;
   text-align: left;
-  padding-bottom: 6px;
-  border-bottom: 2px solid #e0e4e8;
 }
 
 .profile-row {
   display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  gap: 10px;
+  align-items: flex-start;
+  /* Align icon and text at the top */
+  margin-bottom: 10px;
+  gap: 8px;
 }
 
 .profile-row i {
   color: #25c18c;
-  min-width: 22px;
-  text-align: center;
-  font-size: 18px;
+  min-width: 20px;
+  font-size: 17px;
+  margin-top: 2px;
+  /* Slight adjustment for vertical alignment */
 }
 
 .profile-row strong {
-  min-width: 120px;
+  min-width: 90px;
   color: #555;
   font-weight: 600;
+  font-size: 15px;
+  text-align: left;
+  margin-top: 0;
 }
 
 .profile-row span {
   flex: 1;
   color: #333;
   word-break: break-word;
+  font-size: 15px;
+  text-align: left;
+  margin-top: 0;
 }
 
 #closeProfileBtn {
-  margin-top: 10px;
+  margin-top: 16px;
   background: #25c18c;
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 12px 32px;
-  font-size: 17px;
+  padding: 10px 28px;
+  font-size: 16px;
   cursor: pointer;
   font-weight: bold;
   transition: background 0.2s;
-  box-shadow: 0 2px 8px rgba(37,193,140,0.2);
+  box-shadow: 0 2px 8px rgba(37, 193, 140, 0.12);
 }
 
 #closeProfileBtn:hover {
   background: #1fa46a;
-  box-shadow: 0 4px 12px rgba(37,193,140,0.3);
 }
 
 /* Sidebar toggle */
@@ -436,7 +443,7 @@
   z-index: 1201;
   border-radius: 6px;
   padding: 6px 14px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .developer-note {
@@ -466,60 +473,89 @@
 /* ================== */
 @media (max-width: 768px) {
   .page-header {
-    padding-left: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 70px;
     font-size: 18px;
-    justify-content: flex-start;
-    align-items: center;
-    position: relative;
     display: flex;
+    align-items: center;
     flex-direction: row;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 0 16px;
+    background-color: #25c18c;
+  }
+
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    position: static;
+    margin-left: 65px;
+    /* Space for sidebar toggle */
+  }
+
+  .logo-wrapper {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .logo-wrapper .logo {
+    height: 28px;
+    width: auto;
+  }
+
+  .header-title {
+    font-size: 20px;
+    margin-left: 12px;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+    align-self: center;
+    letter-spacing: 1px;
   }
 
   #sidebarToggle {
     display: block;
-    position: static;
-    margin-left: 10px;
-    margin-right: 18px;
-    align-self: center;
-  }
-
-  .logo-container {
-    position: static;
-    top: auto;
-    left: auto;
-    height: auto;
-    gap: 10px;
-    margin: 0 10px 0 0;
-    display: flex;
-    align-items: center;
-    z-index: 1;
-  }
-
-  .logo-wrapper {
-    width: 50px;
-    height: 50px;
-  }
-
-  .logo-wrapper .logo {
-    height: 30px;
-  }
-
-  .header-title {
-    flex: none;
-    text-align: left;
-    margin-left: 18px;
-    font-size: 23px;
-    align-self: center;
-    white-space: nowrap;
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 1201;
+    background: #25c18c;
+    border: none;
+    color: white;
+    font-size: 28px;
+    border-radius: 6px;
+    padding: 6px 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
   }
 
   .sidebar {
-    width: 200px;
+    position: fixed;
     top: 70px;
+    left: 0;
+    width: 200px;
     height: calc(100vh - 70px);
-    transform: translateX(-100%);
     z-index: 1000;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.07);
+    background: #1d3c27;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-top: 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
   }
 
   .sidebar.active {
@@ -528,14 +564,28 @@
 
   .main-content {
     margin-left: 0;
-    padding: 15px 0;
+    padding-top: 70px;
+    min-height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f6f8fa;
+    transition: none;
   }
-  
+
   .sketch-container {
     padding: 25px 10px;
     min-height: 350px;
     width: 98%;
     margin: 20px auto 0 auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    border: 1.5px solid #e0e4e8;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
   }
 
   .profile-columns {
@@ -546,6 +596,10 @@
   .profile-col {
     width: 100%;
     min-width: auto;
+    background: #f8f8f8;
+    border-radius: 10px;
+    padding: 18px 22px;
+    flex: 1;
   }
 
   #profileContainer {
@@ -553,6 +607,14 @@
     padding: 24px 20px;
     margin: 10px;
     max-height: 90vh;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow-y: auto;
   }
 }
 
@@ -560,35 +622,88 @@
   .page-header {
     height: 60px;
     font-size: 16px;
+    padding: 0 8px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+  }
+
+  .logo-container {
+    height: 40px;
+    gap: 6px;
+    position: static;
+    margin-left: 50px;
+    /* Space for sidebar toggle */
   }
 
   .logo-wrapper {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
   }
 
   .logo-wrapper .logo {
-    height: 25px;
-  }
-
-  .sidebar {
-    width: 180px;
-    top: 60px;
-    height: calc(100vh - 60px);
+    height: 20px;
+    width: auto;
   }
 
   .header-title {
-    font-size: 19px;
+    font-size: 16px;
+    margin-left: 8px;
   }
-  
+
+  #sidebarToggle {
+    display: block;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1201;
+    background: #25c18c;
+    border: none;
+    color: white;
+    font-size: 24px;
+    border-radius: 6px;
+    padding: 4px 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 180px;
+    height: calc(100vh - 60px);
+    z-index: 1000;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.07);
+    background: #1d3c27;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-top: 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding-top: 60px;
+  }
+
   .sketch-container {
-    padding: 15px 2px;
+    padding: 10px 2px;
     min-height: 200px;
     width: 98%;
   }
 
   #profileContainer {
-    padding: 20px 15px;
+    padding: 12px 8px;
     width: 98%;
     margin: 5px;
   }
@@ -600,11 +715,11 @@
   }
 
   .profile-row strong {
-    min-width: 100px;
-    font-size: 15px;
+    min-width: 80px;
+    font-size: 13px;
   }
 
   .profile-row span {
-    margin-left: 20px;
+    margin-left: 0;
   }
 }
