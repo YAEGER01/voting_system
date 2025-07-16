@@ -169,8 +169,8 @@ CANDIDATE_UPLOAD_FOLDER = os.path.join('static', 'uploads', 'candidates')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-RECAPTCHA_SITE_KEY = "6Lf6ioErAAAAAMgfS8qXBOmQ-lMUJXoHEK544AEe"
-RECAPTCHA_SECRET_KEY = "6Lf6ioErAAAAAN9CgpFldNEwhmB3Z-vVyRgNrCLw"
+RECAPTCHA_SITE_KEY = "6LfFx4ArAAAAAJJ3BqXudTcbFLA-m-thgKxyIIbb"
+RECAPTCHA_SECRET_KEY = "6LfFx4ArAAAAAMNz8oGkH4bpf02hLjv6zO8mnfSE"
 
 
 def verify_recaptcha(response_token):
