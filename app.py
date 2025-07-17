@@ -180,8 +180,8 @@ CANDIDATE_UPLOAD_FOLDER = os.path.join('static', 'uploads', 'candidates')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-RECAPTCHA_SITE_KEY = "6Lf6ioErAAAAAMgfS8qXBOmQ-lMUJXoHEK544AEe"
-RECAPTCHA_SECRET_KEY = "6Lf6ioErAAAAAN9CgpFldNEwhmB3Z-vVyRgNrCLw"
+RECAPTCHA_SITE_KEY = "6LfFx4ArAAAAAJJ3BqXudTcbFLA-m-thgKxyIIbb"
+RECAPTCHA_SECRET_KEY = "6LfFx4ArAAAAAMNz8oGkH4bpf02hLjv6zO8mnfSE"
 
 
 def verify_recaptcha(response_token):
@@ -1211,6 +1211,53 @@ def system_admin():
         filing_end_display=filing_end_display,
         can_set=can_set)
 
+@app.route('/voting_admin')
+def voting_admin():
+    if session.get('role') != 'SysAdmin':
+        return redirect(url_for('login'))
+
+    # Fetch VOTING period using correct columns: start_time, end_time
+    settings_resp = supabase.table('settings').select('start_time', 'end_time') \
+        .eq('department', 'ALL').order('id', desc=True).limit(1).execute()
+    settings_row = settings_resp.data[0] if settings_resp.data else None
+
+    voting_start = settings_row['start_time'] if settings_row else ''
+    voting_end = settings_row['end_time'] if settings_row else ''
+
+    def safe_format(dt_str):
+        if not dt_str:
+            return 'Not set'
+        try:
+            dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+            dt = dt.astimezone(PH_TZ)
+            return dt.strftime('%B %d, %Y %I:%M%p')
+        except Exception:
+            return 'Invalid date'
+
+    voting_start_display = safe_format(voting_start)
+    voting_end_display = safe_format(voting_end)
+
+    # Allow setting if not set or already expired
+    now_utc = datetime.now(timezone.utc)
+    can_set = False
+    if not voting_start or not voting_end:
+        can_set = True
+    else:
+        try:
+            voting_end_dt = datetime.fromisoformat(voting_end.replace('Z', '+00:00'))
+            if now_utc > voting_end_dt.astimezone(timezone.utc):
+                can_set = True
+        except Exception:
+            can_set = False
+
+    return render_template("voting_admin.html",
+        voting_start=voting_start,
+        voting_end=voting_end,
+        voting_start_display=voting_start_display,
+        voting_end_display=voting_end_display,
+        can_set=can_set)
+
+
 
 @app.route('/get_data_logs')
 def get_data_logs():
@@ -1237,95 +1284,87 @@ def get_data_logs():
         })
 
     return jsonify(logs_data)
-
-
-# --- FINAL FIXED ROUTE (Python) ---
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     if 'school_id' not in session:
         return redirect(url_for('login'))
 
     school_id = session['school_id']
-    user_resp = supabase.table('user').select('*').eq(
-        'school_id', school_id).single().execute()
+    user_resp = supabase.table('user').select('*').eq('school_id', school_id).single().execute()
     user = user_resp.data
     if not user:
         flash("User not found.", "danger")
         return redirect(url_for('login'))
 
     dept_logo = DEPARTMENT_LOGOS.get(user.get('department', '').upper())
-    now = datetime.now(timezone.utc)  # timezone-aware
-    voting_deadline = None
+    now = datetime.now(timezone.utc)
+
+    department = user.get('department', user.get('course', ''))
+    setting_resp = supabase.table('settings').select('*').eq('department', department).order('id', desc=True).limit(1).execute()
+
+    voting_start = None
+    voting_end = None
+    voting_open = False
     voting_closed = False
+    voting_start_display = "Not set"
+    voting_end_display = "Not set"
 
-    setting_resp = supabase.table('settings').select('*').eq(
-        'department',
-        user.get('department',
-                 user.get('course', ''))).order('id',
-                                                desc=True).limit(1).execute()
     if setting_resp.data:
-        voting_deadline_str = setting_resp.data[0]['voting_deadline']
-        if voting_deadline_str:
-            try:
-                voting_deadline = datetime.fromisoformat(voting_deadline_str)
-                # Ensure voting_deadline is timezone-aware
-                if voting_deadline.tzinfo is None or voting_deadline.tzinfo.utcoffset(
-                        voting_deadline) is None:
-                    voting_deadline = voting_deadline.replace(
-                        tzinfo=timezone.utc)
-            except Exception:
-                voting_deadline = None
-        voting_closed = now > voting_deadline if voting_deadline else False
+        setting = setting_resp.data[0]
+        try:
+            start_str = setting.get('start_time')
+            end_str = setting.get('end_time')
 
-    # Handle Vote Submission
-    if request.method == 'POST' and not voting_closed:
+            if start_str and end_str:
+                voting_start = datetime.fromisoformat(start_str)
+                voting_end = datetime.fromisoformat(end_str)
+
+                if voting_start.tzinfo is None:
+                    voting_start = voting_start.replace(tzinfo=timezone.utc)
+                if voting_end.tzinfo is None:
+                    voting_end = voting_end.replace(tzinfo=timezone.utc)
+
+                voting_start_display = voting_start.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+                voting_end_display = voting_end.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+                voting_open = voting_start <= now <= voting_end
+                voting_closed = now > voting_end
+        except Exception:
+            pass
+
+    if request.method == 'POST':
+        if not voting_open:
+            flash("Voting is not open at this time.", "danger")
+            return redirect(url_for('dashboard'))
+
         for position_id, candidate_id in request.form.items():
             if position_id.isdigit() and candidate_id.isdigit():
-                try:
-                    position_id_int = int(position_id)
-                    candidate_id_int = int(candidate_id)
-                except ValueError:
-                    continue  # Skip invalid entries
+                position_id_int = int(position_id)
+                candidate_id_int = int(candidate_id)
 
-                vote_resp = supabase.table('votes').select('*').eq(
-                    'student_id', school_id).eq('position_id',
-                                                position_id_int).execute()
+                vote_resp = supabase.table('votes').select('*').eq('student_id', school_id).eq('position_id', position_id_int).execute()
                 if not vote_resp.data:
-                    encrypted_candidate_id = encrypt_vote(
-                        str(candidate_id_int))
+                    encrypted_candidate_id = encrypt_vote(str(candidate_id_int))
 
                     supabase.table('votes').insert({
-                        'student_id':
-                        school_id,
-                        'position_id':
-                        position_id_int,
-                        'candidate_id':
-                        encrypted_candidate_id,
-                        'candidate_ref':
-                        candidate_id_int,
-                        'department':
-                        user.get('department', user.get('course', ''))
-                    }).execute()
-                    supabase.table('logs').insert({
-                        'user_id':
-                        user['id'],
-                        'action':
-                        'CAST_VOTE',
-                        'table_name':
-                        'votes',
-                        'query_type':
-                        'INSERT',
-                        'target':
-                        f"Position ID: {position_id_int}",
-                        'new_data':
-                        f"Encrypted Candidate ID: {encrypted_candidate_id}",
-                        'timestamp':
-                        datetime.now().isoformat()
+                        'student_id': school_id,
+                        'position_id': position_id_int,
+                        'candidate_id': encrypted_candidate_id,
+                        'candidate_ref': candidate_id_int,
+                        'department': department
                     }).execute()
 
-                    # Add to blockchain
-                    hashed_student_id = hashlib.sha256(
-                        school_id.encode()).hexdigest()
+                    supabase.table('logs').insert({
+                        'user_id': user['id'],
+                        'action': 'CAST_VOTE',
+                        'table_name': 'votes',
+                        'query_type': 'INSERT',
+                        'target': f"Position ID: {position_id_int}",
+                        'new_data': f"Encrypted Candidate ID: {encrypted_candidate_id}",
+                        'timestamp': datetime.now().isoformat()
+                    }).execute()
+
+                    hashed_student_id = hashlib.sha256(school_id.encode()).hexdigest()
                     vote_blockchain.add_block({
                         "student_id": hashed_student_id,
                         "position_id": position_id_int,
@@ -1336,42 +1375,39 @@ def dashboard():
         flash('Your vote has been submitted successfully!', 'success')
         return redirect(url_for('dashboard'))
 
-    # Fetch All Positions
-    department = user.get('department', user.get('course', ''))
-    positions_resp = supabase.table('positions').select('*').eq(
-        'department', department).execute()
+    positions_resp = supabase.table('positions').select('*').eq('department', department).execute()
     positions = positions_resp.data if positions_resp.data else []
 
-    # Get Candidate Data
     candidates_per_position = {}
     votable_positions = []
     for pos in positions:
-        cands_resp = supabase.table('candidates').select('*').eq(
-            'position_id', pos['id']).execute()
+        cands_resp = supabase.table('candidates').select('*').eq('position_id', pos['id']).execute()
         candidates = cands_resp.data if cands_resp.data else []
         candidates_per_position[pos['id']] = candidates
         if candidates:
             votable_positions.append(pos)
 
-    # Voted Positions
-    voted_positions_resp = supabase.table('votes').select('position_id').eq(
-        'student_id', school_id).execute()
-    voted_positions = [v['position_id'] for v in voted_positions_resp.data
-                       ] if voted_positions_resp.data else []
-
+    voted_positions_resp = supabase.table('votes').select('position_id').eq('student_id', school_id).execute()
+    voted_positions = [v['position_id'] for v in voted_positions_resp.data] if voted_positions_resp.data else []
     all_voted = all(pos['id'] in voted_positions for pos in votable_positions)
 
     return render_template('dashboard.html',
-                           user=user,
-                           dept_logo=dept_logo,
-                           voting_deadline=voting_deadline.isoformat()
-                           if voting_deadline else None,
-                           now=now,
-                           voting_closed=voting_closed,
-                           positions=positions,
-                           voted_positions=voted_positions,
-                           candidates_per_position=candidates_per_position,
-                           all_voted=all_voted)
+        user=user,
+        dept_logo=dept_logo,
+        voting_deadline=voting_end,
+        voting_start=voting_start,
+        voting_end=voting_end,
+        voting_start_display=voting_start_display,
+        voting_end_display=voting_end_display,
+        now=now,
+        voting_closed=voting_closed,
+        positions=positions,
+        voted_positions=voted_positions,
+        candidates_per_position=candidates_per_position,
+        all_voted=all_voted
+    )
+
+
 
 
 @app.route('/blockchain')
@@ -2607,6 +2643,109 @@ def set_filing_period():
         can_set=can_set)
 
 # ...existing code...
+#for voting 
+@app.route('/set_voting_period', methods=['GET', 'POST'])
+def set_voting_period():
+    if 'school_id' not in session or session.get('role') != 'SysAdmin':
+        flash("You must be a system admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    # Fetch latest 'ALL' department voting period settings
+    settings_resp = supabase.table('settings').select('start_time', 'end_time') \
+        .eq('department', 'ALL').order('id', desc=True).limit(1).execute()
+    settings_row = settings_resp.data[0] if settings_resp.data else None
+
+    voting_start = settings_row['start_time'] if settings_row else ''
+    voting_end = settings_row['end_time'] if settings_row else ''
+
+    def safe_format(dt_str):
+        if not dt_str:
+            return 'Not set'
+        try:
+            dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+            dt = dt.astimezone(PH_TZ)
+            return dt.strftime('%B %d, %Y %I:%M%p')
+        except Exception:
+            return 'Invalid date'
+
+    voting_start_display = safe_format(voting_start)
+    voting_end_display = safe_format(voting_end)
+
+    # Only allow setting if no period set or period has expired
+    now_utc = datetime.now(timezone.utc)
+    can_set = False
+    if not voting_start or not voting_end:
+        can_set = True
+    else:
+        try:
+            voting_end_dt = datetime.fromisoformat(voting_end.replace('Z', '+00:00'))
+            if now_utc > voting_end_dt.astimezone(timezone.utc):
+                can_set = True
+        except Exception:
+            can_set = False
+
+    if request.method == 'POST':
+        if not can_set:
+            flash("You cannot change the voting period while it is active.", "danger")
+            return redirect(url_for('set_voting_period'))
+
+        start_date = request.form.get('voting_start_date')
+        start_time = request.form.get('voting_start_time')
+        end_date = request.form.get('voting_end_date')
+        end_time = request.form.get('voting_end_time')
+
+        try:
+            start_dt = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M").replace(tzinfo=PH_TZ)
+            end_dt = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M").replace(tzinfo=PH_TZ)
+            start_utc = start_dt.astimezone(timezone.utc).isoformat()
+            end_utc = end_dt.astimezone(timezone.utc).isoformat()
+        except Exception:
+            flash("Invalid date or time format.", "danger")
+            return redirect(url_for('set_voting_period'))
+
+        # Get all unique departments from positions
+        departments_resp = supabase.table('positions').select('department').execute()
+        departments = {d['department'] for d in departments_resp.data} if departments_resp.data else set()
+
+        # Update or insert voting period for each department
+        for dept in departments:
+            dept_settings = supabase.table('settings').select('id').eq('department', dept).execute()
+            if dept_settings.data:
+                supabase.table('settings').update({
+                    'start_time': start_utc,
+                    'end_time': end_utc
+                }).eq('id', dept_settings.data[0]['id']).execute()
+            else:
+                supabase.table('settings').insert({
+                    'department': dept,
+                    'start_time': start_utc,
+                    'end_time': end_utc
+                }).execute()
+
+        # Update or insert for 'ALL' department
+        all_settings = supabase.table('settings').select('id').eq('department', 'ALL').execute()
+        if all_settings.data:
+            supabase.table('settings').update({
+                'start_time': start_utc,
+                'end_time': end_utc
+            }).eq('id', all_settings.data[0]['id']).execute()
+        else:
+            supabase.table('settings').insert({
+                'department': 'ALL',
+                'start_time': start_utc,
+                'end_time': end_utc
+            }).execute()
+
+        flash("Voting period set for all departments!", "success")
+        return redirect(url_for('set_voting_period'))
+
+    return render_template("voting_admin.html",
+                           voting_start=voting_start,
+                           voting_end=voting_end,
+                           voting_start_display=voting_start_display,
+                           voting_end_display=voting_end_display,
+                           can_set=can_set)
+
 
 # ...existing code...
 

@@ -88,9 +88,11 @@
       {% endwith %}
       <h2>{{ user.department }} Dashboard</h2>
       <p>
-        Voting Deadline: <b id="deadlineDisplay">{{ voting_deadline }}</b> |
+        Voting Start: <b>{{ voting_start_display }}</b> |
+        Voting Deadline: <b>{{ voting_end_display }}</b> |
         Now: <b id="liveNow">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</b>
       </p>
+
       <div class="sketch-container">
         {% if voting_closed %}
         <div style="text-align:center; color:#e74c3c; font-size:1.2em; font-weight:bold; margin:40px 0;">
@@ -107,33 +109,35 @@
           You can view the results in <b>[View Results]</b> on the Left side of the dashboard.
         </div>
 
-        {% else %}
-        <p>Welcome, {{ user.first_name }}! Please select your preferred candidates below.</p>
-        <form method="POST" action="">
-          {% for pos in positions %}
-          {% if pos.id not in voted_positions %}
-          <div class="position-block">
-            <h3>{{ pos.name }}</h3>
-            <div class="candidate-card-list">
-              {% for cand in candidates_per_position[pos.id] %}
-              <label class="candidate-result-card">
-                <input type="radio" name="{{ pos.id }}" value="{{ cand.id }}" required>
-                {% if cand.image %}
-                <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}">
+        {% elif voting_start and voting_end and voting_start <= now <=voting_end %}<p>Welcome, {{ user.first_name }}!
+          Please
+          select your preferred candidates below.</p>
+          <form method="POST" action="">
+
+            {% for pos in positions %}
+            {% if pos.id not in voted_positions %}
+            <div class="position-block">
+              <h3>{{ pos.name }}</h3>
+              <div class="candidate-card-list">
+                {% for cand in candidates_per_position[pos.id] %}
+                <label class="candidate-result-card">
+                  <input type="radio" name="{{ pos.id }}" value="{{ cand.id }}" required>
+                  {% if cand.image %}
+                  <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}">
+                  {% endif %}
+                  <div class="candidate-name">{{ cand.name }}</div>
+                </label>
+                {% endfor %}
+                {% if candidates_per_position[pos.id]|length == 0 %}
+                <p>No candidates for this position yet.</p>
                 {% endif %}
-                <div class="candidate-name">{{ cand.name }}</div>
-              </label>
-              {% endfor %}
-              {% if candidates_per_position[pos.id]|length == 0 %}
-              <p>No candidates for this position yet.</p>
-              {% endif %}
+              </div>
             </div>
-          </div>
+            {% endif %}
+            {% endfor %}
+            <button type="submit">Submit Vote</button>
+          </form>
           {% endif %}
-          {% endfor %}
-          <button type="submit">Submit Vote</button>
-        </form>
-        {% endif %}
       </div>
     </div>
   </div>
@@ -197,15 +201,16 @@
         }
       });
     </script>
-    <script>
-      // Parse the voting deadline from the server
-      const votingDeadlineStr = "{{ voting_deadline }}";
-      const votingClosed = {{voting_closed | tojson }};
-      let votingDeadline = null;
+    <!-- Replace this portion in your <script> section -->
 
-      // Function to format date to words with Philippine time
+    <script>
+      const votingStartStr = "{{ voting_start }}";
+      const votingEndStr = "{{ voting_end }}";
+      const votingClosed = {{ voting_closed | tojson }};
+      let votingStart = null;
+      let votingEnd = null;
+
       function formatDateToWords(date) {
-        // Use toLocaleString with Asia/Manila time zone for correct PH time
         return date.toLocaleString("en-US", {
           timeZone: "Asia/Manila",
           year: "numeric",
@@ -218,50 +223,44 @@
         });
       }
 
-      try {
-        // Parse the deadline string to Date object
-        votingDeadline = new Date(votingDeadlineStr);
-
-        // Format and display the deadline immediately
-        const deadlineDisplayElem = document.getElementById('deadlineDisplay');
-        if (deadlineDisplayElem && votingDeadlineStr) {
-          deadlineDisplayElem.textContent = formatDateToWords(votingDeadline);
+      function disableVotingUI(message) {
+        const sketchContainer = document.querySelector('.sketch-container');
+        if (sketchContainer) {
+          sketchContainer.innerHTML = `
+            <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
+              ${message}
+            </div>
+          `;
         }
-      } catch (error) {
-        console.error('Error parsing voting deadline:', error);
       }
 
-      // Live clock updater
-      const clockInterval = setInterval(function () {
+      try {
+        if (votingStartStr) votingStart = new Date(votingStartStr);
+        if (votingEndStr) votingEnd = new Date(votingEndStr);
+
         const now = new Date();
+
+        // Disable voting if current time is outside the voting period
+        if (votingStart && now < votingStart) {
+          disableVotingUI("Voting has not started yet. Please wait until " + formatDateToWords(votingStart));
+        } else if (votingEnd && now > votingEnd) {
+          disableVotingUI("Voting period has ended. Voting was open until " + formatDateToWords(votingEnd));
+        }
+
+        // Update live clock
         const liveNowElem = document.getElementById('liveNow');
         if (liveNowElem) {
-          liveNowElem.textContent = formatDateToWords(now);
+          setInterval(() => {
+            const now = new Date();
+            liveNowElem.textContent = formatDateToWords(now);
+          }, 1000);
         }
-      }, 1000);
 
-      // Deadline checker - separate from clock to avoid continuous checking after deadline
-      let deadlineChecker = null;
-
-      // Only set up deadline checker if voting is not already closed
-      if (!votingClosed && votingDeadline) {
-        deadlineChecker = setInterval(function () {
-          const now = new Date();
-
-          // Check if voting deadline has been reached
-          if (now >= votingDeadline) {
-            console.log('Voting deadline reached. Refreshing page...');
-
-            // Clear both intervals to stop all checking
-            clearInterval(clockInterval);
-            clearInterval(deadlineChecker);
-
-            // Refresh the page
-            window.location.reload();
-          }
-        }, 1000);
+      } catch (error) {
+        console.error("Error parsing start/end time:", error);
       }
     </script>
+
 </body>
 
 </html>
