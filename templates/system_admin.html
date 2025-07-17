@@ -260,6 +260,8 @@
             {% endif %}
             {% endwith %}
 
+            <!-- ...existing code... -->
+            {% if can_set %}
             <form method="POST" action="{{ url_for('set_filing_period') }}">
               <label for="filing_start_date">Filing Start Date:</label>
               <input type="date" id="filing_start_date" name="filing_start_date" required>
@@ -271,13 +273,20 @@
               <label for="filing_end_time">Filing End Time:</label>
               <input type="time" id="filing_end_time" name="filing_end_time" required>
 
-              <button type="submit">Update Filing Period</button>
+              <button type="submit">Set Filing Period</button>
             </form>
+            {% else %}
+            <div style="color:#c0392b;font-weight:bold; margin-bottom:1rem;">
+              You cannot change the filing period while it is active.<br>
+              Current period: {{ filing_start_display }} to {{ filing_end_display }}
+            </div>
+            {% endif %}
             <div style="margin-top:1rem;">
               <strong>Current Filing Period:</strong><br>
               Start: {{ filing_start_display }}<br>
               End: {{ filing_end_display }}
             </div>
+            <!-- ...existing code... -->
           </div>
         </div>
       </div>
