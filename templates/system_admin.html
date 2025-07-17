@@ -244,6 +244,44 @@
         </div>
       </div>
 
+      <!-- Add this card inside your .card-grid div, preferably as the first card -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Manage Filing Period</h3>
+        </div>
+        <div class="card-content">
+          <div class="form-container">
+            <h2>Set Filing Period for All Departments</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <p class="{{ category }}">{{ message }}</p>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('set_filing_period') }}">
+              <label for="filing_start_date">Filing Start Date:</label>
+              <input type="date" id="filing_start_date" name="filing_start_date" required>
+              <label for="filing_start_time">Filing Start Time:</label>
+              <input type="time" id="filing_start_time" name="filing_start_time" required>
+
+              <label for="filing_end_date">Filing End Date:</label>
+              <input type="date" id="filing_end_date" name="filing_end_date" required>
+              <label for="filing_end_time">Filing End Time:</label>
+              <input type="time" id="filing_end_time" name="filing_end_time" required>
+
+              <button type="submit">Update Filing Period</button>
+            </form>
+            <div style="margin-top:1rem;">
+              <strong>Current Filing Period:</strong><br>
+              Start: {{ filing_start_display }}<br>
+              End: {{ filing_end_display }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <h3>User Activity Logs</h3>

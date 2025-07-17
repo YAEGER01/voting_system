@@ -18,7 +18,6 @@
       --dark-gray: #424242;
     }
 
-
     #app {
       max-width: 1400px;
       margin: 0 auto;
@@ -38,7 +37,6 @@
     h3 {
       color: var(--dark-green);
       margin-bottom: 1.25rem;
-
       text-align: center;
     }
 
@@ -100,10 +98,6 @@
       transition: all 0.2s;
       display: inline-block;
       margin-right: 0.5rem;
-    }
-
-    a:hover {
-      background-color: rgba(46, 125, 50, 0.1);
     }
 
     .error,
@@ -214,9 +208,33 @@
     </nav>
 
     <main class="dashboard-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <div>
+          <strong>Time Remaining for Filing Period:</strong>
+          <span id="countdown" style="color:#2e7d32;font-weight:bold;"></span>
+        </div>
+        <div>
+          <strong>Filing Period:</strong>
+          <span>
+            Start: <span style="color:#2e7d32;">{{ filing_start_display }}</span>
+            &nbsp;|&nbsp;
+            End: <span style="color:#c62828;">{{ filing_end_display }}</span>
+          </span>
+        </div>
+      </div>
       <div id="app">
         <div class="candidates-section">
           <h3>Existing Candidates</h3>
+          {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+          {% for category, message in messages %}
+          <div class="{{ category }}">{{ message }}</div>
+          {% endfor %}
+          {% endif %}
+          {% endwith %}
+          {% if not filing_open %}
+          <div class="error">Candidate management is only allowed during the filing period.</div>
+          {% endif %}
           <div class="table-container">
             <table>
               <thead>
@@ -268,15 +286,18 @@
                     {% endif %}
                   </td>
                   <td>
-                    <a href="{{ url_for('edit_candidate', id=candidate.id) }}">Edit</a>
+                    <a href="{{ url_for('edit_candidate', id=candidate.id) }}" {% if not filing_open
+                      %}style="pointer-events:none;opacity:0.5;" {% endif %}>Edit</a>
                     <a href="{{ url_for('delete_candidate', id=candidate.id) }}"
-                      onclick="return confirm('Delete this candidate?')">Delete</a>
+                      onclick="return confirm('Delete this candidate?')" {% if not filing_open
+                      %}style="pointer-events:none;opacity:0.5;" {% endif %}>Delete</a>
                   </td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
+          <br>
         </div>
       </div>
     </main>
@@ -305,11 +326,71 @@
         localStorage.setItem('theme', theme);
       });
     });
-  </script>
-  <script>
     function toggleNav() {
       document.getElementById('navMenu').classList.toggle('show');
     }
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const countdownElement = document.getElementById("countdown");
+      const filingEndIso = "{{ filing_end_iso }}";
+      const filingStartIso = "{{ filing_start_iso }}";
+      const filingOpen = {{'true' if filing_open else 'false' }};
+
+    // Helper to format countdown
+    function formatCountdown(distance) {
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    // If not open, check if we're before the start
+    if (!filingOpen && filingStartIso) {
+      const startDate = new Date(filingStartIso).getTime();
+      const now = new Date().getTime();
+      if (now < startDate) {
+        // Countdown to start of filing period
+        const timer = setInterval(function () {
+          const now2 = new Date().getTime();
+          const distance = startDate - now2;
+          if (distance <= 0) {
+            clearInterval(timer);
+            countdownElement.textContent = "Filing period started!";
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+            return;
+          }
+          countdownElement.textContent = "Opens in: " + formatCountdown(distance);
+        }, 1000);
+        return;
+      }
+    }
+
+    // If open, countdown to end
+    if (filingOpen && filingEndIso) {
+      const endDate = new Date(filingEndIso).getTime();
+      const timer = setInterval(function () {
+        const now = new Date().getTime();
+        const distance = endDate - now;
+        if (distance <= 0) {
+          clearInterval(timer);
+          countdownElement.textContent = "Filing closed.";
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          return;
+        }
+        countdownElement.textContent = formatCountdown(distance);
+      }, 1000);
+      return;
+    }
+
+    // If closed and not before start, just show closed
+    countdownElement.textContent = "Filing closed.";
+    });
   </script>
 </body>
 

@@ -23,6 +23,17 @@ from flask import jsonify
 PH_TZ = timezone(timedelta(hours=8))
 
 
+def format_ph_time(dt_str):
+    if not dt_str:
+        return 'Not set'
+    try:
+        dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+        dt = dt.astimezone(PH_TZ)
+        return dt.strftime('%B %d, %Y %I:%M%p')
+    except Exception:
+        return 'Invalid date'
+
+
 class Block:
 
     def __init__(self, index, timestamp, data, previous_hash):
@@ -1771,18 +1782,13 @@ def vote_results_report():
         })
 
     priority_order = [
-        "President",
-        "Vice President",
-        "Secretary",
-        "Treasurer",
-        "Auditor",
-        "PRO",
-        "Senator",
-        "Representative"
+        "President", "Vice President", "Secretary", "Treasurer", "Auditor",
+        "PRO", "Senator", "Representative"
     ]
 
     def get_priority(pos_name):
-        return priority_order.index(pos_name) if pos_name in priority_order else len(priority_order)
+        return priority_order.index(
+            pos_name) if pos_name in priority_order else len(priority_order)
 
     report_data.sort(key=lambda block: get_priority(block['position']))
 
@@ -2101,59 +2107,295 @@ def manage_poll():
                                                          '')) if admin else ''
     message = ""
 
-    # Add position
-    if request.method == 'POST' and 'position_name' in request.form:
-        position_name = request.form.get('position_name', '').strip()
-        if position_name:
-            supabase.table('positions').insert({
-                'name': position_name,
-                'department': admin_department
-            }).execute()
-            supabase.table('logs').insert({
-                'user_id':
-                admin['id'],
-                'action':
-                'ADD_POSITION',
-                'table_name':
-                'positions',
-                'query_type':
-                'INSERT',
-                'target':
-                position_name,
-                'new_data':
-                f"Department: {admin_department}",
-                'timestamp':
-                datetime.now().isoformat()
-            }).execute()
-            message = "Position added successfully!"
+    # ----- Filing period logic -----
+    filing_start = None
+    filing_end = None
+    filing_start_iso = ''
+    filing_end_iso = ''
+    filing_open = False
 
-    # Add candidate with all new fields
-    if request.method == 'POST' and 'candidate_name' in request.form and 'position_id' in request.form:
-        candidate_name = request.form.get('candidate_name', '').strip()
-        position_id = request.form.get('position_id')
-        campaign_message = request.form.get('campaign_message', '').strip()
-        year_level = request.form.get('year_level', '').strip()
-        course = request.form.get('course', '').strip()
-        skills = request.form.get('skills', '').strip()
-        platform = request.form.get('platform', '').strip()
-        goals = request.form.get('goals', '').strip()
-        sg_years = request.form.get('sg_years', '').strip()
-        previous_role = request.form.get('previous_role', '').strip()
-        experience = request.form.get('experience', '').strip()
-        achievements = request.form.get('achievements', '').strip()
-        slogan = request.form.get('slogan', '').strip()
-        note = request.form.get('note', '').strip()
-        image_path = ''
+    try:
+        settings_resp = supabase.table('settings').select(
+            'filing_start', 'filing_end').order('id',
+                                                desc=True).limit(1).execute()
+        if settings_resp.data:
+            filing_start = settings_resp.data[0]['filing_start']
+            filing_end = settings_resp.data[0]['filing_end']
 
-        file = request.files.get('candidate_image')
-        if file and file.filename:
-            allowed_types = {'image/jpeg', 'image/png', 'image/gif'}
-            if file.mimetype not in allowed_types:
-                message = "Only JPG, PNG, and GIF files are allowed."
-            elif len(file.read()) > 5 * 1024 * 1024:
-                message = "Image size must be less than 5MB."
+        now_ph = datetime.now(PH_TZ)
+        if filing_start and filing_end:
+            filing_start_dt = datetime.fromisoformat(
+                filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_end_dt = datetime.fromisoformat(
+                filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_open = filing_start_dt <= now_ph < filing_end_dt
+            filing_start_iso = filing_start_dt.isoformat()
+            if filing_open:
+                filing_end_iso = filing_end_dt.isoformat()
             else:
-                file.seek(0)
+                filing_end_iso = filing_end_dt.isoformat()
+    except Exception as e:
+        print(f"[ERROR] Filing period parsing failed: {e}")
+        filing_open = False
+        filing_start_iso = ''
+        filing_end_iso = ''
+
+    # ----- Add position -----
+    if request.method == 'POST' and 'position_name' in request.form:
+        if not filing_open:
+            message = "You can only add positions during the filing period."
+        else:
+            position_name = request.form.get('position_name', '').strip()
+            if position_name:
+                supabase.table('positions').insert({
+                    'name':
+                    position_name,
+                    'department':
+                    admin_department
+                }).execute()
+                supabase.table('logs').insert({
+                    'user_id':
+                    admin['id'],
+                    'action':
+                    'ADD_POSITION',
+                    'table_name':
+                    'positions',
+                    'query_type':
+                    'INSERT',
+                    'target':
+                    position_name,
+                    'new_data':
+                    f"Department: {admin_department}",
+                    'timestamp':
+                    datetime.now().isoformat()
+                }).execute()
+                message = "Position added successfully!"
+
+    # ----- Add candidate -----
+    if request.method == 'POST' and 'candidate_name' in request.form and 'position_id' in request.form:
+        if not filing_open:
+            message = "You can only add candidates during the filing period."
+        else:
+            candidate_name = request.form.get('candidate_name', '').strip()
+            position_id = request.form.get('position_id')
+            campaign_message = request.form.get('campaign_message', '').strip()
+            year_level = request.form.get('year_level', '').strip()
+            course = request.form.get('course', '').strip()
+            skills = request.form.get('skills', '').strip()
+            platform = request.form.get('platform', '').strip()
+            goals = request.form.get('goals', '').strip()
+            sg_years = request.form.get('sg_years', '').strip()
+            previous_role = request.form.get('previous_role', '').strip()
+            experience = request.form.get('experience', '').strip()
+            achievements = request.form.get('achievements', '').strip()
+            slogan = request.form.get('slogan', '').strip()
+            note = request.form.get('note', '').strip()
+            image_path = ''
+
+            # --- DUPLICATE CHECK ---
+            dup_resp = supabase.table('candidates') \
+                .select('id') \
+                .eq('department', admin_department) \
+                .ilike('name', candidate_name) \
+                .execute()
+            if dup_resp.data:
+                message = "A candidate with this name already exists in this department."
+            else:
+                file = request.files.get('candidate_image')
+                if file and file.filename:
+                    allowed_types = {'image/jpeg', 'image/png', 'image/gif'}
+                    if file.mimetype not in allowed_types:
+                        message = "Only JPG, PNG, and GIF files are allowed."
+                    elif len(file.read()) > 5 * 1024 * 1024:
+                        message = "Image size must be less than 5MB."
+                    else:
+                        file.seek(0)
+                        os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
+                        filename = secure_filename(
+                            f"{position_id}_{file.filename}")
+                        image_path = f"uploads/candidates/{filename}"
+                        full_save_path = os.path.join(app.root_path, 'static',
+                                                      'uploads', 'candidates',
+                                                      filename)
+                        file.save(full_save_path)
+
+                if candidate_name and position_id and not message:
+                    supabase.table('candidates').insert({
+                        'position_id':
+                        int(position_id),
+                        'name':
+                        candidate_name,
+                        'image':
+                        image_path,
+                        'campaign_message':
+                        campaign_message,
+                        'department':
+                        admin_department,
+                        'year_level':
+                        year_level,
+                        'course':
+                        course,
+                        'skills':
+                        skills,
+                        'platform':
+                        platform,
+                        'goals':
+                        goals,
+                        'sg_years':
+                        sg_years,
+                        'previous_role':
+                        previous_role,
+                        'experience':
+                        experience,
+                        'achievements':
+                        achievements,
+                        'slogan':
+                        slogan,
+                        'note':
+                        note
+                    }).execute()
+
+                    supabase.table('logs').insert({
+                        'user_id':
+                        admin['id'],
+                        'action':
+                        'ADD_CANDIDATE',
+                        'table_name':
+                        'candidates',
+                        'query_type':
+                        'INSERT',
+                        'target':
+                        f"Position ID: {position_id}",
+                        'new_data':
+                        f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
+                        'timestamp':
+                        datetime.now().isoformat()
+                    }).execute()
+                    message = "Candidate added successfully!"
+
+    # ----- Load positions and candidates -----
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', admin_department).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    candidates_per_position = {}
+    for pos in positions:
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates_per_position[
+            pos['id']] = cands_resp.data if cands_resp.data else []
+
+    return render_template('admin_manage_poll.html',
+                           admin_department=admin_department,
+                           message=message,
+                           positions=positions,
+                           candidates_per_position=candidates_per_position,
+                           filing_start_iso=filing_start_iso,
+                           filing_end_iso=filing_end_iso,
+                           filing_open=filing_open)
+
+
+@app.route('/manage_candidates', methods=['GET', 'POST'])
+def manage_candidates():
+    if 'school_id' not in session or session.get('role') != 'admin':
+        flash("You must be an admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    admin_school_id = session.get('school_id')
+    admin_data = supabase.table('user') \
+        .select('department') \
+        .eq('school_id', admin_school_id) \
+        .single().execute().data
+
+    if not admin_data:
+        return "Admin not found", 404
+
+    department = admin_data.get('department')
+    if not department:
+        return "Admin has no department assigned", 400
+
+    # Fetch filing period settings
+    settings_resp = supabase.table('settings') \
+        .select('filing_start', 'filing_end') \
+        .eq('department', department).order('id', desc=True).limit(1).execute()
+
+    if not settings_resp.data:
+        settings_resp = supabase.table('settings') \
+            .select('filing_start', 'filing_end') \
+            .eq('department', 'ALL').order('id', desc=True).limit(1).execute()
+
+    settings_row = settings_resp.data[0] if settings_resp.data else None
+    filing_start = settings_row['filing_start'] if settings_row else None
+    filing_end = settings_row['filing_end'] if settings_row else None
+
+    filing_start_display = format_ph_time(
+        filing_start) if filing_start else 'Not set'
+    filing_end_display = format_ph_time(
+        filing_end) if filing_end else 'Not set'
+
+    # Filing period logic
+    filing_start_iso = ''
+    filing_end_iso = ''
+    filing_open = False
+
+    now_ph = datetime.now(PH_TZ)
+    if filing_start and filing_end:
+        try:
+            filing_start_dt = datetime.fromisoformat(
+                filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_end_dt = datetime.fromisoformat(
+                filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_open = filing_start_dt <= now_ph < filing_end_dt
+            filing_start_iso = filing_start_dt.isoformat()
+            if filing_open:
+                filing_end_iso = filing_end_dt.isoformat()
+            else:
+                filing_end_iso = filing_end_dt.isoformat()
+        except Exception as e:
+            print(f"Error parsing filing period: {e}")
+            filing_open = False
+            filing_start_iso = ''
+            filing_end_iso = ''
+
+    # Handle form submission
+    if request.method == 'POST':
+        if not filing_open:
+            flash(
+                "Candidate/position management is only allowed during the filing period.",
+                "error")
+            return redirect(url_for('manage_candidates'))
+
+        if 'add_candidate' in request.form:
+            name = request.form.get('name', '').strip()
+            position_id = request.form.get('position_id')
+            campaign_message = request.form.get('campaign_message', '').strip()
+            year_level = request.form.get('year_level', '').strip()
+            course = request.form.get('course', '').strip()
+            skills = request.form.get('skills', '').strip()
+            platform = request.form.get('platform', '').strip()
+            goals = request.form.get('goals', '').strip()
+            sg_years = request.form.get('sg_years', '').strip()
+            previous_role = request.form.get('previous_role', '').strip()
+            experience = request.form.get('experience', '').strip()
+            achievements = request.form.get('achievements', '').strip()
+            slogan = request.form.get('slogan', '').strip()
+            note = request.form.get('note', '').strip()
+            image_path = None
+
+            # --- DUPLICATE CHECK ---
+            dup_resp = supabase.table('candidates') \
+                .select('id') \
+                .eq('department', department) \
+                .ilike('name', name) \
+                .execute()
+            if dup_resp.data:
+                flash(
+                    "A candidate with this name already exists in this department.",
+                    "error")
+                return redirect(url_for('manage_candidates'))
+
+            file = request.files.get('image')
+            if file and file.filename:
                 os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
                 filename = secure_filename(f"{position_id}_{file.filename}")
                 image_path = f"uploads/candidates/{filename}"
@@ -2161,13 +2403,13 @@ def manage_poll():
                                               'uploads', 'candidates',
                                               filename)
                 file.save(full_save_path)
-        if candidate_name and position_id and not message:
+
             supabase.table('candidates').insert({
                 'position_id': int(position_id),
-                'name': candidate_name,
+                'name': name,
                 'image': image_path,
                 'campaign_message': campaign_message,
-                'department': admin_department,
+                'department': department,
                 'year_level': year_level,
                 'course': course,
                 'skills': skills,
@@ -2183,7 +2425,7 @@ def manage_poll():
 
             supabase.table('logs').insert({
                 'user_id':
-                admin['id'],
+                session.get('user_id'),
                 'action':
                 'ADD_CANDIDATE',
                 'table_name':
@@ -2191,126 +2433,119 @@ def manage_poll():
                 'query_type':
                 'INSERT',
                 'target':
-                f"Position ID: {position_id}",
+                name,
                 'new_data':
-                f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
+                f"Position ID: {position_id}, Department: {department}",
                 'timestamp':
-                datetime.now().isoformat()
+                datetime.now(PH_TZ).isoformat()
             }).execute()
-            message = "Candidate added successfully!"
 
-    positions_resp = supabase.table('positions').select('*').eq(
-        'department', admin_department).execute()
-    positions = positions_resp.data if positions_resp.data else []
-    candidates_per_position = {}
-    for pos in positions:
-        cands_resp = supabase.table('candidates').select('*').eq(
-            'position_id', pos['id']).execute()
-        candidates_per_position[
-            pos['id']] = cands_resp.data if cands_resp.data else []
+            flash("Candidate added successfully!", "success")
+            return redirect(url_for('manage_candidates'))
 
-    return render_template('admin_manage_poll.html',
-                           admin_department=admin_department,
-                           message=message,
-                           positions=positions,
-                           candidates_per_position=candidates_per_position)
-
-
-@app.route('/manage_candidates', methods=['GET', 'POST'])
-def manage_candidates():
-    if 'school_id' not in session or session.get('role') != 'admin':
-        flash("You must be an admin to access this page.", "danger")
-        return redirect(url_for('login'))
-
-    admin_school_id = session.get('school_id')
-    admin_data = supabase.table('user') \
-        .select('department') \
-        .eq('school_id', admin_school_id) \
-        .single() \
-        .execute().data
-
-    if not admin_data:
-        return "Admin not found", 404
-
-    department = admin_data.get('department')
-    if not department:
-        return "Admin has no department assigned", 400
-
-    if request.method == 'POST' and 'add_candidate' in request.form:
-        name = request.form.get('name', '').strip()
-        position_id = request.form.get('position_id')
-        campaign_message = request.form.get('campaign_message', '').strip()
-        year_level = request.form.get('year_level', '').strip()
-        course = request.form.get('course', '').strip()
-        skills = request.form.get('skills', '').strip()
-        platform = request.form.get('platform', '').strip()
-        goals = request.form.get('goals', '').strip()
-        sg_years = request.form.get('sg_years', '').strip()
-        previous_role = request.form.get('previous_role', '').strip()
-        experience = request.form.get('experience', '').strip()
-        achievements = request.form.get('achievements', '').strip()
-        slogan = request.form.get('slogan', '').strip()
-        note = request.form.get('note', '').strip()
-        image_path = None
-
-        file = request.files.get('image')
-        if file and file.filename:
-            os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
-            filename = secure_filename(f"{position_id}_{file.filename}")
-            image_path = f"uploads/candidates/{filename}"
-            full_save_path = os.path.join(app.root_path, 'static', 'uploads',
-                                          'candidates', filename)
-            file.save(full_save_path)
-
-        supabase.table('candidates').insert({
-            'position_id': int(position_id),
-            'name': name,
-            'image': image_path,
-            'campaign_message': campaign_message,
-            'department': department,
-            'year_level': year_level,
-            'course': course,
-            'skills': skills,
-            'platform': platform,
-            'goals': goals,
-            'sg_years': sg_years,
-            'previous_role': previous_role,
-            'experience': experience,
-            'achievements': achievements,
-            'slogan': slogan,
-            'note': note
-        }).execute()
-        # ✅ Log the candidate insertion
-        supabase.table('logs').insert({
-            'user_id': session.get('user_id'),
-            'action': 'ADD_CANDIDATE',
-            'table_name': 'candidates',
-            'query_type': 'INSERT',
-            'target': name,
-            'new_data':
-            f"Position ID: {position_id}, Department: {department}",
-            'timestamp': datetime.now().isoformat()
-        }).execute()
-
-        flash("Candidate added successfully!", "success")
-        return redirect(url_for('manage_candidates'))
-
+    # Load data for rendering
     positions_resp = supabase.table('positions') \
-        .select('*') \
-        .eq('department', department) \
-        .order('name', desc=False) \
-        .execute()
+        .select('*').eq('department', department) \
+        .order('name', desc=False).execute()
     positions = positions_resp.data or []
 
     candidates_resp = supabase.table('candidates') \
-        .select('*,positions(name)') \
-        .eq('department', department) \
-        .execute()
+        .select('*,positions(name)').eq('department', department).execute()
     candidates = candidates_resp.data or []
 
     return render_template('admin_manage_candidates.html',
+                           filing_start_display=filing_start_display,
+                           filing_end_display=filing_end_display,
+                           filing_start_iso=filing_start_iso,
+                           filing_end_iso=filing_end_iso,
                            positions=positions,
-                           candidates=candidates)
+                           candidates=candidates,
+                           filing_open=filing_open)
+
+
+@app.route('/set_filing_period', methods=['GET', 'POST'])
+def set_filing_period():
+    if 'school_id' not in session or session.get('role') != 'SysAdmin':
+        flash("You must be a system admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    settings_resp = supabase.table('settings').select('filing_start', 'filing_end') \
+        .eq('department', 'ALL').order('id', desc=True).limit(1).execute()
+    settings_row = settings_resp.data[0] if settings_resp.data else None
+
+    filing_start = settings_row['filing_start'] if settings_row else ''
+    filing_end = settings_row['filing_end'] if settings_row else ''
+    filing_start_display = format_ph_time(
+        filing_start) if filing_start else 'Not set'
+    filing_end_display = format_ph_time(
+        filing_end) if filing_end else 'Not set'
+
+    if request.method == 'POST':
+        start_date = request.form.get('filing_start_date')
+        start_time = request.form.get('filing_start_time')
+        end_date = request.form.get('filing_end_date')
+        end_time = request.form.get('filing_end_time')
+
+        try:
+            start_dt = datetime.strptime(
+                f"{start_date} {start_time}",
+                "%Y-%m-%d %H:%M").replace(tzinfo=PH_TZ)
+            end_dt = datetime.strptime(f"{end_date} {end_time}",
+                                       "%Y-%m-%d %H:%M").replace(tzinfo=PH_TZ)
+            start_utc = start_dt.astimezone(timezone.utc).isoformat()
+            end_utc = end_dt.astimezone(timezone.utc).isoformat()
+        except Exception:
+            flash("Invalid date or time format.", "danger")
+            return redirect(url_for('set_filing_period'))
+
+        departments_resp = supabase.table('positions').select(
+            'department').execute()
+        departments = {d['department']
+                       for d in departments_resp.data
+                       } if departments_resp.data else set()
+
+        for dept in departments:
+            dept_settings = supabase.table('settings').select('id').eq(
+                'department', dept).execute()
+            if dept_settings.data:
+                supabase.table('settings').update({
+                    'filing_start': start_utc,
+                    'filing_end': end_utc
+                }).eq('id', dept_settings.data[0]['id']).execute()
+            else:
+                supabase.table('settings').insert({
+                    'department': dept,
+                    'filing_start': start_utc,
+                    'filing_end': end_utc
+                }).execute()
+
+        all_settings = supabase.table('settings').select('id').eq(
+            'department', 'ALL').execute()
+        if all_settings.data:
+            supabase.table('settings').update({
+                'filing_start': start_utc,
+                'filing_end': end_utc
+            }).eq('id', all_settings.data[0]['id']).execute()
+        else:
+            supabase.table('settings').insert({
+                'department': 'ALL',
+                'filing_start': start_utc,
+                'filing_end': end_utc
+            }).execute()
+
+        flash("Filing period updated for all departments!", "success")
+        return redirect(url_for('set_filing_period'))
+
+    return render_template("system_admin.html",
+                           filing_start=filing_start,
+                           filing_end=filing_end,
+                           filing_start_display=filing_start_display,
+                           filing_end_display=filing_end_display)
+
+
+# ...existing code...
+
+# ...existing code...
 
 
 @app.route('/edit_candidate/<int:id>', methods=['GET', 'POST'])
