@@ -1167,18 +1167,17 @@ def logout():
 
 @app.route('/system_admin')
 def system_admin():
-    print("Session role:", session.get('role'))  # Debug only
-
     if session.get('role') != 'SysAdmin':
         return redirect(url_for('login'))
 
-    # Fetch period info just like in /set_filing_period
+    # Fetch the latest filing period for 'ALL' department
     settings_resp = supabase.table('settings').select('filing_start', 'filing_end') \
         .eq('department', 'ALL').order('id', desc=True).limit(1).execute()
     settings_row = settings_resp.data[0] if settings_resp.data else None
 
     filing_start = settings_row['filing_start'] if settings_row else ''
     filing_end = settings_row['filing_end'] if settings_row else ''
+
     def safe_format(dt_str):
         if not dt_str:
             return 'Not set'
@@ -1188,28 +1187,20 @@ def system_admin():
             return dt.strftime('%B %d, %Y %I:%M%p')
         except Exception:
             return 'Invalid date'
+
     filing_start_display = safe_format(filing_start)
     filing_end_display = safe_format(filing_end)
 
-    # Only allow setting if no period set or period has expired
-    now_utc = datetime.now(timezone.utc)
-    can_set = False
-    if not filing_start or not filing_end:
-        can_set = True
-    else:
-        try:
-            filing_end_dt = datetime.fromisoformat(filing_end.replace('Z', '+00:00'))
-            if now_utc > filing_end_dt.astimezone(timezone.utc):
-                can_set = True
-        except Exception:
-            can_set = False
+    # Only allow setting if no period set (not if expired)
+    can_set = not filing_start or not filing_end
 
     return render_template("system_admin.html",
         filing_start=filing_start,
         filing_end=filing_end,
         filing_start_display=filing_start_display,
         filing_end_display=filing_end_display,
-        can_set=can_set)
+        can_set=can_set
+    )
 
 @app.route('/voting_admin')
 def voting_admin():
@@ -2536,111 +2527,77 @@ def manage_candidates():
                            filing_open=filing_open)
 
 
-@app.route('/set_filing_period', methods=['GET', 'POST'])
+@app.route('/set_filing_period', methods=['POST'])
 def set_filing_period():
     if 'school_id' not in session or session.get('role') != 'SysAdmin':
         flash("You must be a system admin to access this page.", "danger")
         return redirect(url_for('login'))
 
-    # Always fetch the latest 'ALL' department settings
+    # Fetch current period to check if setting is allowed
     settings_resp = supabase.table('settings').select('filing_start', 'filing_end') \
         .eq('department', 'ALL').order('id', desc=True).limit(1).execute()
     settings_row = settings_resp.data[0] if settings_resp.data else None
 
     filing_start = settings_row['filing_start'] if settings_row else ''
     filing_end = settings_row['filing_end'] if settings_row else ''
-    # Fix: Ensure Z is replaced for ISO parsing
-    def safe_format(dt_str):
-        if not dt_str:
-            return 'Not set'
-        try:
-            dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
-            dt = dt.astimezone(PH_TZ)
-            return dt.strftime('%B %d, %Y %I:%M%p')
-        except Exception:
-            return 'Invalid date'
-    filing_start_display = safe_format(filing_start)
-    filing_end_display = safe_format(filing_end)
 
-    # Only allow setting if no period set or period has expired
-    now_utc = datetime.now(timezone.utc)
-    can_set = False
-    if not filing_start or not filing_end:
-        can_set = True
-    else:
-        try:
-            filing_end_dt = datetime.fromisoformat(filing_end.replace('Z', '+00:00'))
-            if now_utc > filing_end_dt.astimezone(timezone.utc):
-                can_set = True
-        except Exception:
-            can_set = False
+    # Only allow setting if no period set (not if expired)
+    can_set = not filing_start or not filing_end
 
-    if request.method == 'POST':
-        if not can_set:
-            flash("You cannot change the filing period while it is active.", "danger")
-            return redirect(url_for('set_filing_period'))
+    if not can_set:
+        flash("You cannot change the filing period once it is set.", "danger")
+        return redirect(url_for('system_admin'))
 
-        start_date = request.form.get('filing_start_date')
-        start_time = request.form.get('filing_start_time')
-        end_date = request.form.get('filing_end_date')
-        end_time = request.form.get('filing_end_time')
+    # Get form data
+    start_date = request.form.get('filing_start_date')
+    start_time = request.form.get('filing_start_time')
+    end_date = request.form.get('filing_end_date')
+    end_time = request.form.get('filing_end_time')
 
-        try:
-            start_dt = datetime.strptime(
-                f"{start_date} {start_time}",
-                "%Y-%m-%d %H:%M").replace(tzinfo=PH_TZ)
-            end_dt = datetime.strptime(f"{end_date} {end_time}",
-                                       "%Y-%m-%d %H:%M").replace(tzinfo=PH_TZ)
-            start_utc = start_dt.astimezone(timezone.utc).isoformat()
-            end_utc = end_dt.astimezone(timezone.utc).isoformat()
-        except Exception:
-            flash("Invalid date or time format.", "danger")
-            return redirect(url_for('set_filing_period'))
+    try:
+        start_dt = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M").replace(tzinfo=PH_TZ)
+        end_dt = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M").replace(tzinfo=PH_TZ)
+        start_utc = start_dt.astimezone(timezone.utc).isoformat()
+        end_utc = end_dt.astimezone(timezone.utc).isoformat()
+    except Exception:
+        flash("Invalid date or time format.", "danger")
+        return redirect(url_for('system_admin'))
 
-        # Get all unique departments from positions
-        departments_resp = supabase.table('positions').select('department').execute()
-        departments = {d['department'] for d in departments_resp.data} if departments_resp.data else set()
+    # Get all unique departments from positions
+    departments_resp = supabase.table('positions').select('department').execute()
+    departments = {d['department'] for d in departments_resp.data} if departments_resp.data else set()
 
-        # Update or insert filing period for each department
-        for dept in departments:
-            dept_settings = supabase.table('settings').select('id').eq(
-                'department', dept).execute()
-            if dept_settings.data:
-                supabase.table('settings').update({
-                    'filing_start': start_utc,
-                    'filing_end': end_utc
-                }).eq('id', dept_settings.data[0]['id']).execute()
-            else:
-                supabase.table('settings').insert({
-                    'department': dept,
-                    'filing_start': start_utc,
-                    'filing_end': end_utc
-                }).execute()
-
-        # Update or insert for 'ALL' department
-        all_settings = supabase.table('settings').select('id').eq(
-            'department', 'ALL').execute()
-        if all_settings.data:
+    # Update or insert filing period for each department
+    for dept in departments:
+        dept_settings = supabase.table('settings').select('id').eq('department', dept).execute()
+        if dept_settings.data:
             supabase.table('settings').update({
                 'filing_start': start_utc,
                 'filing_end': end_utc
-            }).eq('id', all_settings.data[0]['id']).execute()
+            }).eq('id', dept_settings.data[0]['id']).execute()
         else:
             supabase.table('settings').insert({
-                'department': 'ALL',
+                'department': dept,
                 'filing_start': start_utc,
                 'filing_end': end_utc
             }).execute()
 
-        flash("Filing period set for all departments!", "success")
-        return redirect(url_for('set_filing_period'))
+    # Update or insert for 'ALL' department
+    all_settings = supabase.table('settings').select('id').eq('department', 'ALL').execute()
+    if all_settings.data:
+        supabase.table('settings').update({
+            'filing_start': start_utc,
+            'filing_end': end_utc
+        }).eq('id', all_settings.data[0]['id']).execute()
+    else:
+        supabase.table('settings').insert({
+            'department': 'ALL',
+            'filing_start': start_utc,
+            'filing_end': end_utc
+        }).execute()
 
-    return render_template("system_admin.html",
-        filing_start=filing_start,
-        filing_end=filing_end,
-        filing_start_display=filing_start_display,
-        filing_end_display=filing_end_display,
-        can_set=can_set)
+    flash("Filing period set for all departments!", "success")
+    return redirect(url_for('system_admin'))
 
 # ...existing code...
 #for voting 
