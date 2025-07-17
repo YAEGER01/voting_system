@@ -2931,70 +2931,72 @@ def manage_settings():
     admin_resp = supabase.table('user').select('*').eq(
         'school_id', session['school_id']).single().execute()
     admin = admin_resp.data
-    admin_department = admin.get('department', admin.get('course',
-                                                         '')) if admin else ''
+    admin_department = admin.get('department', admin.get('course', '')) if admin else ''
     message = ""
-    current_deadline = None
+    voting_start = None
+    voting_end = None
 
-    # Handle POST (save new deadline)
+    # Load latest voting period
+    setting_resp = supabase.table('settings').select('*').eq(
+        'department', admin_department).order('id', desc=True).limit(1).execute()
+    if setting_resp.data:
+        setting = setting_resp.data[0]
+        start_str = setting.get('start_time')
+        end_str = setting.get('end_time')
+        try:
+            if start_str:
+                voting_start = datetime.fromisoformat(start_str)
+                if voting_start.tzinfo is None:
+                    voting_start = voting_start.replace(tzinfo=PH_TZ)
+            if end_str:
+                voting_end = datetime.fromisoformat(end_str)
+                if voting_end.tzinfo is None:
+                    voting_end = voting_end.replace(tzinfo=PH_TZ)
+        except Exception:
+            voting_start = None
+            voting_end = None
+
+    can_set = not voting_start or not voting_end
+
     if request.method == 'POST':
-        new_deadline_str = request.form.get('voting_deadline')
-        if new_deadline_str:
+        if not can_set:
+            flash("Voting period can only be set once and cannot be changed.", "danger")
+            return redirect(url_for('manage_settings'))
+        start_str = request.form.get('voting_start')
+        end_str = request.form.get('voting_end')
+        if start_str and end_str:
             try:
-                # Parse as naive datetime (from browser input)
-                dt = datetime.strptime(new_deadline_str, "%Y-%m-%dT%H:%M")
-                # Attach PH timezone
-                dt = dt.replace(tzinfo=PH_TZ)
-                # Save as ISO string with PH timezone info
+                start_dt = datetime.strptime(start_str, "%Y-%m-%dT%H:%M").replace(tzinfo=PH_TZ)
+                end_dt = datetime.strptime(end_str, "%Y-%m-%dT%H:%M").replace(tzinfo=PH_TZ)
                 supabase.table('settings').insert({
-                    'department':
-                    admin_department,
-                    'voting_deadline':
-                    dt.isoformat()
+                    'department': admin_department,
+                    'start_time': start_dt.isoformat(),
+                    'end_time': end_dt.isoformat()
                 }).execute()
                 supabase.table('logs').insert({
-                    'user_id':
-                    admin['id'],
-                    'action':
-                    'UPDATE_VOTING_DEADLINE',
-                    'table_name':
-                    'settings',
-                    'query_type':
-                    'INSERT',
-                    'target':
-                    f"Department: {admin_department}",
-                    'new_data':
-                    f"Deadline set to: {dt.isoformat()}",
-                    'timestamp':
-                    datetime.now().isoformat()
+                    'user_id': admin['id'],
+                    'action': 'SET_VOTING_PERIOD',
+                    'table_name': 'settings',
+                    'query_type': 'INSERT',
+                    'target': f"Department: {admin_department}",
+                    'new_data': f"Start: {start_dt.isoformat()}, End: {end_dt.isoformat()}",
+                    'timestamp': datetime.now().isoformat()
                 }).execute()
-
-                current_deadline = dt
-                message = f"Voting deadline updated for {admin_department}!"
+                voting_start = start_dt
+                voting_end = end_dt
+                message = f"Voting period set for {admin_department}!"
+                can_set = False
             except Exception:
-                current_deadline = None
+                voting_start = None
+                voting_end = None
                 message = "Invalid date format."
-
-    # Handle GET (load latest deadline)
-    setting_resp = supabase.table('settings').select('*').eq(
-        'department', admin_department).order('id',
-                                              desc=True).limit(1).execute()
-    if setting_resp.data:
-        current_deadline_str = setting_resp.data[0]['voting_deadline']
-        if current_deadline_str:
-            try:
-                dt = datetime.fromisoformat(current_deadline_str)
-                # If no tzinfo, treat as PH time
-                if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
-                    dt = dt.replace(tzinfo=PH_TZ)
-                current_deadline = dt.astimezone(PH_TZ)
-            except Exception:
-                current_deadline = None
 
     return render_template('admin_manage_settings.html',
                            admin_department=admin_department,
-                           current_deadline=current_deadline,
-                           message=message)
+                           voting_start=voting_start,
+                           voting_end=voting_end,
+                           message=message,
+                           can_set=can_set)
 
 
 @app.route('/get_logs')

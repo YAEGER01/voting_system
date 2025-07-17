@@ -77,6 +77,15 @@
       border-radius: 4px;
       margin-bottom: 1rem;
     }
+
+    .warning {
+      background: #fff3cd;
+      color: #856404;
+      padding: 0.75rem;
+      border-radius: 4px;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -111,21 +120,45 @@
     <main class="dashboard-content">
       <div id="app">
         <div class="card">
-          <h2>Manage Voting Deadline for {{ admin_department }}</h2>
+          <h2>Manage Voting Period for {{ admin_department }}</h2>
           {% if message %}
           <p class="message">{{ message }}</p>
           {% endif %}
+
+          {% if can_set %}
           <form method="POST">
-            <label for="voting_deadline">Voting Deadline:</label>
-            <input type="datetime-local" name="voting_deadline" id="voting_deadline"
-              value="{{ current_deadline.strftime('%Y-%m-%dT%H:%M') if current_deadline else '' }}" required>
-            <button type="submit">Save Deadline</button>
+            <label for="voting_start">Voting Start:</label>
+            <input type="datetime-local" name="voting_start" id="voting_start"
+              value="{{ voting_start.strftime('%Y-%m-%dT%H:%M') if voting_start else '' }}" required>
+            <label for="voting_end">Voting Deadline:</label>
+            <input type="datetime-local" name="voting_end" id="voting_end"
+              value="{{ voting_end.strftime('%Y-%m-%dT%H:%M') if voting_end else '' }}" required>
+            <button type="submit">Save Voting Period</button>
+            <div class="warning">
+              NOTE: This can only be set <b>ONCE</b>. You cannot change the voting period once it is set.
+            </div>
           </form>
+          {% else %}
+          <div class="warning">
+            Voting period has already been set and cannot be changed.
+          </div>
+          {% endif %}
+
           <p>
-            Current Deadline:
+            Voting Start:
             <strong>
-              {% if current_deadline %}
-              {{ current_deadline.strftime('%B %d, %Y %H:%M') }}
+              {% if voting_start %}
+              {{ voting_start.strftime('%B %d, %Y %H:%M') }}
+              {% else %}
+              Not set
+              {% endif %}
+            </strong>
+          </p>
+          <p>
+            Voting Deadline:
+            <strong>
+              {% if voting_end %}
+              {{ voting_end.strftime('%B %d, %Y %H:%M') }}
               {% else %}
               Not set
               {% endif %}

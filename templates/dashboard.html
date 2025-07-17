@@ -206,11 +206,11 @@
     <script>
       const votingStartStr = "{{ voting_start }}";
       const votingEndStr = "{{ voting_end }}";
-      const votingClosed = {{ voting_closed | tojson }};
+      const votingClosed = {{voting_closed | tojson }};
       let votingStart = null;
       let votingEnd = null;
 
-      function formatDateToWords(date) {
+      function formatDateToWordsPH(date) {
         return date.toLocaleString("en-US", {
           timeZone: "Asia/Manila",
           year: "numeric",
@@ -238,21 +238,29 @@
         if (votingStartStr) votingStart = new Date(votingStartStr);
         if (votingEndStr) votingEnd = new Date(votingEndStr);
 
-        const now = new Date();
-
-        // Disable voting if current time is outside the voting period
-        if (votingStart && now < votingStart) {
-          disableVotingUI("Voting has not started yet. Please wait until " + formatDateToWords(votingStart));
-        } else if (votingEnd && now > votingEnd) {
-          disableVotingUI("Voting period has ended. Voting was open until " + formatDateToWords(votingEnd));
+        // Get current PH time
+        function getPHNow() {
+          // Get UTC time, then convert to PH time by adding 8 hours
+          const nowUTC = new Date();
+          // PH is UTC+8
+          return new Date(nowUTC.getTime() + (8 - nowUTC.getTimezoneOffset() / 60) * 60 * 60 * 1000);
         }
 
-        // Update live clock
+        let nowPH = getPHNow();
+
+        // Disable voting if current time is outside the voting period
+        if (votingStart && nowPH < votingStart) {
+          disableVotingUI("Voting has not started yet. Please wait until " + formatDateToWordsPH(votingStart));
+        } else if (votingEnd && nowPH > votingEnd) {
+          disableVotingUI("Voting period has ended. Voting was open until " + formatDateToWordsPH(votingEnd));
+        }
+
+        // Update live clock in PH time
         const liveNowElem = document.getElementById('liveNow');
         if (liveNowElem) {
           setInterval(() => {
-            const now = new Date();
-            liveNowElem.textContent = formatDateToWords(now);
+            const nowPH = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+            liveNowElem.textContent = formatDateToWordsPH(nowPH);
           }, 1000);
         }
 
