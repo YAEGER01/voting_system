@@ -20,8 +20,7 @@
       <div class="logo-wrapper"><img src="{{ url_for('static', filename='images/ssc.png') }}" alt="Logo" class="logo" />
       </div>
     </div>
-    <div class="header-title">VOTING SYSTEM
-    </div>
+    <div class="header-title">VOTING SYSTEM</div>
   </header>
 
   <div class="sidebar">
@@ -59,10 +58,14 @@
       <i class="fa-solid fa-users"></i>
       <span>Candidates</span>
     </a>
+    <!-- ...existing sidebar code... -->
+    {% if voting_closed %}
     <a href="{{ url_for('view_results') }}">
       <i class="fa-solid fa-chart-bar"></i>
       <span>View Results</span>
     </a>
+    {% endif %}
+    <!-- ...existing sidebar code... -->
     <a href="{{ url_for('activity') }}">
       <i class="fa-solid fa-list-check"></i>
       <span>View Activities</span>
@@ -96,24 +99,25 @@
       <div class="sketch-container">
         {% if voting_closed %}
         <div style="text-align:center; color:#e74c3c; font-size:1.2em; font-weight:bold; margin:40px 0;">
-          Voting has ended.<br>
+          Voting has ended. You can see the results on the [VIEW RESULTS] page on the sidebar<br>
           Thank you for your participation.<br>
-          Please view the results in <b>[View Results]</b> on the Left side of dashboard.
         </div>
         {% elif positions|length == 0 %}
-        <p>No voting positions are available for your department at this time.</p>
+        <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
+          No voting positions are available for your department at this time.
+        </div>
         {% elif all_voted %}
         <div style="text-align:center; color:#25c18c; font-size:1.2em; font-weight:bold; margin:40px 0;">
           You already voted in all available positions,<br>
           Thank you for participating.<br>
-          You can view the results in <b>[View Results]</b> on the Left side of the dashboard.
         </div>
-
-        {% elif voting_start and voting_end and voting_start <= now <=voting_end %}<p>Welcome, {{ user.first_name }}!
-          Please
-          select your preferred candidates below.</p>
+        {% elif voting_not_started %}
+        <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
+          Voting has not started yet. Please wait until {{ voting_start_display }}.
+        </div>
+        {% elif voting_start and voting_end and voting_start <= now <=voting_end %} <p>Welcome, {{ user.first_name }}!
+          Please select your preferred candidates below.</p>
           <form method="POST" action="">
-
             {% for pos in positions %}
             {% if pos.id not in voted_positions %}
             <div class="position-block">
@@ -172,102 +176,132 @@
         <button id="closeProfileBtn">Close</button>
       </div>
     </div>
+  </div>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        const profileLink = document.getElementById('profileLink');
-        const profileOverlay = document.getElementById('profileOverlay');
-        const closeProfileBtn = document.getElementById('closeProfileBtn');
-        if (profileLink && profileOverlay && closeProfileBtn) {
-          profileLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            profileOverlay.style.display = 'block';
-          });
-          closeProfileBtn.addEventListener('click', function () {
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const profileLink = document.getElementById('profileLink');
+      const profileOverlay = document.getElementById('profileOverlay');
+      const closeProfileBtn = document.getElementById('closeProfileBtn');
+      if (profileLink && profileOverlay && closeProfileBtn) {
+        profileLink.addEventListener('click', function (e) {
+          e.preventDefault();
+          profileOverlay.style.display = 'block';
+        });
+        closeProfileBtn.addEventListener('click', function () {
+          profileOverlay.style.display = 'none';
+        });
+        profileOverlay.addEventListener('click', function (e) {
+          if (e.target === profileOverlay) {
             profileOverlay.style.display = 'none';
-          });
-          profileOverlay.addEventListener('click', function (e) {
-            if (e.target === profileOverlay) {
-              profileOverlay.style.display = 'none';
-            }
-          });
-        }
-        const sidebar = document.querySelector('.sidebar');
-        const toggleBtn = document.getElementById('sidebarToggle');
-        if (toggleBtn && sidebar) {
-          toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-          });
-        }
-      });
-    </script>
-    <!-- Replace this portion in your <script> section -->
-
-    <script>
-      const votingStartStr = "{{ voting_start }}";
-      const votingEndStr = "{{ voting_end }}";
-      const votingClosed = {{voting_closed | tojson }};
-      let votingStart = null;
-      let votingEnd = null;
-
-      function formatDateToWordsPH(date) {
-        return date.toLocaleString("en-US", {
-          timeZone: "Asia/Manila",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: true
+          }
         });
       }
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+          sidebar.classList.toggle('active');
+        });
+      }
+    });
+  </script>
 
-      function disableVotingUI(message) {
-        const sketchContainer = document.querySelector('.sketch-container');
-        if (sketchContainer) {
-          sketchContainer.innerHTML = `
-            <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
-              ${message}
-            </div>
-          `;
-        }
+  <script>
+    const votingStartStr = "{{ voting_start }}";
+    const votingEndStr = "{{ voting_end }}";
+    let votingStart = null;
+    let votingEnd = null;
+
+    function formatDateToWordsPH(date) {
+      return date.toLocaleString("en-US", {
+        timeZone: "Asia/Manila",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+      });
+    }
+
+    function isSameMinute(d1, d2) {
+      return d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate() &&
+        d1.getHours() === d2.getHours() &&
+        d1.getMinutes() === d2.getMinutes();
+    }
+
+    // Double refresh logic
+    function doubleRefresh(key) {
+      const state = localStorage.getItem(key);
+      if (!state) {
+        // First refresh
+        localStorage.setItem(key, "pending_second");
+        location.reload();
+      }
+    }
+
+    // On page load, check if we need to do the second refresh
+    function checkSecondRefresh(key) {
+      const state = localStorage.getItem(key);
+      if (state === "pending_second") {
+        localStorage.setItem(key, "done");
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+      }
+    }
+
+    function resetDoubleRefresh(key) {
+      localStorage.removeItem(key);
+    }
+
+    try {
+      if (votingStartStr) votingStart = new Date(votingStartStr);
+      if (votingEndStr) votingEnd = new Date(votingEndStr);
+
+      function getPHNow() {
+        return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Manila"}));
       }
 
-      try {
-        if (votingStartStr) votingStart = new Date(votingStartStr);
-        if (votingEndStr) votingEnd = new Date(votingEndStr);
+      const liveNowElem = document.getElementById('liveNow');
 
-        // Get current PH time
-        function getPHNow() {
-          // Get UTC time, then convert to PH time by adding 8 hours
-          const nowUTC = new Date();
-          // PH is UTC+8
-          return new Date(nowUTC.getTime() + (8 - nowUTC.getTimezoneOffset() / 60) * 60 * 60 * 1000);
+      // Check for second refresh on page load
+      checkSecondRefresh("votingStartRefreshed");
+      checkSecondRefresh("votingEndRefreshed");
+
+      setInterval(() => {
+        const nowPH = getPHNow();
+
+        // Voting Start: double refresh if now matches votingStart (to the minute)
+        if (votingStart && isSameMinute(nowPH, votingStart)) {
+          doubleRefresh("votingStartRefreshed");
+        }
+        // Voting End: double refresh if now matches votingEnd (to the minute)
+        if (votingEnd && isSameMinute(nowPH, votingEnd)) {
+          doubleRefresh("votingEndRefreshed");
         }
 
-        let nowPH = getPHNow();
-
-        // Disable voting if current time is outside the voting period
-        if (votingStart && nowPH < votingStart) {
-          disableVotingUI("Voting has not started yet. Please wait until " + formatDateToWordsPH(votingStart));
-        } else if (votingEnd && nowPH > votingEnd) {
-          disableVotingUI("Voting period has ended. Voting was open until " + formatDateToWordsPH(votingEnd));
+        // Reset keys if not at the event minute (so next event works)
+        if (votingStart && !isSameMinute(nowPH, votingStart)) {
+          resetDoubleRefresh("votingStartRefreshed");
+        }
+        if (votingEnd && !isSameMinute(nowPH, votingEnd)) {
+          resetDoubleRefresh("votingEndRefreshed");
         }
 
-        // Update live clock in PH time
-        const liveNowElem = document.getElementById('liveNow');
         if (liveNowElem) {
-          setInterval(() => {
-            const nowPH = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Manila"}));
-            liveNowElem.textContent = formatDateToWordsPH(nowPH);
-          }, 1000);
+          liveNowElem.textContent = formatDateToWordsPH(nowPH);
         }
+      }, 1000);
 
-      } catch (error) {
-        console.error("Error parsing start/end time:", error);
-      }
-    </script>
+    } catch (error) {
+      console.error("Error parsing start/end time:", error);
+    }
+  </script>
 
 </body>
 

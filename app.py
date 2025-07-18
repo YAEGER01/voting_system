@@ -180,8 +180,8 @@ CANDIDATE_UPLOAD_FOLDER = os.path.join('static', 'uploads', 'candidates')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-RECAPTCHA_SITE_KEY = "6LfFx4ArAAAAAJJ3BqXudTcbFLA-m-thgKxyIIbb"
-RECAPTCHA_SECRET_KEY = "6LfFx4ArAAAAAMNz8oGkH4bpf02hLjv6zO8mnfSE"
+RECAPTCHA_SITE_KEY = "6Lf6ioErAAAAAMgfS8qXBOmQ-lMUJXoHEK544AEe"
+RECAPTCHA_SECRET_KEY = "6Lf6ioErAAAAAN9CgpFldNEwhmB3Z-vVyRgNrCLw"
 
 
 def verify_recaptcha(response_token):
@@ -1315,8 +1315,8 @@ def dashboard():
                 if voting_end.tzinfo is None:
                     voting_end = voting_end.replace(tzinfo=timezone.utc)
 
-                voting_start_display = voting_start.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-                voting_end_display = voting_end.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+                voting_start_display = voting_start.astimezone(PH_TZ).strftime("%B %d, %Y %I:%M %p PH Time")
+                voting_end_display = voting_end.astimezone(PH_TZ).strftime("%B %d, %Y %I:%M %p PH Time")
 
                 voting_open = voting_start <= now <= voting_end
                 voting_closed = now > voting_end
@@ -1382,6 +1382,8 @@ def dashboard():
     voted_positions = [v['position_id'] for v in voted_positions_resp.data] if voted_positions_resp.data else []
     all_voted = all(pos['id'] in voted_positions for pos in votable_positions)
 
+    voting_not_started = voting_start and now < voting_start
+
     return render_template('dashboard.html',
         user=user,
         dept_logo=dept_logo,
@@ -1395,7 +1397,8 @@ def dashboard():
         positions=positions,
         voted_positions=voted_positions,
         candidates_per_position=candidates_per_position,
-        all_voted=all_voted
+        all_voted=all_voted,
+        voting_not_started=voting_not_started
     )
 
 
