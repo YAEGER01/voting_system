@@ -296,8 +296,8 @@
 
 
         <div class="card-content">
-          <a class="nav-link" href="{{ url_for('set_voting_period') }}">
-            <span>Go to Voting Setting</span>
+          <a class="nav-link" href="{{ url_for('system_admin') }}">
+            <span>Go to Filing Setting</span>
           </a>
           <a href="{{ url_for('voting_statistics') }}" class="nav-link">
             <span>Go to Voting Statistics</span>
@@ -318,7 +318,6 @@
           </a>
         </div>
       </div>
-
 
       <div class="card">
         <div class="card-header">
@@ -368,13 +367,14 @@
         </div>
       </div>
 
+
       <div class="card">
         <div class="card-header">
-          <h3>Manage Filing Period</h3>
+          <h3>Manage Voting Period</h3>
         </div>
         <div class="card-content">
           <div class="form-container">
-            <h2>Set Filing Period for All Departments</h2>
+            <h2>Set Voting Period for All Departments</h2>
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
@@ -383,42 +383,31 @@
             {% endif %}
             {% endwith %}
 
-            <!-- ...existing code... -->
             {% if can_set %}
-            <!-- ...existing code... -->
-            <form id="filingPeriodForm" method="POST" action="{{ url_for('set_filing_period') }}">
-              <label for="filing_start_date">Filing Start Date:</label>
-              <input type="date" id="filing_start_date" name="filing_start_date" required>
-              <label for="filing_start_time">Filing Start Time:</label>
-              <input type="time" id="filing_start_time" name="filing_start_time" required>
+            <form method="POST" action="{{ url_for('set_voting_period') }}">
+              <label for="voting_start_date">Voting Start Date:</label>
+              <input type="date" id="voting_start_date" name="voting_start_date" required>
+              <label for="voting_start_time">Voting Start Time:</label>
+              <input type="time" id="voting_start_time" name="voting_start_time" required>
 
-              <label for="filing_end_date">Filing End Date:</label>
-              <input type="date" id="filing_end_date" name="filing_end_date" required>
-              <label for="filing_end_time">Filing End Time:</label>
-              <input type="time" id="filing_end_time" name="filing_end_time" required>
+              <label for="voting_end_date">Voting End Date:</label>
+              <input type="date" id="voting_end_date" name="voting_end_date" required>
+              <label for="voting_end_time">Voting End Time:</label>
+              <input type="time" id="voting_end_time" name="voting_end_time" required>
 
-              <button type="submit" id="setFilingBtn">Set Filing Period</button>
-              <div style="margin-top:0.5rem; color:#e67e22; font-weight:bold;">
-                NOTE: This can only be set ONCE. You cannot change the filing period once it is set.
-              </div>
+              <button type="submit">Set Voting Period</button>
             </form>
-            <script>
-              document.getElementById('filingPeriodForm').addEventListener('submit', function (e) {
-                document.getElementById('setFilingBtn').disabled = true;
-                document.getElementById('setFilingBtn').textContent = "Submitting...";
-              });
-            </script>
             {% else %}
             <div style="color:#c0392b;font-weight:bold; margin-bottom:1rem;">
-              You cannot change the filing period anymore.<br>
+              You cannot change the voting period while it is active.<br>
+              Current period: {{ voting_start_display }} to {{ voting_end_display }}
             </div>
             {% endif %}
             <div style="margin-top:1rem;">
-              <strong>Current Filing Period:</strong><br>
-              Start: {{ filing_start_display }}<br>
-              End: {{ filing_end_display }}
+              <strong>Current Voting Period:</strong><br>
+              Start: {{ voting_start_display }}<br>
+              End: {{ voting_end_display }}
             </div>
-            <!-- ...existing code... -->
           </div>
         </div>
       </div>

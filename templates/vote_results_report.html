@@ -1,50 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <title>Official Vote Results</title>
+  <meta charset="UTF-8" />
+  <title>UNIVOTE | Official Vote Results</title>
   <style>
     body {
+      position: relative;
       margin: 0;
+      padding: 40px 30px;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f5fdf7;
       color: #1c3e2d;
-      padding: 20px;
+      z-index: 0;
+    }
+
+    .background-circle {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 500px;
+      height: 500px;
+      transform: translate(-50%, -50%);
+      background: url('{{ url_for("static", filename="images/univ.jpg") }}') no-repeat center center;
+      background-size: cover;
+      border-radius: 50%;
+      opacity: 0.06;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    h1,
+    h2,
+    h3 {
+      text-align: center;
+      color: #2d6a4f;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin-bottom: 5px;
     }
 
     h2 {
-      text-align: center;
+      font-size: 24px;
+      margin-bottom: 40px;
+    }
+
+    h3 {
       margin-top: 40px;
-      font-size: 28px;
-      color: #2d6a4f;
+      margin-bottom: 10px;
+      font-size: 20px;
+      text-align: left;
     }
 
     .position-block {
       margin-bottom: 50px;
-      font-size: 25px;
     }
 
     .candidate-name {
-      margin-top: 20px;
       font-weight: bold;
-      font-size: 18px;
-      color: blue;
-      /*color: #1b4332;*/
+      font-size: 16px;
+      color: #1d3557;
+      margin-bottom: 8px;
     }
 
     table {
       border-collapse: collapse;
       width: 100%;
-      margin-top: 10px;
-      background-color: #ffffff;
+      margin-top: 8px;
+      margin-bottom: 20px;
+      background-color: white;
     }
 
     th,
     td {
-      border: 1px solid #ced4da;
-      padding: 8px;
-      text-align: left;
+      border: 1px solid #ccc;
+      padding: 8px 10px;
       font-size: 14px;
+      text-align: left;
     }
 
     th {
@@ -52,67 +86,56 @@
       color: #1c3e2d;
     }
 
-    /* NAVBAR */
     .navbar {
       background-color: #2d6a4f;
-      padding: 15px 40px;
       color: white;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      padding: 15px 30px;
+      margin-bottom: 30px;
     }
 
     .navbar h1 {
       margin: 0;
-      font-size: 24px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      font-size: 22px;
     }
 
     .nav-links {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      margin-top: 10px;
+      gap: 10px;
     }
 
-    .nav-links a {
+    .nav-links a,
+    .nav-links button {
       background-color: #52b788;
       color: white;
-      padding: 8px 14px;
+      padding: 6px 12px;
       text-decoration: none;
-      border-radius: 5px;
-      font-size: 14px;
-      transition: background-color 0.2s ease-in-out;
-    }
-
-    .nav-links a:hover {
-      background-color: #40916c;
-    }
-
-    .nav-links .print-btn {
-      /* Treated as normal nav button */
-      background-color: #52b788;
-      position: static;
-      top: unset;
-      right: unset;
       border: none;
+      border-radius: 4px;
+      font-size: 14px;
       cursor: pointer;
     }
 
-    @media screen and (max-width: 768px) {
-      .navbar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+    .nav-links a:hover,
+    .nav-links button:hover {
+      background-color: #40916c;
+    }
 
-      .nav-links {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+    .no-votes {
+      color: #888;
+      font-style: italic;
+      margin-left: 10px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #ccc;
+      margin: 30px 0;
+    }
+
+    @media screen and (max-width: 768px) {
 
       table,
       th,
@@ -120,71 +143,94 @@
         font-size: 13px;
       }
 
-      .candidate-name {
-        font-size: 16px;
+      h1 {
+        font-size: 24px;
       }
 
-      h2 {
-        font-size: 24px;
+      .nav-links {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
 
     @media print {
-
-      .navbar,
-      .print-btn {
-        display: none !important;
-      }
-
       body {
         background: white;
         color: black;
       }
 
-      table,
+      .background-circle {
+        display: block !important;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 500px;
+        height: 500px;
+        transform: translate(-50%, -50%);
+        background: url('{{ url_for("static", filename="images/univ.jpg") }}') no-repeat center center;
+        background-size: cover;
+        border-radius: 50%;
+        opacity: 0.06;
+        z-index: 999;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .navbar,
+      .nav-links {
+        display: none !important;
+      }
+
       th,
       td {
         border: 1px solid black;
         color: black;
       }
+
+      h1,
+      h2,
+      h3 {
+        color: black;
+      }
     }
   </style>
-
 </head>
 
 <body>
+  <div class="background-circle"></div>
 
-  <!-- Navigation Bar -->
+
+  <!-- NAVBAR (Hidden in Print) -->
   <div class="navbar">
-    <h1>Voting System</h1>
+    <h1>UNIVOTE Results</h1>
     <div class="nav-links">
       <a href="/admin_dashboard">Dashboard</a>
-
-      <a class="print-btn" onclick="window.print()">Print to PDF</a>
+      <button onclick="window.print()">Print PDF</button>
       <a href="/vote_breakdown_export/csv">Export CSV</a>
       <a href="/vote_breakdown_export/txt">Export TXT</a>
-
-
-
       <a href="/logout">Logout</a>
     </div>
   </div>
 
-  <style>
+  <!-- HEADER -->
+  <h2>OFFICIAL VOTING RESULTS FOR YEAR {{ current_year }}</h2>
 
-  </style>
+  <br>
 
-
-  <h2>UNIVOTE Official Voting Results</h2>
+  <br>
+  <!-- DATA BLOCK -->
   {% for block in report_data %}
   <div class="position-block">
     <h3>{{ block.position }}</h3>
+    <br>
+    <hr>
+    <br>
 
     {% for cand in block.candidates %}
     <div class="candidate-name">{{ cand.name }} — Total Votes: {{ cand.vote_count }}</div>
 
     {% if cand.vote_count == 0 %}
-    <p style="margin-left: 10px; color: #888;">This candidate has no votes.</p>
+    <p class="no-votes">This candidate has no votes.</p>
     {% else %}
     <table>
       <thead>
@@ -215,13 +261,10 @@
       </tbody>
     </table>
     {% endif %}
-
-    <hr style="margin: 20px 0;">
+    <hr>
     {% endfor %}
   </div>
   {% endfor %}
-
-
 </body>
 
 </html>

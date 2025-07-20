@@ -475,5 +475,17 @@
     },
     "previous_hash": "f6009447a40fcb586d731afb991858b0874b516e146b4538f38f3938dd216d18",
     "hash": "77082f1a964e1392c0a4f134d62cf4e005bd9488fa35637a795fae3c9e709085"
+  },
+  {
+    "index": 40,
+    "timestamp": "1752888619.4305778",
+    "data": {
+      "student_id": "ce41af941741c64951b38a3a88b736f6e9891910b250fc7ab39d0508bfb5a334",
+      "position_id": 26,
+      "candidate_id": "UW8HRL9A7DX0B/cgPmclyPCcpxC3f3UekdywqZwIYT8=",
+      "timestamp": "1752888619.4305687"
+    },
+    "previous_hash": "77082f1a964e1392c0a4f134d62cf4e005bd9488fa35637a795fae3c9e709085",
+    "hash": "8baaaa102dadbcafbae3abfd2be945195706ae2de09b65312abc48d120715dd2"
   }
 ]

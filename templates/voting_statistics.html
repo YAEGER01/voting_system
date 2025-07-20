@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enhanced Voting Statistics Dashboard</title>
+  <link rel="stylesheet" href="static/css/voting_statistics.css" />
+  <style>
+    .nav-link,
+    .logout-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: white;
+      /* Changed to white */
+      background: #3498db;
+      /* Added blue background */
+      transition: all 0.2s ease;
+      margin: 10px auto;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+      /* Fixed box-shadow syntax */
+    }
+
+    .nav-link:hover,
+    .logout-link:hover {
+      background: #2980b9;
+      /* Darker blue on hover */
+      transform: translateX(4px);
+      color: white;
+      /* Ensured text stays white */
+    }
+
+    .nav-link i,
+    .logout-link i {
+      width: 20px;
+      text-align: center;
+      color: white;
+      /* Icons now white */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <h1>Voting Statistics Dashboard</h1>
+    <br>
+    <hr>
+    <br>
+    <a href="{{ url_for('system_admin') }}" class="nav-link">
+      <span>Go to System Admin</span>
+    </a>
+    <br>
+    <br>
+    <hr>
+    <br>
+    <!-- Voting Turnout -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Voting Turnout</h3>
+      </div>
+      <div class="card-content">
+        <div class="chart-container">
+          <div class="pie-chart"
+            style="background: conic-gradient(#4CAF50 0% {{ turnout_percentage }}%, #F44336 {{ turnout_percentage }}% 100%);">
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: #4CAF50;"></span>
+              <span class="legend-label">
+                Voted ({{ total_voted }} / {{ total_users }}) – {{ turnout_percentage }}%
+              </span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: #F44336;"></span>
+              <span class="legend-label">
+                Not Voted ({{ total_not_voted }} / {{ total_users }}) – {{ not_voted_percentage }}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- By Department -->
+    <div class="card">
+      <div class="card-header">
+        <h3>By Department</h3>
+      </div>
+      <div class="card-content">
+        {% set colors=['#2196F3', '#FF9800', '#9C27B0', '#009688', '#E91E63', '#3F51B5'] %}
+        <div class="bar-chart">
+          {% for dept in department_stats %}
+          <div class="bar-container">
+            <div class="bar-label">{{ dept.department }}</div>
+            <div class="bar">
+              <div class="bar-fill"
+                style="width: {{ dept.percentage }}%; background-color: {{ colors[loop.index0 % colors|length] }};">
+              </div>
+            </div>
+            <div class="bar-value">{{ dept.percentage }}% ({{ dept.voted }}/{{ dept.total }})</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- By Course -->
+    <div class="card">
+      <div class="card-header">
+        <h3>By Course</h3>
+      </div>
+      <div class="card-content">
+        <div class="bar-chart-container">
+          {% set colors = ['#2196F3', '#FF9800', '#9C27B0', '#009688', '#E91E63', '#3F51B5', '#4CAF50', '#FFC107'] %}
+          {% for stat in course_stats %}
+          <div class="bar-row">
+            <div class="bar-label">{{ stat.course }}</div>
+            <div class="bar-track">
+              <div class="bar-fill"
+                style="width: {{ stat.percentage }}%; background-color: {{ colors[loop.index0 % colors|length] }};">
+                <span class="bar-text">{{ stat.percentage }}%</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- By Year -->
+    <div class="card">
+      <div class="card-header">
+        <h3>By Year</h3>
+      </div>
+      <div class="card-content">
+        <div class="horizontal-bar-chart">
+          {% for stat in year_level_stats %}
+          <div class="h-bar-container">
+            <div class="h-bar-label">{{ stat.Year }}</div>
+            <div class="h-bar">
+              <div class="h-bar-fill" style="width: {{ stat.percentage }}%; background-color: {{ stat.color }};"></div>
+            </div>
+            <div class="h-bar-value">{{ stat.percentage }}%</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+
+</html>

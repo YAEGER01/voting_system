@@ -320,7 +320,7 @@
         <h1>Welcome Department Administrator, {{ admin.first_name }} {{ admin.last_name }} .
         </h1>
         <p>
-          You can view the votes breakdown below, <br>
+          You can view the votes preview below, <br>
           Just click the buttons below: <br>
           START button to load the candidates and their votes.<br>
           RESTART button will reload the candidates and their votes.<br>
@@ -435,6 +435,11 @@
       document.getElementById("candidateTables").innerHTML = '';
     });
 
+    function maskName(name) {
+      if (name.length <= 3) return name;
+      return name.substring(0, 3) + '*'.repeat(name.length - 3);
+    }
+
     function renderCandidateTables(data) {
       const container = document.getElementById("candidateTables");
       container.innerHTML = '';
@@ -450,7 +455,8 @@
             <tbody>
               ${block.candidates.map(c => `
                 <tr>
-                  <td>${c.name}</td>
+                  <td>${maskName(c.name)}</td>
+
                   <td>${c.vote_count}</td>
                   <td><button class="btn" onclick="openVoteDetails('${c.id}', '${c.name}', '${block.position.name}')">Vote Details</button></td>
                 </tr>
@@ -469,7 +475,7 @@
 
       table.innerHTML = '';
       loading.style.display = 'block';
-      modalTitle.innerText = `Vote Breakdown for ${candidate_name} (${position_name})`;
+      modalTitle.innerText = `Vote Breakdown for ${maskName(candidate_name)} (${position_name})`;
 
       fetch(`/vote_breakdown/${candidate_id}`)
         .then(res => res.json())

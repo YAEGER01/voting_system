@@ -1,0 +1,188 @@
+/* Layout */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #f2f2f2;
+  color: #333;
+}
+
+.dashboard {
+  max-width: 1200px;
+  margin: auto;
+  padding: 2rem;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Card styles */
+.card {
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.card-header {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.card-content {
+  padding: 1rem 2rem;
+}
+
+/* Pie chart styles */
+.pie-chart {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: conic-gradient(var(--color) 0% var(--percentage)%, #ddd var(--percentage)% 100%);
+  margin: auto;
+}
+
+.chart-legend {
+  margin-top: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  margin-right: 0.5rem;
+  border-radius: 4px;
+}
+
+/* Bar chart styles */
+.bar-chart .bar-container {
+  margin-bottom: 1rem;
+}
+
+.bar-label {
+  margin-bottom: 0.25rem;
+  font-weight: bold;
+}
+
+.bar {
+  height: 20px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease-in-out;
+}
+
+.bar-value {
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+/* Donut chart styles */
+.donut-chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.donut-chart {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  margin: 1rem 0;
+  background: #eee;
+  overflow: hidden;
+}
+
+.donut-segment {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(var(--color) 0% var(--percentage)%, transparent var(--percentage)% 100%);
+  transform: rotate(calc(3.6deg * var(--offset)));
+  transform-origin: center;
+}
+
+.donut-center {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  top: 40px;
+  left: 40px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-center-text {
+  font-weight: bold;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.donut-legend {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.donut-legend .legend-item {
+  display: flex;
+  align-items: center;
+  margin: 0.4rem 0;
+}
+
+.donut-legend .legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+}
+
+/* Horizontal bar chart */
+.horizontal-bar-chart .h-bar-container {
+  margin-bottom: 1rem;
+}
+
+.h-bar-label {
+  margin-bottom: 0.25rem;
+  font-weight: bold;
+}
+
+.h-bar {
+  height: 20px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.h-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease-in-out;
+}
+
+.h-bar-value {
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}

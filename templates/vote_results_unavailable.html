@@ -1,0 +1,47 @@
+<!-- templates/vote_results_unavailable.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Vote Results Unavailable</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #f33;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .box {
+      border: 1px dashed #f33;
+      padding: 2rem;
+      max-width: 600px;
+    }
+
+    .time-window {
+      color: #fff;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h1>⚠️ Voting Results Are Not Viewable Yet</h1>
+    <p>Access to the voting report is restricted to a specific window after voting ends.</p>
+    <div class="time-window">
+      <p><strong>Access opens at:</strong> {{ view_start.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+      <p><strong>Access closes at:</strong> {{ view_end.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    </div>
+    <p>Please return during this period to view the results.</p>
+    <p><a href="/admin_dashboard" style="color: #f33; text-decoration: underline;">Return to Dashboard</a></p>
+  </div>
+</body>
+
+</html>
