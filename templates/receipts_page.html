@@ -206,11 +206,11 @@
     <div class="watermark-grid" id="watermarkGrid"></div>
 
 
-    <h1>Your Vote Receipt{% if receipt_timeout_enabled %} (Valid for 5 Minutes){% endif %}</h1>
+    <h1>Your Vote Receipt{% if receipt_timeout_enabled %} {% endif %}</h1>
 
     <div class="container">
         <div class="card user-info">
-            <button class="report-btn">Report Issue</button>
+
             <div class="card-header">
                 <h2>Your Information</h2>
             </div>
@@ -228,11 +228,16 @@
         </div>
 
         <div class="card vote-info">
-            <button class="report-btn">Report Issue</button>
+
             <div class="card-header">
-                <h2>Your Vote Entries</h2>
+                <h2>Vote Entries</h2>
             </div>
             <div class="vote-entries">
+                {% if vote_entries|length == 0 %}
+                <div class="vote-item" style="margin-bottom: 20px; padding: 10px;">
+                    <p style="color: crimson; font-weight: bold;">You didn’t vote.</p>
+                </div>
+                {% else %}
                 {% for vote in vote_entries %}
                 <div class="vote-item" style="margin-bottom: 20px; padding: 10px; border-bottom: 1px solid #ccc;">
                     <p><strong>Position:</strong> {{ vote.position_name }}</p>
@@ -250,7 +255,9 @@
                     <p><strong>Hashed:</strong> {{ vote.hash }}</p>
                 </div>
                 {% endfor %}
+                {% endif %}
             </div>
+
 
         </div>
     </div>
@@ -283,6 +290,19 @@
             div.textContent = watermarkText;
             grid.appendChild(div);
         }
+    </script>
+    <script>
+        const receiptExpiry = new Date("{{ receipt_expiry }}").getTime();
+
+        function checkExpiry() {
+            const now = new Date().getTime();
+            if (now > receiptExpiry) {
+                alert("Viewing time expired. Redirecting to dashboard...");
+                window.location.href = "/dashboard";
+            }
+        }
+
+        setInterval(checkExpiry, 5000); // Check every 5 seconds
     </script>
 
 </body>

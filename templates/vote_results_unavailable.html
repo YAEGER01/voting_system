@@ -1,4 +1,3 @@
-<!-- templates/vote_results_unavailable.html -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,26 +6,57 @@
   <title>Vote Results Unavailable</title>
   <style>
     body {
-      background-color: #111;
-      color: #f33;
-      font-family: monospace;
+      background-color: #f9f9f9;
+      color: #222;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       text-align: center;
+      padding: 1rem;
     }
 
     .box {
-      border: 1px dashed #f33;
+      border: 2px solid #d33;
+      background-color: #fff0f0;
       padding: 2rem;
       max-width: 600px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #b00;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1rem;
+      margin: 0.5rem 0;
     }
 
     .time-window {
-      color: #fff;
+      color: #333;
       margin-top: 1rem;
+      background-color: #ffecec;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+    }
+
+    a {
+      margin-top: 1rem;
+      display: inline-block;
+      color: #b00;
+      text-decoration: underline;
+      font-weight: bold;
+    }
+
+    a:hover {
+      color: #800;
     }
   </style>
 </head>
@@ -34,13 +64,27 @@
 <body>
   <div class="box">
     <h1>⚠️ Voting Results Are Not Viewable Yet</h1>
-    <p>Access to the voting report is restricted to a specific window after voting ends.</p>
+
+    {% if view_start and view_end %}
+    <p>Access to the voting report is restricted to a specific time window after voting ends.</p><br>
+    <p>Please be adviced that the viewing and acquiring a copy of the vote result is strictly on the viewing window
+      only,<br>Failure to view or acquire a pdf copy of the vote results is the fault of the department admin.
+      result</p>
     <div class="time-window">
-      <p><strong>Access opens at:</strong> {{ view_start.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-      <p><strong>Access closes at:</strong> {{ view_end.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+      <p><strong>Access opens at:</strong> {{ view_start.strftime('%Y-%m-%d %H:%M:%S') }} (PH Time)</p>
+      <p><strong>Access closes at:</strong> {{ view_end.strftime('%Y-%m-%d %H:%M:%S') }} (PH Time)</p>
     </div>
-    <p>Please return during this period to view the results.</p>
-    <p><a href="/admin_dashboard" style="color: #f33; text-decoration: underline;">Return to Dashboard</a></p>
+    <p>Please return during this time to view the results.</p>
+    {% else %}
+    <p>No voting schedule has been configured for your department yet.</p>
+    <p>Please contact your system administrator for further information.</p>
+    <br>
+    <p>Please be adviced that the viewing and acquiring a copy of the vote result is strictly on the viewing window
+      only,<br>Failure to view or acquire a pdf copy of the vote results is the fault of the department admin.
+    </p>
+    {% endif %}
+
+    <a href="/admin_dashboard">Return to Dashboard</a>
   </div>
 </body>
 

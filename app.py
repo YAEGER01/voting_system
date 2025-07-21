@@ -485,6 +485,131 @@ This is an automated message. Please do not reply.
         return False
 
 
+@app.route('/voting_statistics')
+def voting_statistics():
+    # --- Access Control ---
+    role = session.get('role')
+    if role not in ['SysAdmin', 'admin']:
+        abort(403)
+
+    print("📥 [INFO] Fetching users and votes from Supabase...")
+
+    # Fetch data
+    users_response = supabase.table("user").select(
+        "id", "school_id", "department", "course",
+        "year_level").eq("role", "user").execute()
+    votes_response = supabase.table("votes").select("student_id").execute()
+
+    users = users_response.data or []
+    votes = votes_response.data or []
+
+    print(f"✅ [DATA] Users: {len(users)}, Votes: {len(votes)}")
+
+    user_ids = {u['school_id'] for u in users}
+    voted_ids = {v['student_id'] for v in votes if v['student_id'] in user_ids}
+
+    total_users = len(user_ids)
+    total_voted = len(voted_ids)
+    total_not_voted = total_users - total_voted
+
+    turnout_percentage = round(
+        (total_voted / total_users) * 100, 2) if total_users else 0
+    not_voted_percentage = round(100 - turnout_percentage, 2)
+
+    print(
+        f"📈 Turnout: {turnout_percentage}%, Not Voted: {not_voted_percentage}%"
+    )
+
+    # ---------------------- DEPARTMENT STATS ----------------------
+    dept_users, dept_voted = {}, {}
+    for u in users:
+        d = (u.get('department') or 'Unknown').strip()
+        sid = u['school_id']
+        dept_users.setdefault(d, set()).add(sid)
+        if sid in voted_ids:
+            dept_voted.setdefault(d, set()).add(sid)
+
+    department_stats = []
+    for d in sorted(dept_users):
+        t = len(dept_users[d])
+        v = len(dept_voted.get(d, []))
+        p = round((v / t) * 100, 2) if t else 0
+        department_stats.append({
+            "department": d,
+            "total": t,
+            "voted": v,
+            "percentage": p
+        })
+        print(f"🏢 [DEPT] {d}: {p}% ({v}/{t})")
+
+    # ---------------------- COURSE STATS ----------------------
+    course_users, course_voted = {}, {}
+    for u in users:
+        c = (u.get('course') or 'Unknown').strip()
+        sid = u['school_id']
+        course_users.setdefault(c, set()).add(sid)
+        if sid in voted_ids:
+            course_voted.setdefault(c, set()).add(sid)
+
+    course_stats, offset = [], 0
+    for c in sorted(course_users):
+        t = len(course_users[c])
+        v = len(course_voted.get(c, []))
+        p = round((v / t) * 100, 2) if t else 0
+        course_stats.append({
+            "course": c,
+            "percentage": p,
+            "offset": round(offset, 2)
+        })
+        offset += p
+        print(f"📚 [COURSE] {c}: {p}% ({v}/{t})")
+
+    # ---------------------- YEAR LEVEL STATS ----------------------
+    def normalize_year(val):
+        raw = (val or "").strip().lower()
+        if "1" in raw: return "1st Year"
+        if "2" in raw: return "2nd Year"
+        if "3" in raw: return "3rd Year"
+        if "4" in raw: return "4th Year"
+        return "Unknown"
+
+    year_colors = {
+        "1st Year": "#3F51B5",
+        "2nd Year": "#E91E63",
+        "3rd Year": "#00BCD4",
+        "4th Year": "#8BC34A",
+        "Unknown": "#9E9E9E"
+    }
+
+    year_users, year_voted = {}, {}
+    for u in users:
+        y = normalize_year(u.get('year_level'))
+        sid = u['school_id']
+        year_users.setdefault(y, set()).add(sid)
+        if sid in voted_ids:
+            year_voted.setdefault(y, set()).add(sid)
+
+    year_level_stats = []
+    for y, color in year_colors.items():
+        t = len(year_users.get(y, []))
+        v = len(year_voted.get(y, []))
+        p = round((v / t) * 100, 2) if t else 0
+        year_level_stats.append({"Year": y, "percentage": p, "color": color})
+        print(f"🎓 [YEAR] {y}: {p}% ({v}/{t})")
+
+    print("✅ [DONE] Voting statistics ready.\n")
+
+    return render_template("voting_statistics.html",
+                           total_users=total_users,
+                           total_voted=total_voted,
+                           total_not_voted=total_not_voted,
+                           turnout_percentage=turnout_percentage,
+                           not_voted_percentage=not_voted_percentage,
+                           department_stats=department_stats,
+                           course_stats=course_stats,
+                           year_level_stats=year_level_stats)
+
+
 # --- OTP Password Reset Flow ---
 
 
@@ -1242,7 +1367,7 @@ def voting_admin():
         except Exception:
             can_set = False
 
-    return render_template("system_voting_admin.html",
+    return render_template("voting_admin.html",
                            voting_start=voting_start,
                            voting_end=voting_end,
                            voting_start_display=voting_start_display,
@@ -1401,25 +1526,28 @@ def dashboard():
         'student_id', school_id).execute()
     voted_positions = [v['position_id'] for v in voted_positions_resp.data
                        ] if voted_positions_resp.data else []
-    all_voted = all(pos['id'] in voted_positions for pos in votable_positions)
+    all_voted = bool(votable_positions) and all(pos['id'] in voted_positions for pos in votable_positions)
 
     voting_not_started = voting_start and now < voting_start
 
-    return render_template('dashboard.html',
-                           user=user,
-                           dept_logo=dept_logo,
-                           voting_deadline=voting_end,
-                           voting_start=voting_start,
-                           voting_end=voting_end,
-                           voting_start_display=voting_start_display,
-                           voting_end_display=voting_end_display,
-                           now=now,
-                           voting_closed=voting_closed,
-                           positions=positions,
-                           voted_positions=voted_positions,
-                           candidates_per_position=candidates_per_position,
-                           all_voted=all_voted,
-                           voting_not_started=voting_not_started)
+    return render_template(
+        'dashboard.html',
+        user=user,
+        dept_logo=dept_logo,
+        voting_deadline=voting_end,
+        voting_start=voting_start,
+        voting_end=voting_end,
+        voting_start_display=voting_start_display,
+        voting_end_display=voting_end_display,
+        now=now,
+        voting_closed=voting_closed,
+        positions=positions,
+        voted_positions=voted_positions,
+        candidates_per_position=candidates_per_position,
+        all_voted=all_voted,
+        voting_not_started=voting_not_started,
+        votable_positions=votable_positions  # <-- add this line
+    )
 
 
 @app.route('/blockchain')
@@ -1589,12 +1717,6 @@ def vote_breakdown(candidate_id):
     return jsonify({'nested': breakdown, 'total_votes': total})
 
 
-from flask import make_response
-from datetime import datetime
-import csv
-import io
-
-
 @app.route('/vote_breakdown_export/<format>')
 def vote_breakdown_export(format):
     if 'school_id' not in session or session.get('role') not in [
@@ -1604,9 +1726,9 @@ def vote_breakdown_export(format):
 
     school_id = session['school_id']
     role = session['role']
-    user_data = supabase.table('user').select('*').eq(
+    user = supabase.table('user').select('*').eq(
         'school_id', school_id).single().execute().data
-    department = user_data.get('department') or user_data.get('course', '')
+    department = user.get('department', user.get('course', ''))
 
     if role == 'admin':
         positions = supabase.table('positions').select('*').eq(
@@ -1618,22 +1740,22 @@ def vote_breakdown_export(format):
     result = []
 
     for pos in positions:
-        candidates = supabase.table('candidates').select('id, name').eq(
+        cands = supabase.table('candidates').select('id, name').eq(
             'position_id', pos['id']).execute().data or []
-        for cand in candidates:
-            votes = supabase.table('votes').select('student_id').eq(
-                'candidate_ref', cand['id']).execute().data or []
+        for cand in cands:
+            votes = supabase.table('votes').select('student_id') \
+                .eq('candidate_ref', int(cand['id'])).execute().data or []
             student_ids = [
                 v['student_id'] for v in votes if v.get('student_id')
             ]
             breakdown = {}
             vote_count = 0
-
             if student_ids:
-                user_infos = supabase.table('user').select('year_level, department, course, track') \
+                users = supabase.table('user') \
+                    .select('year_level, department, course, track') \
                     .in_('school_id', student_ids).execute().data or []
 
-                for u in user_infos:
+                for u in users:
                     if role == 'admin' and u.get('department') != department:
                         continue
                     y, d, c, t = u.get('year_level'), u.get(
@@ -1644,7 +1766,6 @@ def vote_breakdown_export(format):
                         c, {}).setdefault(t, 0)
                     breakdown[y][d][c][t] += 1
                     vote_count += 1
-
             result.append({
                 'position': pos['name'],
                 'candidate': cand['name'],
@@ -1652,14 +1773,11 @@ def vote_breakdown_export(format):
                 'breakdown': breakdown
             })
 
-    year = datetime.now().year
-    filename = f"vote_breakdown_{year}.{format}"
-
     if format == 'csv':
+        import csv
+        import io
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['Official Voting Results', f"Year: {year}"])
-        writer.writerow([])
         writer.writerow([
             'Position', 'Candidate', 'Total Votes', 'Breakdown Path', 'Votes'
         ])
@@ -1674,21 +1792,21 @@ def vote_breakdown_export(format):
                             count = r['breakdown'][y][d][c][t]
                             path = f"{y} > {d} > {c} > {t}"
                             writer.writerow(['', '', '', path, count])
-            writer.writerow([])
 
+        from flask import make_response
         response = make_response(output.getvalue())
         response.headers[
-            "Content-Disposition"] = f"attachment; filename={filename}"
+            "Content-Disposition"] = "attachment; filename=vote_breakdown.csv"
         response.headers["Content-Type"] = "text/csv"
         return response
 
     elif format == 'txt':
+        import io
         output = io.StringIO()
-        output.write(f"OFFICIAL VOTING RESULTS\nYear: {year}\n\n")
         for r in result:
             output.write(f"Position: {r['position']}\n")
-            output.write(f"  Candidate: {r['candidate']}\n")
-            output.write(f"  Total Votes: {r['vote_count']}\n")
+            output.write(
+                f"  Candidate: {r['candidate']} - Votes: {r['vote_count']}\n")
             for y in r['breakdown']:
                 for d in r['breakdown'][y]:
                     for c in r['breakdown'][y][d]:
@@ -1696,15 +1814,16 @@ def vote_breakdown_export(format):
                             count = r['breakdown'][y][d][c][t]
                             output.write(
                                 f"    {y} > {d} > {c} > {t}: {count}\n")
-            output.write("-" * 40 + "\n")
+            output.write("\n")
 
+        from flask import make_response
         response = make_response(output.getvalue())
         response.headers[
-            "Content-Disposition"] = f"attachment; filename={filename}"
+            "Content-Disposition"] = "attachment; filename=vote_breakdown.txt"
         response.headers["Content-Type"] = "text/plain"
         return response
 
-    return "Unsupported format", 400
+    return "Invalid format", 400
 
 
 @app.route('/vote_tally')
@@ -1811,12 +1930,6 @@ def vote_tally():
                            tally_by_position=tally_by_position)
 
 
-from datetime import datetime, timedelta, timezone as dt_timezone
-from pytz import timezone as pytz_timezone
-
-PH_TZ = pytz_timezone('Asia/Manila')
-
-
 @app.route('/vote_results_report')
 def vote_results_report():
     if 'school_id' not in session or session.get('role') not in [
@@ -1826,55 +1939,63 @@ def vote_results_report():
 
     school_id = session['school_id']
     role = session['role']
-
     user = supabase.table('user').select('*').eq(
         'school_id', school_id).single().execute().data
     department = user.get('department', user.get('course', ''))
 
-    # Retrieve voting end_time from settings
-    settings_query = supabase.table('settings').select('end_time')
-    settings = (settings_query.eq('department',
-                                  department).single().execute().data
-                if role == 'admin' else settings_query.single().execute().data)
+    # Load voting end time
+    settings_resp = supabase.table('settings').select('end_time') \
+        .eq('department', department).order('id', desc=True).limit(1).execute()
 
-    if not settings or not settings.get('end_time'):
-        return "Voting schedule not configured.", 400
+    if not settings_resp.data or not settings_resp.data[0].get('end_time'):
+        print("[DEBUG] No voting end_time found for department:", department)
+        return render_template('vote_results_unavailable.html',
+                               view_start=None,
+                               view_end=None)
 
     try:
-        # Convert ISO to PH time
-        end_time_utc = datetime.fromisoformat(settings['end_time'].replace(
-            'Z', '+00:00'))
-        end_time_ph = end_time_utc.astimezone(PH_TZ)
-    except Exception:
-        return "Invalid end time format.", 500
+        raw_end = settings_resp.data[0].get('end_time')
+        end_time = datetime.fromisoformat(raw_end.replace(
+            'Z', '+00:00')).astimezone(PH_TZ)
+        now = datetime.now(PH_TZ)
 
-    now_ph = datetime.now(PH_TZ)
-    view_start = end_time_ph + timedelta(minutes=2)
-    view_end = view_start + timedelta(minutes=10)
+        access_start = end_time + timedelta(minutes=5)
+        access_end = access_start + timedelta(minutes=15)
 
-    if now_ph < view_start or now_ph > view_end:
-        return render_template('vote_results_unavailable.html',
-                               view_start=view_start,
-                               view_end=view_end)
+        # Debug terminal logs
+        print(f"[DEBUG] Department: {department}")
+        print(f"[DEBUG] Voting end_time (raw): {raw_end}")
+        print(f"[DEBUG] Voting end_time (PH_TZ): {end_time.isoformat()}")
+        print(f"[DEBUG] Now (PH_TZ): {now.isoformat()}")
+        print(
+            f"[DEBUG] Access window: {access_start.isoformat()} to {access_end.isoformat()}"
+        )
 
+        if now < access_start or now > access_end:
+            return render_template('vote_results_unavailable.html',
+                                   view_start=access_start,
+                                   view_end=access_end)
+
+    except Exception as e:
+        print("[ERROR] Voting time window check failed:", e)
+        return "Time validation failed.", 500
+
+    # --- Proceed with report generation (unchanged) ---
     if role == 'admin':
-        positions = supabase.table('positions').select('*') \
-            .eq('department', department).order('name').execute().data or []
+        positions = supabase.table('positions').select('*').eq(
+            'department', department).order('name').execute().data or []
     else:
-        positions = supabase.table('positions').select('*') \
-            .order('name').execute().data or []
+        positions = supabase.table('positions').select('*').order(
+            'name').execute().data or []
 
     report_data = []
-
     for pos in positions:
-        candidates = supabase.table('candidates').select('id, name') \
-            .eq('position_id', pos['id']).execute().data or []
-
+        candidates = supabase.table('candidates').select('id, name').eq(
+            'position_id', pos['id']).execute().data or []
         candidate_rows = []
         for cand in candidates:
             votes = supabase.table('votes').select('student_id') \
                 .eq('candidate_ref', int(cand['id'])).execute().data or []
-
             student_ids = [
                 v['student_id'] for v in votes if v.get('student_id')
             ]
@@ -1882,7 +2003,8 @@ def vote_results_report():
 
             breakdown = {}
             if student_ids:
-                users = supabase.table('user').select('year_level, department, course, track') \
+                users = supabase.table('user') \
+                    .select('year_level, department, course, track') \
                     .in_('school_id', student_ids).execute().data or []
 
                 for u in users:
@@ -1917,11 +2039,22 @@ def vote_results_report():
             pos_name) if pos_name in priority_order else len(priority_order)
 
     report_data.sort(key=lambda block: get_priority(block['position']))
-    current_year = datetime.now(PH_TZ).year
 
-    return render_template('vote_results_report.html',
-                           current_year=current_year,
-                           report_data=report_data)
+    # --- Log access to vote results report ---
+    try:
+        supabase.table('logs').insert({
+            'user_id': user.get('id'),
+            'action': 'Viewed voting results report',
+            'target': f'Department: {department}',
+            'table_name': 'votes',
+            'query_type': 'SELECT',
+            'new_data': None,
+            'old_data': None
+        }).execute()
+    except Exception as log_err:
+        print("[ERROR] Logging vote results access failed:", log_err)
+
+    return render_template('vote_results_report.html', report_data=report_data)
 
 
 @app.route('/candidates')
@@ -2076,70 +2209,109 @@ def view_results():
                            results=results)
 
 
+from dateutil import parser
+
+
 @app.route('/vote_receipt')
 def vote_receipt():
     if 'school_id' not in session:
+        flash("Session expired. Please log in.", "warning")
+        print("[DEBUG] Session missing 'school_id'; redirecting to /login")
         return redirect('/login')
 
     school_id = session['school_id']
-    now = datetime.utcnow()
+    now = datetime.now(PH_TZ)
+    print(f"[DEBUG] Current PH time: {now.isoformat()}")
 
-    ENABLE_RECEIPT_TIMEOUT = True
-    if ENABLE_RECEIPT_TIMEOUT:
-        log_resp = supabase.table("receipt_access_logs").select("*") \
-            .eq("school_id", school_id).eq("status", "active") \
-            .order("viewed_at", desc=True).limit(1).execute()
-        log = log_resp.data[0] if log_resp.data else None
-
-        if not log:
-            supabase.table("receipt_access_logs").insert({
-                "school_id":
-                school_id,
-                "viewed_at":
-                now.isoformat(),
-                "expired_at": (now + timedelta(minutes=5)).isoformat(),
-                "status":
-                "active"
-            }).execute()
-        else:
-            expiry = datetime.fromisoformat(log['expired_at'])
-            if now > expiry:
-                supabase.table("receipt_access_logs") \
-                    .update({"status": "expired"}).eq("id", log['id']).execute()
-                return "<h1>Receipt viewing time expired.</h1>"
-
+    # Fetch user with department and ID
     user_resp = supabase.table("user").select(
-        "school_id, first_name, last_name, course, track, year_level, department"
+        "id, school_id, first_name, last_name, course, track, year_level, department"
     ).eq("school_id", school_id).single().execute()
+
     user = user_resp.data
+    if not user:
+        flash("User not found.", "danger")
+        print(f"[DEBUG] No user found for school_id: {school_id}")
+        return redirect('/dashboard')
 
+    department = user['department']
+    print(f"[DEBUG] User department: {department}")
+
+    # Scrape settings table for all rows matching department
+    settings_resp = supabase.table("settings").select("end_time") \
+        .eq("department", department).order("end_time", desc=True).execute()
+
+    # Filter rows with valid end_time
+    valid_settings = [s for s in settings_resp.data if s.get('end_time')]
+    print(
+        f"[DEBUG] Found {len(valid_settings)} valid settings rows for department '{department}'"
+    )
+
+    if not valid_settings:
+        flash("No valid end_time found for this department.", "warning")
+        print(
+            "[DEBUG] No valid end_time rows available; redirecting to /dashboard"
+        )
+        return redirect('/dashboard')
+
+    # Use most recent end_time and calculate window
+    latest_end = parser.isoparse(
+        valid_settings[0]['end_time']).astimezone(PH_TZ)
+    print(f"[DEBUG] Latest end_time: {latest_end.isoformat()}")
+
+    view_start = latest_end + timedelta(minutes=1)
+    view_end = latest_end + timedelta(minutes=10)
+    print(
+        f"[DEBUG] View window: {view_start.isoformat()} → {view_end.isoformat()}"
+    )
+
+    # Enforce strict viewing window
+    if now < view_start:
+        flash("Receipt viewing not yet available.", "info")
+        print("[DEBUG] Viewing attempt too early")
+        return redirect('/dashboard')
+    elif now > view_end:
+        flash("Viewing period expired permanently.", "danger")
+        print("[DEBUG] Viewing attempt after expiry")
+        return redirect('/dashboard')
+
+    # Name masking
     def mask_name(name):
-        return name[:4] + '*' * (len(name) - 4) if len(name) > 4 else name
+        if len(name) <= 2:
+            return '*' * len(name)
+        elif len(name) <= 4:
+            return name[0] + '*' * (len(name) - 1)
+        else:
+            return name[:2] + '*' * (len(name) - 2)
 
-    masked_first = mask_name(user['first_name']) if user else ''
-    masked_last = mask_name(user['last_name']) if user else ''
-    course = user.get('course', '')
-    track = user.get('track', '')
-    year_level = user.get('year_level', '')
-    department = user.get('department', '')
+    masked_first = mask_name(user['first_name'])
+    masked_last = mask_name(user['last_name'])
+    course, track, year_level = user.get('course',
+                                         ''), user.get('track', ''), user.get(
+                                             'year_level', '')
 
+    # Get all positions
     pos_resp = supabase.table("positions").select("*") \
         .eq("department", department).execute()
-    all_positions = pos_resp.data if pos_resp.data else []
+    all_positions = pos_resp.data or []
+    print(f"[DEBUG] Retrieved {len(all_positions)} positions for department")
 
+    # Get user's votes
     votes_resp = supabase.table("votes").select("position_id, candidate_id") \
         .eq("student_id", school_id).execute()
-    voted = votes_resp.data if votes_resp.data else []
+    voted = votes_resp.data or []
+    print(f"[DEBUG] Retrieved {len(voted)} votes for student_id")
+
     voted_map = {}
     for v in voted:
         try:
-            decrypted_cid = int(decrypt_vote(v['candidate_id']))
-            voted_map[v['position_id']] = decrypted_cid
+            voted_map[v['position_id']] = int(decrypt_vote(v['candidate_id']))
         except Exception:
-            continue
+            print(
+                f"[DEBUG] Failed to decrypt vote for position_id {v['position_id']}"
+            )
 
     vote_entries = []
-
     for pos in all_positions:
         pos_id = pos['id']
         position_name = pos['name']
@@ -2149,64 +2321,38 @@ def vote_receipt():
             cand_resp = supabase.table("candidates").select("name") \
                 .eq("id", candidate_id).single().execute()
             cand = cand_resp.data
-            if cand:
-                masked_cand_name = mask_name(cand['name'])
-                vote_hash = hashlib.sha256(
-                    f"{school_id}:{pos_id}:{candidate_id}".encode()).hexdigest(
-                    )
-                vote_entries.append({
-                    "position_name": position_name,
-                    "masked_candidate": masked_cand_name,
-                    "hash": vote_hash
-                })
-            else:
-                vote_entries.append({
-                    "position_name": position_name,
-                    "masked_candidate": "Vote data error",
-                    "hash": "-"
-                })
+            masked_cand = mask_name(
+                cand['name']) if cand else "Vote data error"
+            vote_hash = hashlib.sha256(
+                f"{school_id}:{pos_id}:{candidate_id}".encode()).hexdigest()
         else:
             cand_count = supabase.table("candidates").select("id") \
                 .eq("position_id", pos_id).execute()
-            if not cand_count.data:
-                vote_entries.append({
-                    "position_name":
-                    position_name,
-                    "masked_candidate":
-                    "No vote recorded (no candidates available)",
-                    "hash":
-                    hashlib.sha256(f"{school_id}:{pos_id}:nocandidate".encode(
-                    )).hexdigest()
-                })
-            else:
-                vote_entries.append({
-                    "position_name":
-                    position_name,
-                    "masked_candidate":
-                    "No vote recorded (you skipped this)",
-                    "hash":
-                    hashlib.sha256(
-                        f"{school_id}:{pos_id}:skipped".encode()).hexdigest()
-                })
+            status = "nocandidate" if not cand_count.data else "skipped"
+            masked_cand = "No vote recorded (no candidates available)" if status == "nocandidate" \
+                else "No vote recorded (you skipped this)"
+            vote_hash = hashlib.sha256(
+                f"{school_id}:{pos_id}:{status}".encode()).hexdigest()
 
-    # Log vote receipt access
-    user_id = None
-    if user_resp.data:
-        # Get the actual numeric user ID
-        user_lookup = supabase.table('user').select('id').eq(
-            'school_id', school_id).single().execute()
-        if user_lookup.data:
-            user_id = user_lookup.data['id']
+        vote_entries.append({
+            "position_name": position_name,
+            "masked_candidate": masked_cand,
+            "hash": vote_hash
+        })
 
+    print(f"[DEBUG] Compiled {len(vote_entries)} vote receipt entries")
+
+    # Log access
     supabase.table("logs").insert({
-        "user_id": user_id,
+        "user_id": user['id'],
         "action": "VIEW_VOTE_RECEIPT",
         "table_name": "votes",
         "query_type": "READ",
         "target": f"Department: {department}",
         "new_data": f"Vote hashes: {[v['hash'] for v in vote_entries]}",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": now.isoformat()
     }).execute()
+    print("[DEBUG] Vote receipt access logged")
 
     return render_template(
         "receipts_page.html",
@@ -2218,10 +2364,21 @@ def vote_receipt():
         department=department,
         hashed_users=[hashlib.sha256(school_id.encode()).hexdigest()],
         vote_entries=vote_entries,
-        receipt_timeout_enabled=ENABLE_RECEIPT_TIMEOUT,
-        receipt_expiry=(now +
-                        timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S"))
+        receipt_timeout_enabled=True,
+        receipt_expiry=view_end.strftime("%Y-%m-%d %H:%M:%S"))
 
+
+import re
+
+def normalize_name(name):
+    name = name.strip().lower()
+    name = re.sub(r'[^\w\s]', '', name)
+    name = re.sub(r'\d+', '', name)
+    name = re.sub(r'\s+', ' ', name)
+    return name
+
+def words_set(name):
+    return set(normalize_name(name).split())
 
 @app.route('/manage_poll', methods=['GET', 'POST'])
 def manage_poll():
@@ -2229,83 +2386,67 @@ def manage_poll():
         flash("You must be an admin to access this page.", "danger")
         return redirect(url_for('login'))
 
-    admin_resp = supabase.table('user').select('*').eq(
-        'school_id', session['school_id']).single().execute()
+    admin_resp = supabase.table('user').select('*').eq('school_id', session['school_id']).single().execute()
     admin = admin_resp.data
-    admin_department = admin.get('department', admin.get('course',
-                                                         '')) if admin else ''
+    admin_department = admin.get('department', admin.get('course', '')) if admin else ''
     message = ""
 
-    # ----- Filing period logic -----
-    filing_start = None
-    filing_end = None
-    filing_start_iso = ''
-    filing_end_iso = ''
+    filing_start = filing_end = None
+    filing_start_iso = filing_end_iso = ''
     filing_open = False
 
     try:
-        settings_resp = supabase.table('settings').select(
-            'filing_start', 'filing_end').order('id',
-                                                desc=True).limit(1).execute()
+        settings_resp = supabase.table('settings').select('filing_start', 'filing_end').order('id', desc=True).limit(1).execute()
         if settings_resp.data:
             filing_start = settings_resp.data[0]['filing_start']
             filing_end = settings_resp.data[0]['filing_end']
 
         now_ph = datetime.now(PH_TZ)
         if filing_start and filing_end:
-            filing_start_dt = datetime.fromisoformat(
-                filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
-            filing_end_dt = datetime.fromisoformat(
-                filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_start_dt = datetime.fromisoformat(filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_end_dt = datetime.fromisoformat(filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
             filing_open = filing_start_dt <= now_ph < filing_end_dt
             filing_start_iso = filing_start_dt.isoformat()
-            if filing_open:
-                filing_end_iso = filing_end_dt.isoformat()
-            else:
-                filing_end_iso = filing_end_dt.isoformat()
+            filing_end_iso = filing_end_dt.isoformat()
     except Exception as e:
         print(f"[ERROR] Filing period parsing failed: {e}")
-        filing_open = False
-        filing_start_iso = ''
-        filing_end_iso = ''
 
-    # ----- Add position -----
     if request.method == 'POST' and 'position_name' in request.form:
         if not filing_open:
             message = "You can only add positions during the filing period."
         else:
             position_name = request.form.get('position_name', '').strip()
-            if position_name:
+            new_words = words_set(position_name)
+            all_positions_resp = supabase.table('positions').select('name').eq('department', admin_department).execute()
+            all_positions = all_positions_resp.data if all_positions_resp.data else []
+            duplicate_found = any(
+                any(ew in nw or nw in ew for nw in new_words for ew in words_set(pos['name']))
+                for pos in all_positions
+            )
+            if duplicate_found:
+                message = f"The position '{position_name}' (or a similar one) already exists in this department."
+            elif position_name:
                 supabase.table('positions').insert({
-                    'name':
-                    position_name,
-                    'department':
-                    admin_department
+                    'name': position_name,
+                    'department': admin_department
                 }).execute()
                 supabase.table('logs').insert({
-                    'user_id':
-                    admin['id'],
-                    'action':
-                    'ADD_POSITION',
-                    'table_name':
-                    'positions',
-                    'query_type':
-                    'INSERT',
-                    'target':
-                    position_name,
-                    'new_data':
-                    f"Department: {admin_department}",
-                    'timestamp':
-                    datetime.now().isoformat()
+                    'user_id': admin['id'],
+                    'action': 'ADD_POSITION',
+                    'table_name': 'positions',
+                    'query_type': 'INSERT',
+                    'target': position_name,
+                    'new_data': f"Department: {admin_department}",
+                    'timestamp': datetime.now().isoformat()
                 }).execute()
                 message = "Position added successfully!"
 
-    # ----- Add candidate -----
     if request.method == 'POST' and 'candidate_name' in request.form and 'position_id' in request.form:
         if not filing_open:
             message = "You can only add candidates during the filing period."
         else:
             candidate_name = request.form.get('candidate_name', '').strip()
+            new_words = words_set(candidate_name)
             position_id = request.form.get('position_id')
             campaign_message = request.form.get('campaign_message', '').strip()
             year_level = request.form.get('year_level', '').strip()
@@ -2321,14 +2462,14 @@ def manage_poll():
             note = request.form.get('note', '').strip()
             image_path = ''
 
-            # --- DUPLICATE CHECK ---
-            dup_resp = supabase.table('candidates') \
-                .select('id') \
-                .eq('department', admin_department) \
-                .ilike('name', candidate_name) \
-                .execute()
-            if dup_resp.data:
-                message = "A candidate with this name already exists in this department."
+            all_candidates_resp = supabase.table('candidates').select('name').eq('department', admin_department).execute()
+            all_candidates = all_candidates_resp.data if all_candidates_resp.data else []
+            duplicate_found = any(
+                any(ew in nw or nw in ew for nw in new_words for ew in words_set(cand['name']))
+                for cand in all_candidates
+            )
+            if duplicate_found:
+                message = f"A candidate with the name '{candidate_name}' (or a similar one) already exists in this department."
             else:
                 file = request.files.get('candidate_image')
                 if file and file.filename:
@@ -2340,79 +2481,48 @@ def manage_poll():
                     else:
                         file.seek(0)
                         os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
-                        filename = secure_filename(
-                            f"{position_id}_{file.filename}")
+                        filename = secure_filename(f"{position_id}_{file.filename}")
                         image_path = f"uploads/candidates/{filename}"
-                        full_save_path = os.path.join(app.root_path, 'static',
-                                                      'uploads', 'candidates',
-                                                      filename)
+                        full_save_path = os.path.join(app.root_path, 'static', 'uploads', 'candidates', filename)
                         file.save(full_save_path)
 
                 if candidate_name and position_id and not message:
                     supabase.table('candidates').insert({
-                        'position_id':
-                        int(position_id),
-                        'name':
-                        candidate_name,
-                        'image':
-                        image_path,
-                        'campaign_message':
-                        campaign_message,
-                        'department':
-                        admin_department,
-                        'year_level':
-                        year_level,
-                        'course':
-                        course,
-                        'skills':
-                        skills,
-                        'platform':
-                        platform,
-                        'goals':
-                        goals,
-                        'sg_years':
-                        sg_years,
-                        'previous_role':
-                        previous_role,
-                        'experience':
-                        experience,
-                        'achievements':
-                        achievements,
-                        'slogan':
-                        slogan,
-                        'note':
-                        note
+                        'position_id': int(position_id),
+                        'name': candidate_name,
+                        'image': image_path,
+                        'campaign_message': campaign_message,
+                        'department': admin_department,
+                        'year_level': year_level,
+                        'course': course,
+                        'skills': skills,
+                        'platform': platform,
+                        'goals': goals,
+                        'sg_years': sg_years,
+                        'previous_role': previous_role,
+                        'experience': experience,
+                        'achievements': achievements,
+                        'slogan': slogan,
+                        'note': note
                     }).execute()
-
                     supabase.table('logs').insert({
-                        'user_id':
-                        admin['id'],
-                        'action':
-                        'ADD_CANDIDATE',
-                        'table_name':
-                        'candidates',
-                        'query_type':
-                        'INSERT',
-                        'target':
-                        f"Position ID: {position_id}",
-                        'new_data':
-                        f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
-                        'timestamp':
-                        datetime.now().isoformat()
+                        'user_id': admin['id'],
+                        'action': 'ADD_CANDIDATE',
+                        'table_name': 'candidates',
+                        'query_type': 'INSERT',
+                        'target': f"Position ID: {position_id}",
+                        'new_data': f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
+                        'timestamp': datetime.now().isoformat()
                     }).execute()
                     message = "Candidate added successfully!"
 
-    # ----- Load positions and candidates -----
-    positions_resp = supabase.table('positions').select('*').eq(
-        'department', admin_department).execute()
+    positions_resp = supabase.table('positions').select('*').eq('department', admin_department).execute()
     positions = positions_resp.data if positions_resp.data else []
 
     candidates_per_position = {}
     for pos in positions:
-        cands_resp = supabase.table('candidates').select('*').eq(
-            'position_id', pos['id']).execute()
-        candidates_per_position[
-            pos['id']] = cands_resp.data if cands_resp.data else []
+        cands_resp = supabase.table('candidates').select('*').eq('position_id', pos['id']).execute()
+        candidates_per_position[pos['id']] = cands_resp.data if cands_resp.data else []
 
     return render_template('admin_manage_poll.html',
                            admin_department=admin_department,
@@ -2422,6 +2532,8 @@ def manage_poll():
                            filing_start_iso=filing_start_iso,
                            filing_end_iso=filing_end_iso,
                            filing_open=filing_open)
+
+
 
 
 @app.route('/manage_candidates', methods=['GET', 'POST'])
@@ -2779,7 +2891,7 @@ def set_voting_period():
         flash("Voting period set for all departments!", "success")
         return redirect(url_for('set_voting_period'))
 
-    return render_template("system_voting_admin.html",
+    return render_template("voting_admin.html",
                            voting_start=voting_start,
                            voting_end=voting_end,
                            voting_start_display=voting_start_display,
@@ -3005,6 +3117,7 @@ def reject_user(user_id):
     return redirect(url_for('manage_students'))
 
 
+#working_insert
 @app.route('/manage_settings', methods=['GET', 'POST'])
 def manage_settings():
     if 'school_id' not in session or session.get('role') != 'admin':
@@ -3277,130 +3390,34 @@ def activity():
         f"{current_user.get('first_name', '')} {current_user.get('last_name', '')}"
     )
 
+@app.route('/delete_position/<int:id>', methods=['POST'])
+def delete_position(id):
+    if 'school_id' not in session or session.get('role') != 'admin':
+        flash("You must be an admin to perform this action.", "error")
+        return redirect(url_for('manage_poll'))
 
-@app.route('/voting_statistics')
-def voting_statistics():
-    # --- Access Control ---
-    role = session.get('role')
-    if role not in ['SysAdmin', 'admin']:
-        abort(403)
+    # Optionally: Check if filing period is open before allowing delete
+    settings_resp = supabase.table('settings').select('filing_start', 'filing_end').order('id', desc=True).limit(1).execute()
+    filing_open = False
+    if settings_resp.data:
+        filing_start = settings_resp.data[0]['filing_start']
+        filing_end = settings_resp.data[0]['filing_end']
+        now_ph = datetime.now(PH_TZ)
+        if filing_start and filing_end:
+            filing_start_dt = datetime.fromisoformat(filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_end_dt = datetime.fromisoformat(filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_open = filing_start_dt <= now_ph < filing_end_dt
 
-    print("📥 [INFO] Fetching users and votes from Supabase...")
+    if not filing_open:
+        flash("You can only delete positions during the filing period.", "error")
+        return redirect(url_for('manage_poll'))
 
-    # Fetch data
-    users_response = supabase.table("user").select(
-        "id", "school_id", "department", "course",
-        "year_level").eq("role", "user").execute()
-    votes_response = supabase.table("votes").select("student_id").execute()
-
-    users = users_response.data or []
-    votes = votes_response.data or []
-
-    print(f"✅ [DATA] Users: {len(users)}, Votes: {len(votes)}")
-
-    user_ids = {u['school_id'] for u in users}
-    voted_ids = {v['student_id'] for v in votes if v['student_id'] in user_ids}
-
-    total_users = len(user_ids)
-    total_voted = len(voted_ids)
-    total_not_voted = total_users - total_voted
-
-    turnout_percentage = round(
-        (total_voted / total_users) * 100, 2) if total_users else 0
-    not_voted_percentage = round(100 - turnout_percentage, 2)
-
-    print(
-        f"📈 Turnout: {turnout_percentage}%, Not Voted: {not_voted_percentage}%"
-    )
-
-    # ---------------------- DEPARTMENT STATS ----------------------
-    dept_users, dept_voted = {}, {}
-    for u in users:
-        d = (u.get('department') or 'Unknown').strip()
-        sid = u['school_id']
-        dept_users.setdefault(d, set()).add(sid)
-        if sid in voted_ids:
-            dept_voted.setdefault(d, set()).add(sid)
-
-    department_stats = []
-    for d in sorted(dept_users):
-        t = len(dept_users[d])
-        v = len(dept_voted.get(d, []))
-        p = round((v / t) * 100, 2) if t else 0
-        department_stats.append({
-            "department": d,
-            "total": t,
-            "voted": v,
-            "percentage": p
-        })
-        print(f"🏢 [DEPT] {d}: {p}% ({v}/{t})")
-
-    # ---------------------- COURSE STATS ----------------------
-    course_users, course_voted = {}, {}
-    for u in users:
-        c = (u.get('course') or 'Unknown').strip()
-        sid = u['school_id']
-        course_users.setdefault(c, set()).add(sid)
-        if sid in voted_ids:
-            course_voted.setdefault(c, set()).add(sid)
-
-    course_stats, offset = [], 0
-    for c in sorted(course_users):
-        t = len(course_users[c])
-        v = len(course_voted.get(c, []))
-        p = round((v / t) * 100, 2) if t else 0
-        course_stats.append({
-            "course": c,
-            "percentage": p,
-            "offset": round(offset, 2)
-        })
-        offset += p
-        print(f"📚 [COURSE] {c}: {p}% ({v}/{t})")
-
-    # ---------------------- YEAR LEVEL STATS ----------------------
-    def normalize_year(val):
-        raw = (val or "").strip().lower()
-        if "1" in raw: return "1st Year"
-        if "2" in raw: return "2nd Year"
-        if "3" in raw: return "3rd Year"
-        if "4" in raw: return "4th Year"
-        return "Unknown"
-
-    year_colors = {
-        "1st Year": "#3F51B5",
-        "2nd Year": "#E91E63",
-        "3rd Year": "#00BCD4",
-        "4th Year": "#8BC34A",
-        "Unknown": "#9E9E9E"
-    }
-
-    year_users, year_voted = {}, {}
-    for u in users:
-        y = normalize_year(u.get('year_level'))
-        sid = u['school_id']
-        year_users.setdefault(y, set()).add(sid)
-        if sid in voted_ids:
-            year_voted.setdefault(y, set()).add(sid)
-
-    year_level_stats = []
-    for y, color in year_colors.items():
-        t = len(year_users.get(y, []))
-        v = len(year_voted.get(y, []))
-        p = round((v / t) * 100, 2) if t else 0
-        year_level_stats.append({"Year": y, "percentage": p, "color": color})
-        print(f"🎓 [YEAR] {y}: {p}% ({v}/{t})")
-
-    print("✅ [DONE] Voting statistics ready.\n")
-
-    return render_template("voting_statistics.html",
-                           total_users=total_users,
-                           total_voted=total_voted,
-                           total_not_voted=total_not_voted,
-                           turnout_percentage=turnout_percentage,
-                           not_voted_percentage=not_voted_percentage,
-                           department_stats=department_stats,
-                           course_stats=course_stats,
-                           year_level_stats=year_level_stats)
+    # Delete candidates for this position first (optional, or set up DB cascade)
+    supabase.table('candidates').delete().eq('position_id', id).execute()
+    # Delete the position
+    supabase.table('positions').delete().eq('id', id).execute()
+    flash("Position deleted successfully.", "success")
+    return redirect(url_for('manage_poll'))
 
 
 @app.route('/pyinfo')

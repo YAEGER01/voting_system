@@ -296,9 +296,7 @@
 
 
         <div class="card-content">
-          <a class="nav-link" href="{{ url_for('set_voting_period') }}">
-            <span>Go to Voting Setting</span>
-          </a>
+
           <a href="{{ url_for('voting_statistics') }}" class="nav-link">
             <span>Go to Voting Statistics</span>
           </a>
@@ -467,7 +465,7 @@
       <!-- VOTE TALLY TERMINAL VIEW -->
       <div class="card">
         <div class="card-header">
-          <h3>Vote Tally (Terminal View)</h3>
+          <h3>Vote Data</h3>
         </div>
         <div class="card-content">
           <div class="log-controls"
@@ -638,7 +636,7 @@
       const end = document.getElementById("endTallyBtn");
 
       term.style.display = "block";
-      out.textContent = "Fetching vote tally data...";
+      out.textContent = "fetching vote data...";
 
       fetch("/fetch_candidates")
         .then(res => res.json())
@@ -664,18 +662,18 @@
           filterTally();
         })
         .catch(() => {
-          out.textContent = "Error loading tally.";
+          out.textContent = "Error loading.";
         });
     }
 
     function reloadTally() {
-      document.getElementById("tallyOutput").textContent = "Reloading tally...";
+      document.getElementById("tallyOutput").textContent = "reloading...";
       loadTally();
     }
 
     function endTally() {
       document.getElementById("tallyTerminal").style.display = "block";
-      document.getElementById("tallyOutput").textContent = "Tally viewing ended.";
+      document.getElementById("tallyOutput").textContent = "viewing ended.";
 
       document.getElementById("startTallyBtn").style.display = "inline-block";
       document.getElementById("reloadTallyBtn").style.display = "none";

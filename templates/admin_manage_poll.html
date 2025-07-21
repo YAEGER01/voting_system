@@ -144,6 +144,9 @@
           <h3>Add Position</h3>
           <form method="post">
             <input type="text" name="position_name" placeholder="Position Name (e.g., President)" required>
+            <small style="color:#c0392b;font-weight:bold;">
+              ⚠️ Note: Use <u>VP</u> instead of "Vice President" to avoid duplicate detection issues.
+            </small>
             <button type="submit">Add Position</button>
           </form>
 
@@ -187,6 +190,12 @@
           <div
             style="margin-bottom: 32px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background: #fdfdfd;">
             <h4 style="margin-bottom: 12px; color: #2c3e50;">{{ pos.name }}</h4>
+            <form method="post" action="{{ url_for('delete_position', id=pos.id) }}" style="display:inline;"
+              onsubmit="return confirm('Delete this position and all its candidates?');">
+              <button type="submit"
+                style="background:#c0392b;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.98em;">Delete
+                Position</button>
+            </form>
 
             {% if candidates_per_position[pos.id] %}
             <div style="display: flex; flex-wrap: wrap; gap: 16px;">

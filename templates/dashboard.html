@@ -93,6 +93,11 @@
       </p>
 
       <div class="sketch-container">
+        {% if not voting_start or not voting_end %}
+        <div style="text-align:center; color:#e74c3c; font-size:1.2em; font-weight:bold; margin:40px 0;">
+          There's no Voting Schedule yet. Please come back once it's been set.
+        </div>
+        {% else %}
         {% if voting_closed %}
         <div style="text-align:center; color:#e74c3c; font-size:1.2em; font-weight:bold; margin:40px 0;">
           Voting has ended. You can see the results on the [VIEW RESULTS] page on the sidebar<br>
@@ -101,6 +106,11 @@
         {% elif positions|length == 0 %}
         <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
           No voting positions are available for your department at this time.
+        </div>
+        {% elif votable_positions|length == 0 %}
+        <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
+          The Admin hasn't set any candidates yet for the election.<br>
+          Please check back later once candidates are available.
         </div>
         {% elif all_voted %}
         <div style="text-align:center; color:#25c18c; font-size:1.2em; font-weight:bold; margin:40px 0;">
@@ -137,6 +147,7 @@
             {% endfor %}
             <button type="submit">Submit Vote</button>
           </form>
+          {% endif %}
           {% endif %}
       </div>
     </div>
