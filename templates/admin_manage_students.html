@@ -246,6 +246,7 @@
                 <th>School ID</th>
                 <th>Name</th>
                 <th>Course</th>
+                <th>Section</th>
                 <th>Email</th>
                 <th>Phone</th>
                 <th>ID Front</th>
@@ -260,6 +261,7 @@
                 <td>{{ user.school_id }}</td>
                 <td>{{ user.first_name }} {{ user.last_name }}</td>
                 <td>{{ user.course }}</td>
+                <td>{{ user.section }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.phone }}</td>
                 <td><img src="{{ user.id_photo_front }}" alt="Front ID" class="preview"></td>
@@ -345,6 +347,7 @@
         <p><strong>School ID:</strong> ${user.school_id}</p>
         <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
         <p><strong>Course:</strong> ${user.course}</p>
+        <p><strong>Section:</strong> ${user.section || ''}</p>
         <p><strong>Email:</strong> ${user.email}</p>
         <p><strong>Phone:</strong> ${user.phone}</p>
         <p><strong>Submitted At:</strong> ${user.submitted_at}</p>

@@ -984,6 +984,7 @@ def register():
         course_code = request.form.get('course', '').strip()
         track = request.form.get('track', '').strip()
         year_level = request.form.get('year_level', '').strip()
+        section = request.form.get('section', '').strip()
         course = COURSE_FULL_NAMES.get(course_code, course_code)
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
@@ -1052,6 +1053,7 @@ def register():
             'course_code': course_code,
             'track': track,
             'year_level': year_level,
+            'section': section,
             'email': email,
             'password_plain': password,
             'first_name': first_name,
@@ -3059,6 +3061,7 @@ def approve_user(user_id):
         'course_code': user.get('course_code', ''),
         'track': user.get('track', ''),
         'year_level': user.get('year_level', ''),
+        'section': user.get('section', ''),
         'email': user['email'],
         'password_hash': hashed_pw,
         'first_name': user['first_name'],

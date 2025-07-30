@@ -823,5 +823,53 @@
     },
     "previous_hash": "2602a4ac9dc3d656fe68e8799713b59278bbfe234b1dad10ede82c94f2ea5f35",
     "hash": "172c90ce3844eb177759c3b24a0e1d0ffe5c356067465eb3dd1048eab716265c"
+  },
+  {
+    "index": 69,
+    "timestamp": "1753077027.868126",
+    "data": {
+      "student_id": "4bda20e8aed84ef5d1e8abde5af4de1f28aea6f12e9deef95b7dc76f3cbbf58f",
+      "position_id": 72,
+      "candidate_id": "OUmyZuzi3BZ6aZ7o4tQ3G/f1YNo5pKohRKwvQ9qaZuw=",
+      "timestamp": "1753077027.8681176"
+    },
+    "previous_hash": "172c90ce3844eb177759c3b24a0e1d0ffe5c356067465eb3dd1048eab716265c",
+    "hash": "6708747270478d2181174f6a8f6b28fc8d45db7adc9107b5c2ca56fdbb93ddc1"
+  },
+  {
+    "index": 70,
+    "timestamp": "1753077028.6661897",
+    "data": {
+      "student_id": "4bda20e8aed84ef5d1e8abde5af4de1f28aea6f12e9deef95b7dc76f3cbbf58f",
+      "position_id": 73,
+      "candidate_id": "RPC3fdpS0ERwv2S/DGi4hy7RMHR00jtUx0ThN1MsYdc=",
+      "timestamp": "1753077028.666182"
+    },
+    "previous_hash": "6708747270478d2181174f6a8f6b28fc8d45db7adc9107b5c2ca56fdbb93ddc1",
+    "hash": "74dc5b11215b03c44dd2dd9cf1e7d65d64be7c18fc00e70a25ae0343f1b2aa75"
+  },
+  {
+    "index": 71,
+    "timestamp": "1753077029.4506445",
+    "data": {
+      "student_id": "4bda20e8aed84ef5d1e8abde5af4de1f28aea6f12e9deef95b7dc76f3cbbf58f",
+      "position_id": 74,
+      "candidate_id": "x/NXEuV5aIhDQdjmyClwxGwffVaYokrVY1jL4wMTXtE=",
+      "timestamp": "1753077029.4506347"
+    },
+    "previous_hash": "74dc5b11215b03c44dd2dd9cf1e7d65d64be7c18fc00e70a25ae0343f1b2aa75",
+    "hash": "ee50d89fc9cfae15a8391013c8929f1a7f63ceeddaad57e1d5523912921ca331"
+  },
+  {
+    "index": 72,
+    "timestamp": "1753077030.7123916",
+    "data": {
+      "student_id": "4bda20e8aed84ef5d1e8abde5af4de1f28aea6f12e9deef95b7dc76f3cbbf58f",
+      "position_id": 75,
+      "candidate_id": "QOPK9Icugfiqcpg+3AepqS9/ET+t6iKzQize8OflboQ=",
+      "timestamp": "1753077030.712386"
+    },
+    "previous_hash": "ee50d89fc9cfae15a8391013c8929f1a7f63ceeddaad57e1d5523912921ca331",
+    "hash": "848655caf516aac6caaedcd19aa9482e713df2abbc37649b91f61d7d85b56fcb"
   }
 ]

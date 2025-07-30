@@ -59,17 +59,17 @@
       <span>Candidates</span>
     </a>
     <!-- ...existing sidebar code... -->
-    {% if voting_closed %}
-    <a href="{{ url_for('view_results') }}">
+    <!-- {% if voting_closed %}
+   <a href="{{ url_for('view_results') }}">
       <i class="fa-solid fa-chart-bar"></i>
       <span>View Results</span>
     </a>
     {% endif %}
-    <!-- ...existing sidebar code... -->
+    <!-- ...existing sidebar code... 
     <a href="{{ url_for('activity') }}">
       <i class="fa-solid fa-list-check"></i>
       <span>View Activities</span>
-    </a>
+    </a> -->
     <a href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?');">
       <i class="fa-solid fa-right-from-bracket"></i>
       <span>Logout</span>
@@ -100,7 +100,7 @@
         {% else %}
         {% if voting_closed %}
         <div style="text-align:center; color:#e74c3c; font-size:1.2em; font-weight:bold; margin:40px 0;">
-          Voting has ended. You can see the results on the [VIEW RESULTS] page on the sidebar<br>
+          Voting has ended.<br>
           Thank you for your participation.<br>
         </div>
         {% elif positions|length == 0 %}
@@ -160,19 +160,45 @@
       <div class="profile-columns">
         <div class="profile-col">
           <div class="profile-col-title">Student Information |</div>
-          <div class="profile-row"><i class="fa-solid fa-id-badge"></i><strong>First Name:</strong><span>{{
-              user.first_name }}</span></div>
-          <div class="profile-row"><i class="fa-solid fa-id-badge"></i><strong>Last Name:</strong><span>{{
-              user.last_name }}</span></div>
-          <div class="profile-row"><i class="fa-solid fa-id-badge"></i><strong>Phone Number:</strong><span>{{ user.phone
-              }}</span></div>
-          <div class="profile-row"><i class="fa-solid fa-building-columns"></i><strong>Department:</strong><span>{{
-              user.course }}</span></div>
-          <div class="profile-row"><i class="fa-solid fa-road"></i><strong>Track:</strong><span>{{ user.track }}</span>
+
+          <div class="profile-row">
+            <i class="fa-solid fa-user"></i>
+            <strong>First Name:</strong><span>{{ user.first_name }}</span>
           </div>
-          <div class="profile-row"><i class="fa-solid fa-layer-group"></i><strong>Year Level:</strong><span>{{
-              user.year_level }}</span></div>
+
+          <div class="profile-row">
+            <i class="fa-solid fa-user"></i>
+            <strong>Last Name:</strong><span>{{ user.last_name }}</span>
+          </div>
+
+          <div class="profile-row">
+            <i class="fa-solid fa-phone"></i>
+            <strong>Phone Number:</strong><span>{{ user.phone }}</span>
+          </div>
+
+          <div class="profile-row">
+            <i class="fa-solid fa-building-columns"></i>
+            <strong>Department:</strong><span>{{ user.course }}</span>
+          </div>
+
+          <div class="profile-row">
+            <i class="fa-solid fa-network-wired"></i>
+            <strong>Track:</strong><span>{{ user.track }}</span>
+          </div>
+
+          <div class="profile-row">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <strong>Year Level:</strong><span>{{ user.year_level }}</span>
+          </div>
+
+          <div class="profile-row">
+            <i class="fa-solid fa-users-rectangle"></i>
+            <strong>Section:</strong><span>{{ user.section }}</span>
+          </div>
         </div>
+
+
+
         <div class="profile-col">
           <div class="profile-col-title">Login Details |</div>
           <div class="profile-row"><i class="fa-solid fa-id-card"></i><strong>School ID:</strong><span>{{

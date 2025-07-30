@@ -70,8 +70,9 @@
             id="togglePassword" data-state="hidden" />
         </div>
         <!-- Improved reCAPTCHA alignment -->
-        <div class="form-group captcha-group">
-          <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+        <!-- Add this before the submit button -->
+        <div style="margin: 18px 0;">
+          <div class="g-recaptcha" data-sitekey="6Lf6ioErAAAAAMgfS8qXBOmQ-lMUJXoHEK544AEe"></div>
         </div>
         <div class="forgot-password">
           <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
