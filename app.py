@@ -713,7 +713,7 @@ def resend_otp():
         return redirect(url_for('forgot_password'))
 
     otp = generate_otp()
-    expiry = datetime.now(UTC) + timedelta(minutes=10)
+    expiry = datetime.now(UTC) + timedelta(minutes=10) #type:ignore
 
     # ✅ Update reset_otp and expiry
     supabase.table('user').update({
@@ -5129,7 +5129,6 @@ def view_student(school_id):
         return redirect(url_for('classroom_students'))
     return render_template('view_student.html', student=student)
 
-
 @app.route('/register_classroom_admin', methods=['GET', 'POST'])
 def register_classroom_admin():
     if request.method == 'POST':
@@ -5152,11 +5151,19 @@ def register_classroom_admin():
 
         email = f"{school_id}@classroom.local"
 
-        resp = supabase.table('user').select('id').or_(
-            f'school_id.eq.{school_id},email.eq.{email}').execute()
-        if resp.data:
-            flash("School ID or generated email already exists.", 'danger')
+        # --- MANUAL CHECK FOR EXISTING USER ---
+        # 1. Check for an existing user with the same school_id
+        resp_school_id = supabase.table('user').select('id').eq('school_id', school_id).execute()
+        if resp_school_id.data:
+            flash("School ID already exists.", 'danger')
             return redirect(url_for('register_classroom_admin'))
+
+        # 2. Check for an existing user with the generated email
+        resp_email = supabase.table('user').select('id').eq('email', email).execute()
+        if resp_email.data:
+            flash("Generated email already exists.", 'danger')
+            return redirect(url_for('register_classroom_admin'))
+        # -------------------------------------
 
         password_hash = generate_password_hash(password)
         short_uuid = str(uuid.uuid4())[:6]
@@ -5191,10 +5198,8 @@ def register_classroom_admin():
         }).execute()
 
         flash('Classroom Admin successfully registered!', 'success')
-        return redirect(url_for('system_admin'))  # <-- FIXED
-        return redirect(url_for('system_admin'))  # <-- FIXED
-
-
+        return redirect(url_for('system_admin'))
+        
 @app.route('/set_classroom_filing_period', methods=['POST'])
 def set_classroom_filing_period():
     if 'school_id' not in session or session.get('role') != 'SysAdmin':
@@ -5236,6 +5241,177 @@ def set_classroom_filing_period():
     flash('Classroom Filing period successfully set for all classrooms!',
           'success')
     return redirect(url_for('system_admin'))
+@app.route("/classroom_statistics")
+def classroom_statistics():
+    # --- [1] Authorization ---
+    if "user_id" not in session or session.get("role") != "classroom_admin":
+        flash("Unauthorized access. Please log in as a classroom admin.")
+        return redirect(url_for("login"))
+
+    # --- [2] Get classroom admin info ---
+    user_id = session["user_id"]
+    user_res = supabase.from_("user").select(
+        "id, first_name, last_name, year_level, course, track, section"
+    ).eq("id", user_id).single().execute()
+
+    if not user_res.data:
+        flash("Failed to retrieve class context.")
+        return redirect(url_for("dashboard"))
+
+    admin = user_res.data
+    admin_name = f"{admin['first_name']} {admin['last_name']}"
+    year_level = admin["year_level"].strip().lower()
+    course_raw = admin["course"].strip().lower()
+    track = admin["track"].strip().lower()
+    section = admin["section"].strip().lower()
+
+    # --- [3] Normalize course ---
+    COURSE_MAP = {
+        "bsit": "bachelor of science in information technology",
+        "bsindtech": "bachelor of science in industrial technology",
+        "bscs": "bachelor of science in computer science",
+        "bsemc": "bachelor of science in entertainment and multimedia computing",
+        "bsba": "bachelor of science in business administration",
+        "bsm": "bachelor of science in management",
+        "bshm": "bachelor of science in hospitality management",
+        "bstm": "bachelor of science in tourism management",
+        "bsais": "bachelor of science in accounting information system",
+        "bsma": "bachelor of science in management accounting",
+        "bsentrep": "bachelor of science in entrepreneurship",
+        "bslm": "bachelor of science in legal management",
+        "bscrim": "bachelor of science in criminology",
+        "bsed": "bachelor of secondary education",
+        "beed": "bachelor of elementary education",
+        "bped": "bachelor of physical education",
+        "baels": "bachelor of arts in english language studies",
+        "baps": "bachelor of arts in political science",
+        "das": "diploma in agricultural sciences"
+    }
+    normalized_course = COURSE_MAP.get(course_raw, course_raw)
+
+    # --- [4] Fetch all users matching class and filter roles ---
+    excluded_roles = {"admin", "ssc_admin", "classroom_admin", "sysadmin"}
+    users_res = supabase.from_("user").select(
+        "id, course, role"
+    ).match({
+        "year_level": admin["year_level"],
+        "track": admin["track"],
+        "section": admin["section"]
+    }).execute()
+
+    matching_user_ids = []
+    if users_res.data:
+        for user in users_res.data:
+            role = user.get("role", "").strip().lower()
+            if role in excluded_roles:
+                continue
+            u_course = user["course"].strip().lower()
+            if u_course == course_raw or u_course == normalized_course:
+                matching_user_ids.append(str(user["id"]))
+
+    total_students = len(matching_user_ids)
+
+    # --- [5] classroom_votes handled in part 8 ---
+
+    def mask_name(name):
+        parts = name.split()
+        masked_parts = []
+        for part in parts:
+            if len(part) <= 2:
+                masked_parts.append(part)
+            else:
+                masked_parts.append(part[0] + '*' * (len(part) - 2) + part[-1])
+        return ' '.join(masked_parts)
+
+    # --- [6] Debug Terminal Log ---
+    print("\n[CLASSROOM STATS DEBUG]")
+    print(f"Admin: {mask_name(admin_name)}")
+    print(f"Class: YEAR {admin['year_level']}, COURSE: {admin['course']}, TRACK: {admin['track']}, SECTION: {admin['section']}")
+    print(f"Normalized Course: {normalized_course}")
+    print(f"Total Matching Students: {total_students}")
+    print("-" * 50)
+
+    # --- [7] Render ---
+    class_info = f"YEAR {admin['year_level']} - {admin['course'].upper()} - {admin['track'].upper()} - SECTION {admin['section'].upper()}"
+
+    # --- [8] Fetch student info and build participation list ---
+    students = []
+    voted_school_ids = set()
+
+    if matching_user_ids:
+        print("\n[DEBUG PART 8] Fetching student info for class:")
+        print(f" - Year: {admin['year_level']}, Course: {admin['course']}, Track: {admin['track']}, Section: {admin['section']}")
+        print(f" - Matching User IDs: {matching_user_ids}")
+
+        user_query = supabase.from_("user").select(
+            "id, school_id, first_name, last_name, active, id_photo_front, course"
+        ).in_("id", matching_user_ids).execute()
+
+        print(f"[DEBUG PART 8] Retrieved {len(user_query.data)} students for class.")
+
+        vote_query = supabase.from_("classroom_votes").select(
+            "student_id, course"
+        ).match({
+            "year_level": admin["year_level"],
+            "track": admin["track"],
+            "section": admin["section"]
+        }).execute()
+
+        if vote_query.data:
+            print(f"[DEBUG PART 8] Retrieved {len(vote_query.data)} classroom_votes entries.")
+            for vote in vote_query.data:
+                vote_course = vote.get("course", "").strip().lower()
+                school_id = vote.get("student_id", "").strip()
+                print(f" - Checking vote by school_id {school_id}: course = {vote_course}")
+                if vote_course == course_raw or vote_course == normalized_course:
+                    print(f"   -> MATCH (course matched admin’s): {vote_course}")
+                    voted_school_ids.add(school_id)
+                else:
+                    print(f"   -> SKIPPED (course mismatch): {vote_course}")
+        else:
+            print("[DEBUG PART 8] No classroom_votes found.")
+
+        print(f"[DEBUG PART 8] Final voted_school_ids list: {list(voted_school_ids)}")
+
+        for u in user_query.data:
+            full_name = f"{u['first_name']} {u['last_name']}"
+            school_id = u.get("school_id", "").strip()
+            vote_status = "voted" if school_id in voted_school_ids else "not-voted"
+            online_status = "online" if str(u.get("active", "")).strip().upper() == "ACTIVE" else "offline"
+            photo_url = u.get("id_photo_front", "")
+
+            print(f" - Student: {full_name}")
+            print(f"   SCHOOL ID: {school_id}")
+            print(f"   VOTE STATUS: {vote_status} (in voted_school_ids? {school_id in voted_school_ids})")
+            print(f"   ONLINE STATUS: {online_status}")
+            print(f"   PHOTO: {photo_url}")
+
+            students.append({
+                "name": full_name,
+                "vote_status": vote_status,
+                "online_status": online_status,
+                "photo": photo_url
+            })
+    else:
+        print("[DEBUG PART 8] No matching_user_ids found.")
+
+    voted_count = len(voted_school_ids)
+    not_voted_count = max(total_students - voted_count, 0)
+    participation_rate = round((voted_count / total_students) * 100) if total_students > 0 else 0
+
+    return render_template(
+        "classroom_statistics.html",
+        class_info=class_info,
+        total_students=total_students,
+        voted_count=voted_count,
+        not_voted_count=not_voted_count,
+        participation_rate=participation_rate,
+        students=students
+    )
+
+@app.route('/help')
+def help():
+    return render_template("help.html")
 
 
 @app.route('/pyinfo')

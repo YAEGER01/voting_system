@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERROR: SYSTEM CRITICAL</title>
+    <!-- Load Tailwind CSS for utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Google Fonts for a more unsettling typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifier&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles for the entire page */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            /* Hide scrollbars to prevent distraction */
+            cursor: none;
+            /* Hide the cursor for a more unsettling and helpless feel */
+            font-family: 'Nosifier', sans-serif;
+            /* A creepy, distorted font */
+        }
+
+        /* Background flashing animation - faster and more jarring */
+        body {
+            animation: background-flash 0.15s infinite alternate;
+            /* Very fast, aggressive flash */
+        }
+
+        @keyframes background-flash {
+            0% {
+                background-color: #000;
+            }
+
+            /* Black */
+            25% {
+                background-color: #330000;
+            }
+
+            /* Dark Red */
+            50% {
+                background-color: #000;
+            }
+
+            /* Black */
+            75% {
+                background-color: #660000;
+            }
+
+            /* Even darker, more intense red */
+            100% {
+                background-color: #000;
+            }
+
+            /* Black */
+        }
+
+        /* Full-screen glitch effect overlay */
+        .glitch-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* Allow clicks to pass through */
+            z-index: 1000;
+            /* Ensure it's on top of everything */
+            animation: screen-glitch 0.05s infinite steps(1);
+            /* Rapid, random jumps */
+            background: repeating-linear-gradient(90deg,
+                    rgba(255, 0, 0, 0.05) 0px,
+                    rgba(0, 255, 0, 0.05) 1px,
+                    rgba(0, 0, 255, 0.05) 2px,
+                    transparent 3px,
+                    transparent 5px);
+            /* Subtle chromatic aberration lines */
+        }
+
+        @keyframes screen-glitch {
+            0% {
+                opacity: 0.1;
+                transform: translate(0, 0);
+            }
+
+            10% {
+                opacity: 0.3;
+                transform: translate(-3px, 3px);
+            }
+
+            20% {
+                opacity: 0.1;
+                transform: translate(3px, -3px);
+            }
+
+            30% {
+                opacity: 0.4;
+                transform: translate(-2px, 2px);
+            }
+
+            40% {
+                opacity: 0.1;
+                transform: translate(2px, -2px);
+            }
+
+            50% {
+                opacity: 0.2;
+                transform: translate(0, 0);
+            }
+
+            60% {
+                opacity: 0.5;
+                transform: translate(-4px, 4px);
+            }
+
+            70% {
+                opacity: 0.1;
+                transform: translate(4px, -4px);
+            }
+
+            80% {
+                opacity: 0.3;
+                transform: translate(-2px, 2px);
+            }
+
+            90% {
+                opacity: 0.1;
+                transform: translate(2px, -2px);
+            }
+
+            100% {
+                opacity: 0.2;
+                transform: translate(0, 0);
+            }
+        }
+
+        /* Static noise overlay for a grainy, broken TV feel */
+        .static-noise::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg,
+                    rgba(0, 0, 0, 0.15) 0px,
+                    rgba(0, 0, 0, 0.15) 1px,
+                    transparent 1px,
+                    transparent 3px);
+            mix-blend-mode: overlay;
+            /* Blend with content below for a subtle effect */
+            opacity: 0.4;
+            animation: static-flicker 0.08s infinite;
+            /* Rapid flickering */
+        }
+
+        @keyframes static-flicker {
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Vignette effect to darken the edges and create a claustrophobic feel */
+        .vignette::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0px 0px 300px 150px rgba(0, 0, 0, 0.95);
+            /* Deeper, wider shadow */
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Main text styling and aggressive glitch effects */
+        h1 {
+            color: #fff;
+            text-align: center;
+            font-size: 8rem;
+            /* Large text */
+            margin-top: 15vh;
+            /* Position slightly higher on the screen */
+            position: relative;
+            z-index: 10;
+            /* Ensure text is above overlays */
+            animation: text-glitch 0.2s infinite alternate,
+                /* Rapid text distortion */
+                text-flicker 0.05s infinite;
+            /* Very fast opacity flicker */
+            text-shadow: 0 0 8px #f00, 0 0 16px #0f0, 0 0 24px #00f;
+            /* Stronger chromatic aberration */
+        }
+
+        @keyframes text-glitch {
+            0% {
+                transform: translate(0, 0) skewX(0deg);
+                text-shadow: 0 0 8px #f00, 0 0 16px #0f0, 0 0 24px #00f;
+            }
+
+            25% {
+                transform: translate(3px, -3px) skewX(8deg);
+                /* More aggressive skew */
+                text-shadow: -3px 0 8px #0f0, 3px 0 16px #f00, 0 0 24px #00f;
+            }
+
+            50% {
+                transform: translate(-3px, 3px) skewX(-8deg);
+                /* More aggressive skew */
+                text-shadow: 0 3px 8px #00f, 0 -3px 16px #f00, 0 0 24px #0f0;
+            }
+
+            75% {
+                transform: translate(2px, -2px) skewX(4deg);
+                text-shadow: 2px 0 8px #f00, -2px 0 16px #0f0, 0 0 24px #00f;
+            }
+
+            100% {
+                transform: translate(0, 0) skewX(0deg);
+                text-shadow: 0 0 8px #f00, 0 0 16px #0f0, 0 0 24px #00f;
+            }
+        }
+
+        @keyframes text-flicker {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            /* More noticeable flicker */
+        }
+
+        /* Subliminal creepy image that flashes very briefly and subtly */
+        .subliminal-image {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            /* Make it very large to fill the screen */
+            max-width: 800px;
+            /* Cap max width */
+            height: auto;
+            opacity: 0;
+            animation: image-flash 5s infinite;
+            /* Flash more frequently, but still subtle */
+            z-index: 5;
+            /* Below text, above background */
+        }
+
+        @keyframes image-flash {
+
+            0%,
+            98% {
+                opacity: 0;
+            }
+
+            98.5% {
+                opacity: 0.07;
+            }
+
+            /* Slightly more visible flash */
+            99% {
+                opacity: 0;
+            }
+
+            99.5% {
+                opacity: 0.07;
+            }
+
+            /* Another quick flash */
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 5rem;
+                /* Smaller font size on mobile */
+                margin-top: 20vh;
+            }
+
+            .subliminal-image {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen relative">
+    <!-- Overlay for screen glitches and static noise -->
+    <div class="glitch-overlay"></div>
+    <div class="static-noise"></div>
+    <div class="vignette"></div>
+
+    <!-- Subliminal creepy image - a placeholder that looks like distorted eyes/face -->
+    <img class="subliminal-image" src="https://placehold.co/800x600/000000/330000?text=I+SEE+YOU" alt="Distorted Image">
+
+    <!-- The main terrifying text with unicode distortion -->
+    <h1 class="text-white text-center font-extrabold text-9xl md:text-[12rem] lg:text-[15rem] leading-none">
+        H̷̡̗̠̐̈́́͐̈́͜E̸͎͐̄͛̚͠L̵̢̰̳͎̥̿̓͌͑͠P̴̢̯͈̠̦̈̆̔̚͝
+    </h1>
+
+    <!-- Original audio tag - commented out because 'url_for' is a server-side function
+         and won't work in the client-side Canvas preview.
+         If you host this page yourself, you can uncomment and provide a valid audio path. -->
+    <!--
+    <audio autoplay loop>
+        <source src="{{ url_for('static', filename='audio/help.mp3') }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    -->
+
+    <script>
+        // Redirect to 'admin_dashboard' after 10 seconds
+        setTimeout(function () {
+            window.location.href = 'admin_dashboard'; // Change this to your actual admin dashboard URL
+        }, 3000); // 10000 milliseconds = 10 seconds
+    </script>
+</body>
+
+</html>
