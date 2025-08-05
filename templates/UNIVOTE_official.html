@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIVOTE: Campus Voting Reimagined</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom CSS variables for themes using RGB values for opacity control */
+        :root {
+            --color-bg-primary-rgb: 240, 253, 244;
+            --color-bg-secondary-rgb: 255, 255, 255;
+            --color-text-primary: #1f2937;
+            --color-text-secondary: #4b5563;
+            --color-accent-primary: #15803d;
+            --color-accent-secondary: #4ade80;
+            --color-card-bg: #15803d;
+        }
+
+        .dark {
+            --color-bg-primary-rgb: 0, 0, 0;
+            /* Changed to black */
+            --color-bg-secondary-rgb: 20, 20, 20;
+            /* Changed to very dark gray/almost black */
+            --color-text-primary: #f9fafb;
+            --color-text-secondary: #d1d5db;
+            --color-accent-primary: #34d399;
+            --color-accent-secondary: #065f46;
+            --color-card-bg: #22c55e;
+        }
+
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: rgb(var(--color-bg-primary-rgb));
+            transition: background-color 0.3s ease-in-out;
+            color: var(--color-text-primary);
+        }
+
+        /* Hero section background with gradient and grid accents */
+        .hero-bg {
+            background-image: linear-gradient(to right, var(--color-accent-primary), var(--color-accent-secondary));
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(to right, rgba(var(--color-bg-secondary-rgb), 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(var(--color-bg-secondary-rgb), 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.5;
+            z-index: 0;
+        }
+
+        /* Glassmorphism effect now uses RGB variables for automatic color change */
+        .glass-effect {
+            background-color: rgba(var(--color-bg-secondary-rgb), 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(var(--color-bg-secondary-rgb), 0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Modal-specific glass effect also uses RGB variables and now includes the glowing effect */
+        .modal-glass-effect {
+            background-color: rgba(255, 255, 255, 0.8);
+            /* More opaque white for light mode */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.7), 0 0 60px rgba(255, 255, 255, 0.5);
+            /* White glow */
+        }
+
+        .dark .modal-glass-effect {
+            background-color: rgba(20, 20, 20, 0.8);
+            /* Adjusted for black background */
+            border: 1px solid rgba(40, 40, 40, 0.9);
+            /* Adjusted border for black background */
+            box-shadow: 0 0 30px rgba(30, 30, 30, 0.7), 0 0 60px rgba(30, 30, 30, 0.5);
+            /* Subtle dark glow */
+        }
+
+        /* Style for the search input */
+        .search-input {
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.5);
+            /* Purple shadow */
+        }
+
+        /* Custom hover for cards to use purple/orange */
+        .card-hover {
+            transition: all 0.3s ease;
+            color: var(--color-text-primary);
+            background-color: rgba(var(--color-card-bg), 0.2);
+            border-color: transparent;
+        }
+
+        .card-hover:hover {
+            background-color: #a855f7;
+            /* Purple */
+            color: white;
+            /* White text on hover */
+            transform: translateY(-8px) scale(1.03);
+            border-color: #a855f7;
+            box-shadow: 0 10px 15px rgba(168, 85, 247, 0.3);
+        }
+
+        .card-hover:nth-child(even):hover {
+            background-color: #f97316;
+            /* Orange */
+            border-color: #f97316;
+            box-shadow: 0 10px 15px rgba(249, 115, 22, 0.3);
+        }
+
+        /* Icon color change on hover for cards */
+        .card-hover .card-icon {
+            color: var(--color-text-primary);
+            transition: color 0.3s ease;
+        }
+
+        .card-hover:hover .card-icon {
+            color: white;
+        }
+
+        /* Custom animation for the circular graphic */
+        @keyframes rotate-slow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-rotate-slow {
+            animation: rotate-slow 20s linear infinite;
+        }
+
+        /* Modal overlay */
+        .modal-overlay {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 999;
+            place-items: center;
+        }
+
+        .modal-content {
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Department Drawer styles */
+        .departments-drawer-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+        }
+
+        .departments-drawer-content.open {
+            max-height: 1000px;
+            /* Adjust based on content height */
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        /* Glowing Buttons */
+        .glowing-btn {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .glowing-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: -1;
+        }
+
+        .glowing-btn:hover::before {
+            opacity: 1;
+        }
+
+        .glowing-btn.login-btn:hover {
+            box-shadow: 0 0 15px #15803d, 0 0 30px #15803d, 0 0 45px #15803d;
+        }
+
+        .glowing-btn.signup-btn:hover {
+            box-shadow: 0 0 15px #a855f7, 0 0 30px #a855f7, 0 0 45px #a855f7;
+        }
+
+        .dark .glowing-btn.login-btn:hover {
+            box-shadow: 0 0 15px #34d399, 0 0 30px #34d399, 0 0 45px #34d399;
+        }
+
+        .dark .glowing-btn.signup-btn:hover {
+            box-shadow: 0 0 15px #c084fc, 0 0 30px #c084fc, 0 0 45px #c084fc;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-[var(--color-bg-secondary)] shadow-md">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between flex-wrap">
+            <!-- Logo and Search -->
+            <div class="flex items-center space-x-6 w-full lg:w-auto mb-4 lg:mb-0">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl font-bold text-[var(--color-accent-primary)]">UNIVOTE</span>
+                </div>
+                <div class="relative hidden sm:block">
+                    <input type="text" placeholder="Search..."
+                        class="search-input w-48 lg:w-64 py-2 pl-4 pr-10 border border-gray-300 rounded-lg text-sm bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
+                    <i
+                        class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"></i>
+                </div>
+            </div>
+
+            <!-- Main Nav -->
+            <div class="flex items-center space-x-6 flex-grow justify-end">
+                <nav>
+                    <ul class="flex space-x-4 text-sm font-medium hidden lg:flex">
+                        <li><a href="#"
+                                class="text-white px-3 py-1 bg-[var(--color-accent-primary)] rounded-full hover:bg-[var(--color-accent-secondary)] transition">Home</a>
+                        </li>
+                        <li><a href="{{ url_for('contacts') }}"
+                                class="text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)] transition">Contacts</a>
+                        </li>
+
+                        <li><a href="#" id="theme-toggle"
+                                class="text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)] transition cursor-pointer">Dark
+                                Mode</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="hero-bg text-white py-20 relative">
+        <div class="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 items-center gap-10">
+            <!-- Left Content -->
+            <div class="flex flex-col space-y-6 text-center lg:text-left p-6 rounded-3xl glass-effect">
+                <h1
+                    class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-[var(--color-text-primary)]">
+                    UNIVOTE: <br> Campus Voting Reimagined
+                </h1>
+                <p class="text-lg md:text-xl font-medium text-[var(--color-text-secondary)]">
+                    Experience secure, transparent, and accessible campus elections with UNIVOTE.
+                    Our platform simplifies the voting process for students and administrators,
+                    ensuring fair and efficient results every time.
+                </p>
+
+            </div>
+
+            <!-- Right Graphic -->
+            <div class="flex justify-center items-center relative mt-10 lg:mt-0">
+                <div
+                    class="w-64 h-64 md:w-80 md:h-80 bg-[var(--color-accent-primary)] border-4 border-[var(--color-bg-secondary)] rounded-full flex justify-center items-center animate-rotate-slow shadow-xl">
+
+                    <!-- Logo Image instead of SVG -->
+                    <img src="{{ url_for('static', filename='images/univ.jpg') }}" alt="UNIVOTE Logo"
+                        class="w-3/4 h-3/4 object-contain rounded-full" />
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- UNIVOTE Tagline Highlight -->
+    <section class="container mx-auto px-4 py-8">
+        <div id="new-voting-system-highlight"
+            class="glass-effect rounded-3xl p-6 md:p-8 cursor-pointer hover:scale-[1.02] transition-transform duration-300">
+            <div class="flex items-center justify-between flex-wrap">
+                <div class="flex items-center space-x-4">
+                    <span class="text-3xl font-extrabold text-[var(--color-accent-primary)]">UNIVOTE</span>
+                    <span class="text-xl font-medium text-[var(--color-text-primary)] hidden sm:block"> | Secure,
+                        Transparent, Accessible Voting</span>
+                </div>
+                <button
+                    class="bg-[var(--color-accent-primary)] text-white px-6 py-2 rounded-full font-bold hover:bg-[var(--color-accent-secondary)] transition-colors">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Highlight: AES Equipped -->
+    <section class="container mx-auto px-4 py-8">
+        <div id="aes-equipped-highlight"
+            class="glass-effect rounded-3xl p-6 md:p-8 cursor-pointer hover:scale-[1.02] transition-transform duration-300">
+            <div class="flex items-center justify-between flex-wrap">
+                <div class="flex items-center space-x-4">
+                    <span class="text-3xl font-extrabold text-[var(--color-accent-primary)]">AES EQUIPPED</span>
+                    <span class="text-xl font-medium text-[var(--color-text-primary)] hidden sm:block"> | Advanced
+                        Encryption Standard</span>
+                </div>
+                <button
+                    class="bg-[var(--color-accent-primary)] text-white px-6 py-2 rounded-full font-bold hover:bg-[var(--color-accent-secondary)] transition-colors">
+                    Details
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Highlight: BLOCKCHAIN -->
+    <section class="container mx-auto px-4 py-8">
+        <div id="blockchain-highlight"
+            class="glass-effect rounded-3xl p-6 md:p-8 cursor-pointer hover:scale-[1.02] transition-transform duration-300">
+            <div class="flex items-center justify-between flex-wrap">
+                <div class="flex items-center space-x-4">
+                    <span class="text-3xl font-extrabold text-[var(--color-accent-primary)]">BLOCKCHAIN</span>
+                    <span class="text-xl font-medium text-[var(--color-text-primary)] hidden sm:block"> | Decentralized
+                        Security</span>
+                </div>
+                <button
+                    class="bg-[var(--color-accent-primary)] text-white px-6 py-2 rounded-full font-bold hover:bg-[var(--color-accent-secondary)] transition-colors">
+                    Explore
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Highlight: Web APK Download -->
+    <section class="container mx-auto px-4 py-8">
+        <div id="web-apk-highlight"
+            class="glass-effect rounded-3xl p-6 md:p-8 cursor-pointer hover:scale-[1.02] transition-transform duration-300">
+            <div class="flex items-center justify-between flex-wrap">
+                <div class="flex items-center space-x-4">
+                    <span class="text-3xl font-extrabold text-[var(--color-accent-primary)]">WEB APK FORM</span>
+                    <span class="text-xl font-medium text-[var(--color-text-primary)] hidden sm:block"> | Download
+                        Now!</span>
+                </div>
+                <button
+                    class="bg-[var(--color-accent-primary)] text-white px-6 py-2 rounded-full font-bold hover:bg-[var(--color-accent-secondary)] transition-colors">
+                    Download
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Department Logos Drawer -->
+    <section class="container mx-auto px-4 py-8">
+        <div class="glass-effect rounded-3xl p-6 md:p-8">
+            <button id="toggle-departments-drawer"
+                class="w-full flex items-center justify-between text-left py-4 px-6 rounded-xl cursor-pointer bg-[var(--color-bg-secondary)]/30 hover:bg-[var(--color-bg-secondary)]/50 transition-colors duration-300 text-[var(--color-text-primary)] font-bold text-xl">
+                <span>View All Departments</span>
+                <i class="fas fa-chevron-down transform transition-transform duration-300"></i>
+            </button>
+            <div id="departments-drawer-content" class="departments-drawer-content glass-effect rounded-b-3xl mt-4">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    <!-- 15 Placeholder Department Logos -->
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-purple-500/50 transition-colors duration-300">
+                        <img src="static\images\ccsict.png" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">CCSICT Dept</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-orange-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=CS" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">CS Dept</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-purple-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Eng" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Eng Dept</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-orange-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Bus" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Bus Admin</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-purple-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Edu" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Edu Dept</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-orange-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Bio" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Biology</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-purple-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Chem" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Chemistry</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-orange-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Phys" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Physics</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-purple-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Math" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Math Dept</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-orange-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Hist" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">History</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-purple-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Lit" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Literature</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-orange-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Art" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Arts Dept</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-purple-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Music" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Music Dept</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-orange-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Sport" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Sports</p>
+                    </div>
+                    <div
+                        class="text-center p-4 rounded-lg bg-[var(--color-bg-secondary)]/50 hover:bg-purple-500/50 transition-colors duration-300">
+                        <img src="https://placehold.co/80x80/90EE90/000000?text=Agri" alt="Department Logo"
+                            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover border-2 border-[var(--color-text-primary)]">
+                        <p class="text-sm font-medium text-[var(--color-text-primary)]">Agriculture</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AES Equipped Modal -->
+    <div id="aes-modal-overlay" class="modal-overlay hidden place-items-center">
+        <div id="aes-modal-content"
+            class="modal-content modal-glass-effect rounded-3xl p-8 max-w-lg w-full relative mx-4">
+            <button id="aes-modal-close-btn"
+                class="absolute top-4 right-4 text-3xl font-bold transition-transform transform hover:scale-110 text-[var(--color-text-primary)]">
+                &times;
+            </button>
+            <div class="text-center">
+                <h3 class="text-4xl font-extrabold mb-2 text-[var(--color-text-primary)]">AES Equipped</h3>
+                <p class="text-lg mt-4 mb-8 text-[var(--color-text-primary)]">
+                    UNIVOTE utilizes Advanced Encryption Standard (AES) to secure all sensitive data,
+                    ensuring that your votes and personal information are protected with military-grade encryption.
+                    Your privacy and security are our top priority.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blockchain Modal -->
+    <div id="blockchain-modal-overlay" class="modal-overlay hidden place-items-center">
+        <div id="blockchain-modal-content"
+            class="modal-content modal-glass-effect rounded-3xl p-8 max-w-lg w-full relative mx-4">
+            <button id="blockchain-modal-close-btn"
+                class="absolute top-4 right-4 text-3xl font-bold transition-transform transform hover:scale-110 text-[var(--color-text-primary)]">
+                &times;
+            </button>
+            <div class="text-center">
+                <h3 class="text-4xl font-extrabold mb-2 text-[var(--color-text-primary)]">Blockchain Technology</h3>
+                <p class="text-lg mt-4 mb-8 text-[var(--color-text-primary)]">
+                    Leveraging blockchain technology, UNIVOTE ensures unparalleled transparency and immutability
+                    of election results. Every vote is recorded on a distributed ledger, making it impossible
+                    to tamper with or alter, guaranteeing verifiable and trustworthy outcomes.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web APK Modal -->
+    <div id="web-apk-modal-overlay" class="modal-overlay hidden place-items-center">
+        <div id="web-apk-modal-content"
+            class="modal-content modal-glass-effect rounded-3xl p-8 max-w-lg w-full relative mx-4">
+            <button id="web-apk-modal-close-btn"
+                class="absolute top-4 right-4 text-3xl font-bold transition-transform transform hover:scale-110 text-[var(--color-text-primary)]">
+                &times;
+            </button>
+            <div class="text-center">
+                <h3 class="text-4xl font-extrabold mb-2 text-[var(--color-text-primary)]">Web APK Form</h3>
+                <p class="text-lg mt-4 mb-8 text-[var(--color-text-primary)]">
+                    Access UNIVOTE conveniently on your mobile device! Download our web APK directly for a seamless
+                    voting experience.
+                </p>
+                <div class="flex flex-col items-center space-y-4">
+                    <a href="#"
+                        class="bg-[var(--color-accent-primary)] text-white font-bold py-3 px-8 rounded-full glowing-btn">
+                        Download Now (Link)
+                    </a>
+                    <img src="https://placehold.co/150x150/000000/FFFFFF?text=QR+Code" alt="QR Code Placeholder"
+                        class="w-36 h-36 border-2 border-[var(--color-text-primary)]">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voting System Modal (Existing) -->
+    <div id="voting-system-modal-overlay" class="modal-overlay hidden place-items-center">
+        <div id="voting-system-modal-content"
+            class="modal-content modal-glass-effect rounded-3xl p-8 max-w-lg w-full relative mx-4">
+            <button id="voting-system-modal-close-btn"
+                class="absolute top-4 right-4 text-3xl font-bold transition-transform transform hover:scale-110 text-[var(--color-text-primary)]">
+                &times;
+            </button>
+            <div class="text-center">
+                <h3 class="text-4xl font-extrabold mb-2 text-[var(--color-text-primary)]">UNIVOTE</h3>
+                <p class="text-xl font-medium mb-4 text-[var(--color-text-secondary)]">Campus Voting Reimagined</p>
+                <p class="text-lg mt-4 mb-8 text-[var(--color-text-primary)]">
+                    UNIVOTE is designed to provide a transparent and secure platform for all campus elections.
+                    It ensures that every vote is counted accurately and that the integrity of the election process is
+                    maintained.
+                    Ready to cast your vote or manage your campaign?
+                </p>
+                <div
+                    class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mt-4">
+                    <a href="{{ url_for('login') }}"
+                        class="w-full sm:w-auto bg-[var(--color-accent-primary)] text-white font-bold py-3 px-8 rounded-full glowing-btn login-btn">
+                        Login
+                    </a>
+                    <a href="{{ url_for('register') }}"
+                        class="w-full sm:w-auto bg-purple-500 text-white font-bold py-3 px-8 rounded-full glowing-btn signup-btn">
+                        Signup
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Modals and Theme Functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const body = document.body;
+            const themeToggleBtn = document.getElementById('theme-toggle');
+
+            // Function to set the theme
+            function setTheme(theme) {
+                if (theme === 'dark') {
+                    body.classList.add('dark');
+                    themeToggleBtn.textContent = 'Light Mode';
+                } else {
+                    body.classList.remove('dark');
+                    themeToggleBtn.textContent = 'Dark Mode';
+                }
+                localStorage.setItem('theme', theme);
+            }
+
+            // Function to get the initial theme
+            function getInitialTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme) {
+                    return savedTheme;
+                }
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            // Apply the initial theme on page load
+            const initialTheme = getInitialTheme();
+            setTheme(initialTheme);
+
+            // Add event listener to toggle the theme
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = body.classList.contains('dark') ? 'light' : 'dark';
+                setTheme(currentTheme);
+            });
+
+            // Generic modal show/hide functions
+            function showModal(modalOverlay) {
+                modalOverlay.style.display = 'grid';
+                setTimeout(() => {
+                    modalOverlay.classList.add('active');
+                }, 10);
+            }
+
+            function hideModal(modalOverlay) {
+                modalOverlay.classList.remove('active');
+                setTimeout(() => {
+                    modalOverlay.style.display = 'none';
+                }, 300);
+            }
+
+            // Voting System Modal Functionality
+            const votingSystemHighlight = document.getElementById('new-voting-system-highlight');
+            const votingSystemModalOverlay = document.getElementById('voting-system-modal-overlay');
+            const votingSystemModalCloseBtn = document.getElementById('voting-system-modal-close-btn');
+
+            votingSystemHighlight.addEventListener('click', () => showModal(votingSystemModalOverlay));
+            votingSystemModalCloseBtn.addEventListener('click', () => hideModal(votingSystemModalOverlay));
+            votingSystemModalOverlay.addEventListener('click', (e) => {
+                if (e.target.id === 'voting-system-modal-overlay') {
+                    hideModal(votingSystemModalOverlay);
+                }
+            });
+
+            // New Highlight Modals Functionality
+            const aesEquippedHighlight = document.getElementById('aes-equipped-highlight');
+            const aesModalOverlay = document.getElementById('aes-modal-overlay');
+            const aesModalCloseBtn = document.getElementById('aes-modal-close-btn');
+
+            aesEquippedHighlight.addEventListener('click', () => showModal(aesModalOverlay));
+            aesModalCloseBtn.addEventListener('click', () => hideModal(aesModalOverlay));
+            aesModalOverlay.addEventListener('click', (e) => {
+                if (e.target.id === 'aes-modal-overlay') {
+                    hideModal(aesModalOverlay);
+                }
+            });
+
+            const blockchainHighlight = document.getElementById('blockchain-highlight');
+            const blockchainModalOverlay = document.getElementById('blockchain-modal-overlay');
+            const blockchainModalCloseBtn = document.getElementById('blockchain-modal-close-btn');
+
+            blockchainHighlight.addEventListener('click', () => showModal(blockchainModalOverlay));
+            blockchainModalCloseBtn.addEventListener('click', () => hideModal(blockchainModalOverlay));
+            blockchainModalOverlay.addEventListener('click', (e) => {
+                if (e.target.id === 'blockchain-modal-overlay') {
+                    hideModal(blockchainModalOverlay);
+                }
+            });
+
+            const webApkHighlight = document.getElementById('web-apk-highlight');
+            const webApkModalOverlay = document.getElementById('web-apk-modal-overlay');
+            const webApkModalCloseBtn = document.getElementById('web-apk-modal-close-btn');
+
+            webApkHighlight.addEventListener('click', () => showModal(webApkModalOverlay));
+            webApkModalCloseBtn.addEventListener('click', () => hideModal(webApkModalOverlay));
+            webApkModalOverlay.addEventListener('click', (e) => {
+                if (e.target.id === 'web-apk-modal-overlay') {
+                    hideModal(webApkModalOverlay);
+                }
+            });
+
+            // Department Drawer Functionality
+            const toggleDepartmentsDrawerBtn = document.getElementById('toggle-departments-drawer');
+            const departmentsDrawerContent = document.getElementById('departments-drawer-content');
+            const drawerChevronIcon = toggleDepartmentsDrawerBtn.querySelector('i');
+
+            toggleDepartmentsDrawerBtn.addEventListener('click', () => {
+                departmentsDrawerContent.classList.toggle('open');
+                drawerChevronIcon.classList.toggle('fa-chevron-up');
+                drawerChevronIcon.classList.toggle('fa-chevron-down');
+            });
+        });
+    </script>
+
+</body>
+
+</html>

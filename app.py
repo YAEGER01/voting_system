@@ -840,7 +840,7 @@ def nl2br_filter(s):
 
 @app.route('/')
 def index():
-    return render_template('UNIVOTE.html')
+    return render_template('UNIVOTE_official.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
