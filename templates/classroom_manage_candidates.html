@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNIVOTE: CLASROOM ADMIN MANAGE CANDIDATES</title>
+  <link rel="stylesheet" href="static/css/admin_dash.css">
+  <style>
+    :root {
+      --primary-green: #2e7d32;
+      --light-green: #81c784;
+      --lighter-green: #e8f5e9;
+      --dark-green: #1b5e20;
+      --white: #ffffff;
+      --light-gray: #f5f5f5;
+      --medium-gray: #e0e0e0;
+      --dark-gray: #424242;
+    }
+
+    #app {
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .candidates-section {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      margin: 0 auto;
+      max-width: 100%;
+    }
+
+    h2,
+    h3 {
+      color: var(--dark-green);
+      margin-bottom: 1.25rem;
+      text-align: center;
+    }
+
+    .table-container {
+      max-height: 70vh;
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--medium-gray);
+      background: var(--white);
+      margin-top: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    th,
+    td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--medium-gray);
+      vertical-align: top;
+    }
+
+    th {
+      background-color: var(--primary-green);
+      color: var(--white);
+      position: sticky;
+      top: 0;
+      font-weight: 500;
+      z-index: 2;
+    }
+
+    tr:nth-child(even) {
+      background-color: var(--light-gray);
+    }
+
+    tr:hover {
+      background-color: var(--lighter-green);
+    }
+
+    img {
+      border-radius: 4px;
+      object-fit: cover;
+      height: 60px;
+      width: 60px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    a {
+      color: var(--primary-green);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    .error,
+    .success {
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .error {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef9a9a;
+    }
+
+    .success {
+      background-color: #e8f5e9;
+      color: var(--dark-green);
+      border: 1px solid var(--light-green);
+    }
+
+    @media (max-width: 1200px) {
+      .table-container {
+        overflow-x: auto;
+      }
+
+      table {
+        min-width: 1000px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .candidates-section {
+        padding: 1rem;
+      }
+
+      th,
+      td {
+        padding: 0.5rem;
+        font-size: 0.97rem;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .dashboard-content {
+        padding: 0.5rem;
+      }
+
+      .candidates-section {
+        padding: 0.5rem;
+      }
+
+      table {
+        font-size: 0.92rem;
+        min-width: 900px;
+      }
+    }
+
+    .table-container::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+      background: var(--light-gray);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+      background-color: var(--light-green);
+      border-radius: 8px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+      background-color: var(--primary-green);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1>UNIVOTE<h5>MANAGE CANDIDATES</h5>
+        </h1>
+        <div class="header-actions">
+          <button id="theme-toggle" class="btn">🌙 Dark Mode</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="dashboard-nav">
+      <div class="nav-container">
+        <button class="nav-toggle" onclick="toggleNav()">☰</button>
+        <ul class="nav-list" id="navMenu">
+          <li class="nav-item"><a href="{{ url_for('classroom_admin_dashboard') }}" class="active">Home</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_poll') }}">Manage Poll</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_candidates') }}">Manage Candidates</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_settings') }}">Manage Voting Settings</a></li>
+          <!--<li class="nav-item"><a href="{{ url_for('activity') }}">Activity</a></li>-->
+          <li class="nav-item"><a href="{{ url_for('logout') }}"
+              onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+          <li class="nav-item"><a href="#">Help</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main class="dashboard-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <div>
+          <strong>Time Remaining for Filing Period:</strong>
+          <span id="countdown" style="color:#2e7d32;font-weight:bold;"></span>
+        </div>
+        <div>
+          <strong>Filing Period:</strong>
+          <span>
+            Start: <span style="color:#2e7d32;">{{ filing_start_display }}</span>
+            &nbsp;|&nbsp;
+            End: <span style="color:#c62828;">{{ filing_end_display }}</span>
+          </span>
+        </div>
+      </div>
+      <div id="app">
+        <div class="candidates-section">
+          <h3>Existing Candidates</h3>
+          {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+          {% for category, message in messages %}
+          <div class="{{ category }}">{{ message }}</div>
+          {% endfor %}
+          {% endif %}
+          {% endwith %}
+          {% if not filing_open %}
+          <div class="error">Candidate management is only allowed during the filing period.</div>
+          {% endif %}
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Position</th>
+                  <th>Year</th>
+                  <th>Course</th>
+                  <th>Skills</th>
+                  <th>Platform</th>
+                  <th>Goals</th>
+                  <th>SG Years</th>
+                  <th>Prev Role</th>
+                  <th>Experience</th>
+                  <th>Achievements</th>
+                  <th>Slogan</th>
+                  <th>Note</th>
+                  <th>Campaign</th>
+                  <th>Image</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for candidate in candidates %}
+                <tr>
+                  <td>{{ candidate.name }}</td>
+                  <td>
+                    {% for pos in positions %}
+                    {% if pos.id == candidate.position_id %}
+                    {{ pos.name }}
+                    {% endif %}
+                    {% endfor %}
+                  </td>
+                  <td>{{ candidate.year_level or '' }}</td>
+                  <td>{{ candidate.course or '' }}</td>
+                  <td>{{ candidate.skills or '' }}</td>
+                  <td>{{ candidate.platform or '' }}</td>
+                  <td>{{ candidate.goals or '' }}</td>
+                  <td>{{ candidate.sg_years or '' }}</td>
+                  <td>{{ candidate.previous_role or '' }}</td>
+                  <td>{{ candidate.experience or '' }}</td>
+                  <td>{{ candidate.achievements or '' }}</td>
+                  <td>{{ candidate.slogan or '' }}</td>
+                  <td>{{ candidate.note or '' }}</td>
+                  <td>{{ candidate.campaign_message | e | replace('\n', '<br>') | safe }}</td>
+                  <td>
+                    {% if candidate.image %}
+                    <img src="{{ url_for('static', filename=candidate.image) }}" alt="Candidate Image">
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{{ url_for('edit_candidate', id=candidate.id) }}" {% if not filing_open
+                      %}style="pointer-events:none;opacity:0.5;" {% endif %}>Edit</a>
+                    <a href="{{ url_for('delete_candidate', id=candidate.id) }}"
+                      onclick="return confirm('Delete this candidate?')" {% if not filing_open
+                      %}style="pointer-events:none;opacity:0.5;" {% endif %}>Delete</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <br>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggle = document.getElementById('theme-toggle');
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+      const currentTheme = localStorage.getItem('theme') ||
+        (prefersDarkScheme.matches ? 'dark' : 'light');
+      if (currentTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀️ Light Mode';
+      }
+      themeToggle.addEventListener('click', () => {
+        let theme;
+        if (document.body.getAttribute('data-theme') === 'dark') {
+          document.body.removeAttribute('data-theme');
+          theme = 'light';
+          themeToggle.textContent = '🌙 Dark Mode';
+        } else {
+          document.body.setAttribute('data-theme', 'dark');
+          theme = 'dark';
+          themeToggle.textContent = '☀️ Light Mode';
+        }
+        localStorage.setItem('theme', theme);
+      });
+    });
+    function toggleNav() {
+      document.getElementById('navMenu').classList.toggle('show');
+    }
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const countdownElement = document.getElementById("countdown");
+      const filingEndIso = "{{ filing_end_iso }}";
+      const filingStartIso = "{{ filing_start_iso }}";
+      const filingOpen = {{'true' if filing_open else 'false' }};
+
+    // Helper to format countdown
+    function formatCountdown(distance) {
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    // If not open, check if we're before the start
+    if (!filingOpen && filingStartIso) {
+      const startDate = new Date(filingStartIso).getTime();
+      const now = new Date().getTime();
+      if (now < startDate) {
+        // Countdown to start of filing period
+        const timer = setInterval(function () {
+          const now2 = new Date().getTime();
+          const distance = startDate - now2;
+          if (distance <= 0) {
+            clearInterval(timer);
+            countdownElement.textContent = "Filing period started!";
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+            return;
+          }
+          countdownElement.textContent = "Opens in: " + formatCountdown(distance);
+        }, 1000);
+        return;
+      }
+    }
+
+    // If open, countdown to end
+    if (filingOpen && filingEndIso) {
+      const endDate = new Date(filingEndIso).getTime();
+      const timer = setInterval(function () {
+        const now = new Date().getTime();
+        const distance = endDate - now;
+        if (distance <= 0) {
+          clearInterval(timer);
+          countdownElement.textContent = "Filing closed.";
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          return;
+        }
+        countdownElement.textContent = formatCountdown(distance);
+      }, 1000);
+      return;
+    }
+
+    // If closed and not before start, just show closed
+    countdownElement.textContent = "Filing closed.";
+    });
+  </script>
+</body>
+
+</html>

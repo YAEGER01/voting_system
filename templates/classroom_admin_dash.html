@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNIVOTE: CLASSROOM ADMIN DASHBOARD</title>
+  <link rel="stylesheet" href="static/css/admin_dash.css">
+  <link rel="stylesheet" href="static/css/vote_tally_style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .dashboard-content {
+      flex: 1;
+      padding: .5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Dashboard Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .dashboard-card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px var(--shadow);
+      padding: 1rem;
+      border-left: 4px solid var(--primary);
+
+
+    }
+
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--primary-dark);
+    }
+
+    .card-icon {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    /* Position Participation */
+    .position-item {
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .position-name {
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+
+    .user-card {
+      width: 100%;
+      /*max-width: 400px;*/
+      max-height: 700px;
+      background: var(--card-bg);
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px var(--shadow);
+      overflow: auto;
+      scrollbar-width: none;
+      /* Firefox */
+      -ms-overflow-style: none;
+      /* IE/Edge */
+      position: relative;
+    }
+
+    /* WebKit browsers */
+    .user-card::-webkit-scrollbar {
+      display: none;
+    }
+    }
+
+    .card-header {
+      background: var(--card-bg);
+      color: green;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .user-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .user-item:last-child {
+      border-bottom: none;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      font-weight: bold;
+    }
+
+    .user-name {
+      font-weight: 500;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #4caf50;
+      margin-left: auto;
+    }
+
+    .candidates-container {
+      max-width: 900px;
+      margin: 32px auto;
+      background: var(--card-bg);
+      border-radius: 14px;
+      box-shadow: 0 4px 24px var(--shadow);
+      padding: 32px 28px 24px 28px;
+    }
+
+    .position-block {
+      margin-bottom: 32px;
+    }
+
+    .candidate-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+
+    .candidate-card {
+      background: #f9f9f9;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 18px;
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s, transform 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      border: 2px solid transparent;
+    }
+
+    .candidate-card:hover {
+      box-shadow: 0 6px 20px rgba(33, 83, 42, 0.13);
+      transform: translateY(-4px) scale(1.03);
+      border: 2px solid var(--primary);
+    }
+
+    .candidate-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    .candidate-name {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+    }
+
+    .candidate-campaign {
+      font-size: 0.98em;
+      color: #444;
+      text-align: center;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 24px;
+      padding: 12px 28px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: background 0.2s;
+      position: relative;
+      top: 0;
+      left: 0;
+    }
+
+    .back-btn:hover,
+    .back-btn:focus {
+      background: var(--primary-dark);
+      color: #fff;
+    }
+
+    .note {
+      max-width: 900px;
+      margin: 0 auto 18px auto;
+      padding: 10px 20px 10px 20px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: 8px;
+      font-size: 1.05em;
+    }
+
+    @media (max-width: 600px) {
+      .candidate-list {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .candidate-card {
+        width: 95%;
+      }
+
+      .dashboard-content {
+        padding: .5rem;
+      }
+
+      .dashboard-card {
+        width: 100% !important;
+        margin: 0 auto;
+      }
+
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1>UNIVOTE</h1>
+        <div class="header-actions">
+          <button id="theme-toggle" class="btn">🌙 Dark Mode</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="dashboard-nav">
+      <div class="nav-container">
+        <button class="nav-toggle" onclick="toggleNav()">☰</button>
+        <ul class="nav-list" id="navMenu">
+          <li class="nav-item"><a href="{{ url_for('classroom_admin_dashboard') }}" class="active">Home</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_poll') }}">Manage Poll</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_candidates') }}">Manage Candidates</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_settings') }}">Manage Voting Settings</a></li>
+          <!--<li class="nav-item"><a href="{{ url_for('activity') }}">Activity</a></li>-->
+          <li class="nav-item"><a href="{{ url_for('logout') }}"
+              onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+
+        </ul>
+      </div>
+    </nav>
+
+    <main class="dashboard-content">
+      <div class="dashboard-card">
+        <div class="user-card">
+          <div class="card-header">Active Accounts ({{ active_users|length }})</div>
+          <ul class="user-list">
+            {% for user in active_users %}
+            <li class="user-item">
+              <div class="user-avatar">
+                {{ user.first_name[0] }}{{ user.last_name[0] }}
+              </div>
+              <span class="user-name">
+                {{ user.first_name }} {{ user.last_name }}
+                ({{ user.role }}{% if user.school_id == admin.school_id %}, You{% endif %})
+              </span>
+              <div class="status-indicator"></div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+
+      <br>
+      <hr>
+      <br>
+
+
+      <div class="dashboard-card">
+
+        <h1>Welcome Classroom Administrator, {{ admin.first_name }} {{ admin.last_name }} .
+        </h1>
+        <p>
+          You can view the votes preview below, <br>
+          Just click the buttons below: <br>
+          START button to load the candidates and their votes.<br>
+          RESTART button will reload the candidates and their votes.<br>
+          END button will hide candidates table.
+        </p>
+        <br>
+        <hr>
+        <br>
+
+        <!-- START / RESTART / END buttons -->
+        <div class="control-buttons" style="padding:10px">
+
+          <button id="startBtn" class="btn">Start</button>
+          <button id="restartBtn" class="btn">Restart</button>
+          <button id="endBtn" class="btn btn-danger">End</button>
+          <br>
+          <hr><br>
+          <a style="text-decoration: none;" class="btn" href="/vote_results_report">View Official Results</a>
+        </div>
+
+
+        <!-- Candidate Table Container -->
+        <div id="candidatetablecontainer">
+          <div id="loadingCandidates" class="loading" style="display: none;">Loading candidates...</div>
+
+          <div id="candidateTables"></div>
+        </div>
+
+        <!-- Hidden Toast -->
+        <div id="toast"
+          style="display:none; position:fixed; top:20px; right:20px; background:#ff4444; color:white; padding:10px; border-radius:5px; z-index:9999;">
+          <span id="toastMessage"></span>
+        </div>
+
+        <!-- Modal -->
+        <div id="voteModal" class="modal">
+          <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalLoading" style="display:none;">Loading...</div>
+            <div id="voteBreakdownTable"></div>
+          </div>
+        </div>
+
+
+
+
+      </div>
+
+    </main>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggle = document.getElementById('theme-toggle');
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+      // Check for saved theme or use preferred color scheme
+      const currentTheme = localStorage.getItem('theme') ||
+        (prefersDarkScheme.matches ? 'dark' : 'light');
+
+      if (currentTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀️ Light Mode';
+      }
+
+      themeToggle.addEventListener('click', () => {
+        let theme;
+        if (document.body.getAttribute('data-theme') === 'dark') {
+          document.body.removeAttribute('data-theme');
+          theme = 'light';
+          themeToggle.textContent = '🌙 Dark Mode';
+        } else {
+          document.body.setAttribute('data-theme', 'dark');
+          theme = 'dark';
+          themeToggle.textContent = '☀️ Light Mode';
+        }
+        localStorage.setItem('theme', theme);
+      });
+    });
+  </script>
+  <script>
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toastMessage").innerText = message;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    document.getElementById("startBtn").addEventListener("click", async () => {
+      const loading = document.getElementById("loadingCandidates");
+      const container = document.getElementById("candidateTables");
+
+      container.innerHTML = '';
+      loading.style.display = 'block';
+
+      try {
+        const res = await fetch("/fetch_candidates");
+        const data = await res.json();
+        renderCandidateTables(data);
+      } catch (err) {
+        showToast("Failed to load candidates.");
+      } finally {
+        loading.style.display = 'none';
+      }
+    });
+
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      document.getElementById("startBtn").click();
+    });
+
+    document.getElementById("endBtn").addEventListener("click", () => {
+      document.getElementById("candidateTables").innerHTML = '';
+    });
+
+    function maskName(name) {
+      if (name.length <= 3) return name;
+      return name.substring(0, 3) + '*'.repeat(name.length - 3);
+    }
+
+    function renderCandidateTables(data) {
+      const container = document.getElementById("candidateTables");
+      container.innerHTML = '';
+      data.forEach(block => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+        <div class="candidate-block">
+          <h2 class="position-title">${block.position.name}</h2>
+          <table class="candidate-table">
+            <thead>
+              <tr><th>Name</th><th>Votes</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              ${block.candidates.map(c => `
+                <tr>
+                  <td>${maskName(c.name)}</td>
+
+                  <td>${c.vote_count}</td>
+                  <td><button class="btn" onclick="openVoteDetails('${c.id}', '${c.name}', '${block.position.name}')">Vote Details</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>`;
+
+        container.appendChild(div);
+      });
+    }
+    function openVoteDetails(candidate_id, candidate_name, position_name) {
+      const loading = document.getElementById("modalLoading");
+      const table = document.getElementById("voteBreakdownTable");
+      const modalTitle = document.getElementById("modalTitle");
+
+      table.innerHTML = '';
+      loading.style.display = 'block';
+      modalTitle.innerText = `Vote Breakdown for ${maskName(candidate_name)} (${position_name})`;
+
+      fetch(`/vote_breakdown/${candidate_id}`)
+        .then(res => res.json())
+        .then(data => {
+          const nested = data.nested;
+          const total = data.total_votes;
+
+          let html = '<table border="1">';
+          for (const year in nested) {
+            html += `<tr><td colspan="5"><strong>${year}</strong></td></tr>`;
+            const depts = nested[year];
+            for (const dept in depts) {
+              html += `<tr><td colspan="5" style="padding-left:20px;"><strong>${dept}</strong></td></tr>`;
+              const courses = depts[dept];
+              for (const course in courses) {
+                html += `<tr><td colspan="5" style="padding-left:40px;"><strong>${course}</strong></td></tr>`;
+                const tracks = courses[course];
+                for (const track in tracks) {
+                  html += `<tr>
+                    <td style="padding-left:60px;">${track}</td>
+                    <td>${tracks[track]}</td>
+                  </tr>`;
+                }
+              }
+            }
+          }
+          html += `<tr><td colspan="2"><strong>Total Votes: ${total}</strong></td></tr>`;
+          html += '</table>';
+          table.innerHTML = html;
+          showModal();
+        })
+        .catch(() => {
+          showToast("Failed to load vote details.");
+        })
+        .finally(() => {
+          loading.style.display = 'none';
+        });
+    }
+
+
+    function showModal() {
+      document.getElementById("voteModal").style.display = "flex";
+    }
+    function closeModal() {
+      document.getElementById("voteModal").style.display = "none";
+    }
+
+  </script>
+  <script>
+    function toggleNav() {
+      document.getElementById('navMenu').classList.toggle('show');
+    }
+  </script>
+</body>
+
+</html>

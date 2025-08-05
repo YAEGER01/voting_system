@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>System Admin Dashboard</title>
+  <title>System Admin Dashboard!</title>
   <link rel="stylesheet" href="styles.css">
   <style>
     :root {
@@ -317,110 +317,6 @@
         </div>
       </div>
 
-
-      <div class="card">
-        <div class="card-header">
-          <h3>Admin Registration</h3>
-        </div>
-        <div class="card-content">
-          <div id="AccCreate" class="tab-content">
-            <div class="form-container">
-              <h2>REGISTRATION OF DEPARTMENT ADMIN</h2>
-              {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-              {% for category, message in messages %}
-              <p class="{{ category }}">{{ message }}</p>
-              {% endfor %}
-              {% endif %}
-              {% endwith %}
-
-              <form method="post" action="{{ url_for('register_admin') }}">
-                <label for="school_id">School ID:</label>
-                <input type="text" id="school_id" name="school_id" required>
-
-                <label for="course">Department:</label>
-                <select id="course" name="course" required>
-                  <option value="" disabled selected>Select your Department</option>
-                  <option value="CCSICT">CCSICT</option>
-                  <option value="CCJE">CCJE</option>
-                  <option value="PS">PS</option>
-                  <option value="CED">CED</option>
-                  <option value="CBM">CBM</option>
-                  <option value="SAS">SAS</option>
-                  <option value="IAT">IAT</option>
-                </select>
-
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-
-                <label for="first_name">First Name:</label>
-                <input type="text" id="first_name" name="first_name" required>
-
-                <label for="last_name">Last Name:</label>
-                <input type="text" id="last_name" name="last_name" required>
-
-                <button type="submit">Register Admin</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h3>Manage Filing Period</h3>
-        </div>
-        <div class="card-content">
-          <div class="form-container">
-            <h2>Set Filing Period for All Departments</h2>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages %}
-            <p class="{{ category }}">{{ message }}</p>
-            {% endfor %}
-            {% endif %}
-            {% endwith %}
-
-            <!-- ...existing code... -->
-            {% if can_set %}
-            <!-- ...existing code... -->
-            <form id="filingPeriodForm" method="POST" action="{{ url_for('set_filing_period') }}">
-              <label for="filing_start_date">Filing Start Date:</label>
-              <input type="date" id="filing_start_date" name="filing_start_date" required>
-              <label for="filing_start_time">Filing Start Time:</label>
-              <input type="time" id="filing_start_time" name="filing_start_time" required>
-
-              <label for="filing_end_date">Filing End Date:</label>
-              <input type="date" id="filing_end_date" name="filing_end_date" required>
-              <label for="filing_end_time">Filing End Time:</label>
-              <input type="time" id="filing_end_time" name="filing_end_time" required>
-
-              <button type="submit" id="setFilingBtn">Set Filing Period</button>
-              <div style="margin-top:0.5rem; color:#e67e22; font-weight:bold;">
-                NOTE: This can only be set ONCE. You cannot change the filing period once it is set.
-              </div>
-            </form>
-            <script>
-              document.getElementById('filingPeriodForm').addEventListener('submit', function (e) {
-                document.getElementById('setFilingBtn').disabled = true;
-                document.getElementById('setFilingBtn').textContent = "Submitting...";
-              });
-            </script>
-            {% else %}
-            <div style="color:#c0392b;font-weight:bold; margin-bottom:1rem;">
-              You cannot change the filing period anymore.<br>
-            </div>
-            {% endif %}
-            <div style="margin-top:1rem;">
-              <strong>Current Filing Period:</strong><br>
-              Start: {{ filing_start_display }}<br>
-              End: {{ filing_end_display }}
-            </div>
-            <!-- ...existing code... -->
-          </div>
-        </div>
-      </div>
-
       <div class="card">
         <div class="card-header">
           <h3>User Activity Logs</h3>
@@ -508,7 +404,280 @@
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-content" style="display: flex; justify-content: center; align-items: center; height: 150px;">
+          <h1 style="font-size: 2rem; color: var(--card-text);">DEPARTMENT ADMIN SECTION FEATURES</h1>
+        </div>
+      </div>
 
+      <div class="card">
+        <div class="card-header">
+          <h3>Admin Registration</h3>
+        </div>
+        <div class="card-content">
+          <div id="AccCreate" class="tab-content">
+            <div class="form-container">
+              <h2>REGISTRATION OF DEPARTMENT ADMIN</h2>
+              {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+              {% for category, message in messages %}
+              <p class="{{ category }}">{{ message }}</p>
+              {% endfor %}
+              {% endif %}
+              {% endwith %}
+
+              <form method="post" action="{{ url_for('register_admin') }}">
+                <label for="school_id">School ID:</label>
+                <input type="text" id="school_id" name="school_id" required>
+
+                <label for="course">Department:</label>
+                <select id="course" name="course" required>
+                  <option value="" disabled selected>Select your Department</option>
+                  <option value="CCSICT">CCSICT</option>
+                  <option value="CCJE">CCJE</option>
+                  <option value="PS">PS</option>
+                  <option value="CED">CED</option>
+                  <option value="CBM">CBM</option>
+                  <option value="SAS">SAS</option>
+                  <option value="IAT">IAT</option>
+                </select>
+
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required>
+
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required>
+
+                <button type="submit">Register Admin</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Manage Filing Period</h3>
+        </div>
+        <div class="card-content">
+          <div class="form-container">
+            <h2>Set Filing Period for All Departments</h2>         
+            {% if can_set %}   
+            <form id="filingPeriodForm" method="POST" action="{{ url_for('set_filing_period') }}">
+              <label for="filing_start_date">Filing Start Date:</label>
+              <input type="date" id="filing_start_date" name="filing_start_date" required>
+              <label for="filing_start_time">Filing Start Time:</label>
+              <input type="time" id="filing_start_time" name="filing_start_time" required>
+
+              <label for="filing_end_date">Filing End Date:</label>
+              <input type="date" id="filing_end_date" name="filing_end_date" required>
+              <label for="filing_end_time">Filing End Time:</label>
+              <input type="time" id="filing_end_time" name="filing_end_time" required>
+
+              <button type="submit" id="setFilingBtn">Set Filing Period</button>
+              <div style="margin-top:0.5rem; color:#e67e22; font-weight:bold;">
+                NOTE: This can only be set ONCE. You cannot change the filing period once it is set.
+              </div>
+            </form>
+            <script>
+              document.getElementById('filingPeriodForm').addEventListener('submit', function (e) {
+                document.getElementById('setFilingBtn').disabled = true;
+                document.getElementById('setFilingBtn').textContent = "Submitting...";
+              });
+            </script>
+            {% else %}
+            <div style="color:#c0392b;font-weight:bold; margin-bottom:1rem;">
+              You cannot change the filing period anymore.<br>
+            </div>
+            {% endif %}
+            <div style="margin-top:1rem;">
+              <strong>Current Filing Period:</strong><br>
+              Start: {{ filing_start_display }}<br>
+              End: {{ filing_end_display }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-content" style="display: flex; justify-content: center; align-items: center; height: 150px;">
+          <h1 style="font-size: 2rem; color: var(--card-text);">SSC ADMIN SECTION FEATURES</h1>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>SSC Admin Registration</h3>
+        </div>
+        <div class="card-content">
+          <div class="form-container">
+            <h2>REGISTRATION OF SSC ADMIN</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-container">
+              {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            <form method="post" action="{{ url_for('register_ssc_admin') }}">
+              <label for="ssc_school_id">School ID:</label>
+              <input type="text" id="ssc_school_id" name="school_id" required>
+
+              <label for="ssc_password">Password:</label>
+              <input type="password" id="ssc_password" name="password" required>
+
+              <label for="ssc_first_name">First Name:</label>
+              <input type="text" id="ssc_first_name" name="first_name" required>
+
+              <label for="ssc_last_name">Last Name:</label>
+              <input type="text" id="ssc_last_name" name="last_name" required>
+
+              <button type="submit">Register SSC Admin</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="card">
+        <div class="card-header">
+          <h3>SSC Manage Filing Period</h3>
+        </div>
+        <div class="card-content">
+          <div class="form-container">
+            <h2>Set SSC Filing Period</h2>
+            <form method="POST" action="{{ url_for('set_ssc_filing_period') }}">
+              <label for="ssc_filing_start_date">Filing Start Date:</label>
+              <input type="date" id="ssc_filing_start_date" name="filing_start_date" required>
+
+              <label for="ssc_filing_start_time">Filing Start Time:</label>
+              <input type="time" id="ssc_filing_start_time" name="filing_start_time" required>
+
+              <label for="ssc_filing_end_date">Filing End Date:</label>
+              <input type="date" id="ssc_filing_end_date" name="filing_end_date" required>
+
+              <label for="ssc_filing_end_time">Filing End Time:</label>
+              <input type="time" id="ssc_filing_end_time" name="filing_end_time" required>
+
+              <button type="submit">Set SSC Filing Period</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-content" style="display: flex; justify-content: center; align-items: center; height: 150px;">
+          <h1 style="font-size: 2rem; color: var(--card-text);">CLASSROOM ADMIN SECTION FEATURES</h1>
+        </div>
+      </div>
+
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Classroom Admin Registration</h3>
+        </div>
+        <div class="card-content">
+          <div class="form-container">
+            <h2>REGISTRATION OF CLASSROOM ADMIN</h2>
+            <form method="post" action="{{ url_for('register_classroom_admin') }}">
+              <label for="school_id">School ID:</label>
+              <input type="text" id="school_id" name="school_id" required>
+
+              <label for="password">Password:</label>
+              <input type="password" id="password" name="password" required>
+
+              <label for="first-name">First Name</label>
+              <input type="text" id="first-name" name="first_name" required />
+
+              <label for="last-name">Last Name</label>
+              <input type="text" id="last-name" name="last_name" required />
+
+              <label for="class_department">Department</label>
+              <select id="class_department" name="department" required>
+                <option value="" disabled selected>Select your Department</option>
+                <option value="CCSICT">COLLEGE OF COMPUTING, STUDIES, INFORMATION AND COMMUNICATION TECHNOLOGY</option>
+                <option value="CBM">COLLEGE OF BUSINESS AND MANAGEMENT</option>
+                <option value="CCJE">COLLEGE OF CRIMINAL JUSTICE EDUCATION</option>
+                <option value="CED">COLLEGE OF EDUCATION</option>
+                <option value="PS">POLYTECHNIC SCHOOL</option>
+                <option value="SAS">SCHOOL OF ARTS AND SCIENCES</option>
+                <option value="IAT">ISU CAUAYAN-AURORA EXTENSION INSTITUTE OF AGRICULTURAL TECHNOLOGY</option>
+              </select>
+
+              <label for="class_course">Course</label>
+              <select id="class_course" name="course" required disabled>
+                <option value="" disabled selected>Select your Course</option>
+              </select>
+
+              <label for="class_track">Track</label>
+              <select id="class_track" name="track" required disabled>
+                <option value="" disabled selected>Select your Track</option>
+              </select>
+
+              <label for="year">Year Level</label>
+              <select id="year" name="year_level" required>
+                <option value="" disabled selected>Select Year Level</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+              </select>
+
+              <label for="section">Section</label>
+              <select id="section" name="section" required>
+                <option value="" disabled selected>Select Section</option>
+                <option value="1A">1A</option>
+                <option value="1B">1B</option>
+                <option value="1C">1C</option>
+                <option value="2A">2A</option>
+                <option value="2B">2B</option>
+                <option value="2C">2C</option>
+                <option value="3A">3A</option>
+                <option value="3B">3B</option>
+                <option value="3C">3C</option>
+                <option value="4A">4A</option>
+                <option value="4B">4B</option>
+                <option value="4C">4C</option>
+              </select>
+
+              <button type="submit">Register Classroom Admin</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Classroom Manage Filing Period</h3>
+        </div>
+        <div class="card-content">
+          <div class="form-container">
+            <h2>Set Classroom Filing Period</h2>
+            <form method="POST" action="{{ url_for('set_classroom_filing_period') }}">
+              <label for="class_filing_start_date">Filing Start Date:</label>
+              <input type="date" id="class_filing_start_date" name="filing_start_date" required>
+
+              <label for="class_filing_start_time">Filing Start Time:</label>
+              <input type="time" id="class_filing_start_time" name="filing_start_time" required>
+
+              <label for="class_filing_end_date">Filing End Date:</label>
+              <input type="date" id="class_filing_end_date" name="filing_end_date" required>
+
+              <label for="class_filing_end_time">Filing End Time:</label>
+              <input type="time" id="class_filing_end_time" name="filing_end_time" required>
+
+              <button type="submit">Set Classroom Filing Period</button>
+            </form>
+          </div>
+        </div>
+      </div>
 
 
 
@@ -761,6 +930,125 @@
     function toggleNav() {
       document.getElementById('navMenu').classList.toggle('show');
     }
+  </script>
+  <script>
+    // Department → Course → Track logic
+    const courseData = {
+      "CCSICT": {
+        "BSIT": [
+          "Networking and Security",
+          "Business Analytics",
+          "Service Management for Business Process",
+          "Web and Mobile Application Development"
+        ],
+        "BSCS": [
+          "Data Mining",
+          "Business Analytics"
+        ],
+        "BSEMC": [
+          "Game Development",
+          "Digital Animation"
+        ]
+      },
+      "CBM": {
+        "BSBA": [],
+        "BSM": [],
+        "BSHM": [],
+        "BSTM": [],
+        "BSAIS": [],
+        "BSMA": [],
+        "BSEntrep": [],
+        "BSLM": []
+      },
+      "CCJE": {
+        "BSCRIM": []
+      },
+      "CED": {
+        "BSED": [
+          "English",
+          "Filipino",
+          "Math",
+          "Science"
+        ],
+        "BEED": [],
+        "BPEd": []
+      },
+      "PS": {
+        "BSIndTech": [
+          "Automotive Technology",
+          "Electronics Technology"
+        ]
+      },
+      "SAS": {
+        "BAELS": [],
+        "BAPS": []
+      },
+      "IAT": {
+        "DAS": []
+      }
+    };
+
+    const courseFullNames = {
+      "BSIT": "Bachelor of Science in Information Technology",
+      "BSIndTech": "Bachelor of Science in Industrial Technology",
+      "BSCS": "Bachelor of Science in Computer Science",
+      "BSEMC": "Bachelor of Science in Entertainment and Multimedia Computing",
+      "BSBA": "Bachelor of Science in Business Administration",
+      "BSM": "Bachelor of Science in Management",
+      "BSHM": "Bachelor of Science in Hospitality Management",
+      "BSTM": "Bachelor of Science in Tourism Management",
+      "BSAIS": "Bachelor of Science in Accounting Information System",
+      "BSMA": "Bachelor of Science in Management Accounting",
+      "BSEntrep": "Bachelor of Science in Entrepreneurship",
+      "BSLM": "Bachelor of Science in Legal Management",
+      "BSCRIM": "Bachelor of Science in Criminology",
+      "BSED": "Bachelor of Secondary Education",
+      "BEED": "Bachelor of Elementary Education",
+      "BPEd": "Bachelor of Physical Education",
+      "BAELS": "Bachelor of Arts in English Language Studies",
+      "BAPS": "Bachelor of Arts in Political Science",
+      "DAS": "Diploma in Agricultural Sciences"
+    };
+
+    // Use unique IDs for classroom admin form
+    const classDepartmentSelect = document.getElementById('class_department');
+    const classCourseSelect = document.getElementById('class_course');
+    const classTrackSelect = document.getElementById('class_track');
+
+    classDepartmentSelect.addEventListener('change', function () {
+      const dept = this.value;
+      classCourseSelect.innerHTML = '<option value="" disabled selected>Select your Course</option>';
+      classTrackSelect.innerHTML = '<option value="" disabled selected>Select your Track</option>';
+      classTrackSelect.disabled = true;
+      if (courseData[dept]) {
+        Object.keys(courseData[dept]).forEach(function (shortName) {
+          const opt = document.createElement('option');
+          opt.value = shortName;
+          opt.textContent = shortName + (courseFullNames[shortName] ? ` (${courseFullNames[shortName]})` : '');
+          classCourseSelect.appendChild(opt);
+        });
+        classCourseSelect.disabled = false;
+      } else {
+        classCourseSelect.disabled = true;
+      }
+    });
+
+    classCourseSelect.addEventListener('change', function () {
+      const dept = classDepartmentSelect.value;
+      const course = this.value;
+      classTrackSelect.innerHTML = '<option value="" disabled selected>Select your Track</option>';
+      if (courseData[dept] && courseData[dept][course] && courseData[dept][course].length > 0) {
+        courseData[dept][course].forEach(function (track) {
+          const opt = document.createElement('option');
+          opt.value = track;
+          opt.textContent = track;
+          classTrackSelect.appendChild(opt);
+        });
+        classTrackSelect.disabled = false;
+      } else {
+        classTrackSelect.disabled = true;
+      }
+    });
   </script>
   <script>
     document.getElementById('filingPeriodForm').addEventListener('submit', function (e) {

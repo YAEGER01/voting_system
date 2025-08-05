@@ -131,14 +131,17 @@
 </head>
 
 <body>
-    <a href="{{ url_for('dashboard') }}" class="back-btn">&larr; Back to Dashboard</a>
+    <a href="{{ url_for('classroom_dashboard') }}" class="back-btn">&larr; Back to Dashboard</a>
     <div class="note">
         <strong>Note:</strong> You can click on any candidate to view their information and campaign details.
     </div>
     <div class="candidates-container">
-        <h2>Candidates for {{ department }}</h2>
+        <h2>
+            Candidates for
+            {{ classroom_course }} {{ classroom_year_level }} {{ classroom_section }} {{ classroom_track }}
+        </h2>
         {% if positions_with_candidates|length == 0 %}
-        <p>No positions found for your department.</p>
+        <p>No positions found for your classroom.</p>
         {% else %}
         {% for pos_block in positions_with_candidates %}
         <div class="position-block">

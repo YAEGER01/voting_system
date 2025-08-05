@@ -19,14 +19,18 @@ import json
 import time
 import threading
 from flask import jsonify
+from pytz import timezone as pytz_timezone
 
-PH_TZ = timezone(timedelta(hours=8))
+PH_TZ = pytz_timezone('Asia/Manila')
+
+#PH_TZ = timezone(timedelta(hours=8)) <-- posible gamitin ulit
 
 
 def format_ph_time(dt_str):
     if not dt_str:
         return 'Not set'
     try:
+        # Always parse as UTC, then convert
         dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
         dt = dt.astimezone(PH_TZ)
         return dt.strftime('%B %d, %Y %I:%M%p')
@@ -883,20 +887,13 @@ def login():
 
                 # Log the login action
                 supabase.table('logs').insert({
-                    'user_id':
-                    user['id'],
-                    'action':
-                    'LOGIN_SUCCESS',
-                    'table_name':
-                    'user',
-                    'query_type':
-                    'SYSTEM',
-                    'target':
-                    f'Login from IP {request.remote_addr} with role {user["role"]}',
-                    'new_data':
-                    'active=ACTIVE',
-                    'timestamp':
-                    datetime.now().isoformat()
+                    'user_id': user['id'],
+                    'action': 'LOGIN_SUCCESS',
+                    'table_name': 'user',
+                    'query_type': 'SYSTEM',
+                    'target': f'Login from IP {request.remote_addr} with role {user["role"]}',
+                    'new_data': 'active=ACTIVE',
+                    'timestamp': datetime.now().isoformat()
                 }).execute()
 
                 # Redirect based on role
@@ -910,15 +907,117 @@ def login():
                         'redirecting.html',
                         target=url_for('system_admin'),
                         message="REDIRECTING to SYSTEM ADMIN DASHBOARD...")
+                elif user['role'] == 'ssc_admin':
+                    return render_template(
+                        'redirecting.html',
+                        target=url_for('ssc_dashboard'),
+                        message="REDIRECTING to SSC ADMIN DASHBOARD...")
+                elif user['role'] == 'classroom_admin':
+                    return render_template(
+                        'redirecting.html',
+                        target=url_for('classroom_admin_dashboard'),
+                        message="REDIRECTING to CLASSROOM ADMIN DASHBOARD...")
                 else:
                     return render_template(
                         'redirecting.html',
-                        target=url_for('dashboard'),
+                        target=url_for('main_dashboard'),
                         message="REDIRECTING to DASHBOARD...")
             else:
                 flash("Invalid School ID or Password.", 'danger')
-
+    print("Session role:", session.get('role'))
     return render_template('login.html', recaptcha_site_key=RECAPTCHA_SITE_KEY)
+
+@app.route('/main_dashboard', methods=['GET', 'POST'])
+def main_dashboard():
+    if 'school_id' not in session:
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    user_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    user = user_resp.data
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    dept_logo = DEPARTMENT_LOGOS.get(user.get('department', '').upper())
+    now = datetime.now(timezone.utc)
+
+    department = user.get('department', user.get('course', ''))
+    setting_resp = supabase.table('settings').select('*').eq(
+        'department', department).order('id', desc=True).limit(1).execute()
+
+    voting_start = None
+    voting_end = None
+    voting_open = False
+    voting_closed = False
+    voting_start_display = "Not set"
+    voting_end_display = "Not set"
+
+    if setting_resp.data:
+        setting = setting_resp.data[0]
+        try:
+            start_str = setting.get('start_time')
+            end_str = setting.get('end_time')
+
+            if start_str and end_str:
+                voting_start = datetime.fromisoformat(start_str)
+                voting_end = datetime.fromisoformat(end_str)
+
+                if voting_start.tzinfo is None:
+                    voting_start = voting_start.replace(tzinfo=timezone.utc)
+                if voting_end.tzinfo is None:
+                    voting_end = voting_end.replace(tzinfo=timezone.utc)
+
+                voting_start_display = voting_start.astimezone(PH_TZ).strftime(
+                    "%B %d, %Y %I:%M %p PH Time")
+                voting_end_display = voting_end.astimezone(PH_TZ).strftime(
+                    "%B %d, %Y %I:%M %p PH Time")
+
+                voting_open = voting_start <= now <= voting_end
+                voting_closed = now > voting_end
+        except Exception:
+            pass
+
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', department).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    candidates_per_position = {}
+    votable_positions = []
+    for pos in positions:
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates = cands_resp.data if cands_resp.data else []
+        candidates_per_position[pos['id']] = candidates
+        if candidates:
+            votable_positions.append(pos)
+
+    voted_positions_resp = supabase.table('votes').select('position_id').eq(
+        'student_id', school_id).execute()
+    voted_positions = [v['position_id'] for v in voted_positions_resp.data
+                       ] if voted_positions_resp.data else []
+    all_voted = bool(votable_positions) and all(pos['id'] in voted_positions
+                                                for pos in votable_positions)
+
+    voting_not_started = voting_start and now < voting_start
+
+    return render_template('main_dashboard.html',
+                           user=user,
+                           dept_logo=dept_logo,
+                           voting_deadline=voting_end,
+                           voting_start=voting_start,
+                           voting_end=voting_end,
+                           voting_start_display=voting_start_display,
+                           voting_end_display=voting_end_display,
+                           now=now,
+                           voting_closed=voting_closed,
+                           positions=positions,
+                           voted_positions=voted_positions,
+                           candidates_per_position=candidates_per_position,
+                           all_voted=all_voted,
+                           voting_not_started=voting_not_started,
+                           votable_positions=votable_positions)
 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
@@ -1210,7 +1309,7 @@ def register_admin():
 
         if not all([school_id, password, first_name, last_name, course]):
             flash("Please fill in all required fields.", 'danger')
-            return redirect(url_for('register_admin'))
+            return redirect(url_for('system_admin'))  # FIXED
 
         email = f"{school_id}@admin.local"
 
@@ -1218,12 +1317,12 @@ def register_admin():
             f'school_id.eq.{school_id},email.eq.{email}').execute()
         if resp.data:
             flash("School ID or generated email already exists.", 'danger')
-            return redirect(url_for('register_admin'))
+            return redirect(url_for('system_admin'))  # FIXED
 
         password_hash = generate_password_hash(password)
 
-        short_uuid = str(uuid.uuid4())[:6]  # Shorter to ensure under 20 chars
-        fake_phone = f"adm-{short_uuid}"  # Shortened prefix
+        short_uuid = str(uuid.uuid4())[:6]
+        fake_phone = f"adm-{short_uuid}"
 
         supabase.table('user').insert({
             'school_id': school_id,
@@ -1234,7 +1333,7 @@ def register_admin():
             'first_name': first_name,
             'last_name': last_name,
             'role': 'admin',
-            'phone': fake_phone,  # ✅ Now guaranteed < 20 characters
+            'phone': fake_phone,
             'id_photo_front': 'N/A',
             'id_photo_back': 'N/A'
         }).execute()
@@ -1250,9 +1349,9 @@ def register_admin():
         }).execute()
 
         flash("Admin registered successfully!", "success")
-        return redirect(url_for('register_admin'))
+        return redirect(url_for('system_admin'))  # FIXED
 
-    return render_template('system_admin.html')
+    return redirect(url_for('system_admin'))  # FIXED
 
 
 @app.route('/logout')
@@ -1306,7 +1405,7 @@ def system_admin():
     filing_end = settings_row['filing_end'] if settings_row else ''
 
     def safe_format(dt_str):
-        if not dt_str:
+        if not dt_str or dt_str == 'None':
             return 'Not set'
         try:
             dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
@@ -1319,8 +1418,11 @@ def system_admin():
     filing_end_display = safe_format(filing_end)
 
     # Only allow setting if no period set (not if expired)
-    can_set = not filing_start or not filing_end
-
+    can_set = not filing_start or not filing_end or filing_start == 'None' or filing_end == 'None'
+    print("settings_resp.data:", settings_resp.data)
+    print("filing_start:", filing_start)
+    print("filing_end:", filing_end)
+    print("can_set:", can_set)
     return render_template("system_admin.html",
                            filing_start=filing_start,
                            filing_end=filing_end,
@@ -1528,7 +1630,8 @@ def dashboard():
         'student_id', school_id).execute()
     voted_positions = [v['position_id'] for v in voted_positions_resp.data
                        ] if voted_positions_resp.data else []
-    all_voted = bool(votable_positions) and all(pos['id'] in voted_positions for pos in votable_positions)
+    all_voted = bool(votable_positions) and all(pos['id'] in voted_positions
+                                                for pos in votable_positions)
 
     voting_not_started = voting_start and now < voting_start
 
@@ -1549,6 +1652,289 @@ def dashboard():
         all_voted=all_voted,
         voting_not_started=voting_not_started,
         votable_positions=votable_positions  # <-- add this line
+    )
+
+@app.route('/ssc_dashboard', methods=['GET', 'POST'])
+def ssc_dashboard():
+    if 'school_id' not in session:
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    user_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    user = user_resp.data
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    dept_logo = DEPARTMENT_LOGOS.get('SSC')
+    now = datetime.now(timezone.utc)
+
+    department = 'SSC'
+    setting_resp = supabase.table('settings').select('*').eq(
+        'department', department).order('id', desc=True).limit(1).execute()
+
+    voting_start = None
+    voting_end = None
+    voting_open = False
+    voting_closed = False
+    voting_start_display = "Not set"
+    voting_end_display = "Not set"
+
+    if setting_resp.data:
+        setting = setting_resp.data[0]
+        try:
+            start_str = setting.get('start_time')
+            end_str = setting.get('end_time')
+
+            if start_str and end_str:
+                voting_start = datetime.fromisoformat(start_str)
+                voting_end = datetime.fromisoformat(end_str)
+
+                if voting_start.tzinfo is None:
+                    voting_start = voting_start.replace(tzinfo=timezone.utc)
+                if voting_end.tzinfo is None:
+                    voting_end = voting_end.replace(tzinfo=timezone.utc)
+
+                voting_start_display = voting_start.astimezone(PH_TZ).strftime(
+                    "%B %d, %Y %I:%M %p PH Time")
+                voting_end_display = voting_end.astimezone(PH_TZ).strftime(
+                    "%B %d, %Y %I:%M %p PH Time")
+
+                voting_open = voting_start <= now <= voting_end
+                voting_closed = now > voting_end
+        except Exception:
+            pass
+
+    if request.method == 'POST':
+        if not voting_open:
+            flash("Voting is not open at this time.", "danger")
+            return redirect(url_for('ssc_dashboard'))
+
+        for position_id, candidate_id in request.form.items():
+            if position_id.isdigit() and candidate_id.isdigit():
+                position_id_int = int(position_id)
+                candidate_id_int = int(candidate_id)
+
+                vote_resp = supabase.table('votes').select('*').eq(
+                    'student_id', school_id).eq('position_id',
+                                                position_id_int).execute()
+                if not vote_resp.data:
+                    encrypted_candidate_id = encrypt_vote(
+                        str(candidate_id_int))
+
+                    supabase.table('votes').insert({
+                        'student_id': school_id,
+                        'position_id': position_id_int,
+                        'candidate_id': encrypted_candidate_id,
+                        'candidate_ref': candidate_id_int,
+                        'department': department
+                    }).execute()
+
+                    supabase.table('logs').insert({
+                        'user_id': user['id'],
+                        'action': 'CAST_VOTE',
+                        'table_name': 'votes',
+                        'query_type': 'INSERT',
+                        'target': f"Position ID: {position_id_int}",
+                        'new_data': f"Encrypted Candidate ID: {encrypted_candidate_id}",
+                        'timestamp': datetime.now().isoformat()
+                    }).execute()
+
+                    hashed_student_id = hashlib.sha256(
+                        school_id.encode()).hexdigest()
+                    vote_blockchain.add_block({
+                        "student_id": hashed_student_id,
+                        "position_id": position_id_int,
+                        "candidate_id": encrypted_candidate_id,
+                        "timestamp": str(time.time())
+                    })
+
+        flash('Your vote has been submitted successfully!', 'success')
+        return redirect(url_for('ssc_dashboard'))
+
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', department).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    candidates_per_position = {}
+    votable_positions = []
+    for pos in positions:
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates = cands_resp.data if cands_resp.data else []
+        candidates_per_position[pos['id']] = candidates
+        if candidates:
+            votable_positions.append(pos)
+
+    voted_positions_resp = supabase.table('votes').select('position_id').eq(
+        'student_id', school_id).execute()
+    voted_positions = [v['position_id'] for v in voted_positions_resp.data
+                       ] if voted_positions_resp.data else []
+    all_voted = bool(votable_positions) and all(pos['id'] in voted_positions
+                                                for pos in votable_positions)
+
+    voting_not_started = voting_start and now < voting_start
+
+    return render_template(
+        'ssc_dashboard.html',
+        user=user,
+        dept_logo=dept_logo,
+        voting_deadline=voting_end,
+        voting_start=voting_start,
+        voting_end=voting_end,
+        voting_start_display=voting_start_display,
+        voting_end_display=voting_end_display,
+        now=now,
+        voting_closed=voting_closed,
+        positions=positions,
+        voted_positions=voted_positions,
+        candidates_per_position=candidates_per_position,
+        all_voted=all_voted,
+        voting_not_started=voting_not_started,
+        votable_positions=votable_positions
+    )
+
+
+@app.route('/classroom_dashboard', methods=['GET', 'POST'])
+def classroom_dashboard():
+    if 'school_id' not in session:
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    user_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    user = user_resp.data
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    dept_logo = DEPARTMENT_LOGOS.get(user.get('department', '').upper())
+    now = datetime.now(timezone.utc)
+
+    department = user.get('department', user.get('course', ''))
+    setting_resp = supabase.table('settings').select('*').eq(
+        'department', department).order('id', desc=True).limit(1).execute()
+
+    voting_start = None
+    voting_end = None
+    voting_open = False
+    voting_closed = False
+    voting_start_display = "Not set"
+    voting_end_display = "Not set"
+
+    if setting_resp.data:
+        setting = setting_resp.data[0]
+        try:
+            start_str = setting.get('start_time')
+            end_str = setting.get('end_time')
+
+            if start_str and end_str:
+                voting_start = datetime.fromisoformat(start_str)
+                voting_end = datetime.fromisoformat(end_str)
+
+                if voting_start.tzinfo is None:
+                    voting_start = voting_start.replace(tzinfo=timezone.utc)
+                if voting_end.tzinfo is None:
+                    voting_end = voting_end.replace(tzinfo=timezone.utc)
+
+                voting_start_display = voting_start.astimezone(PH_TZ).strftime(
+                    "%B %d, %Y %I:%M %p PH Time")
+                voting_end_display = voting_end.astimezone(PH_TZ).strftime(
+                    "%B %d, %Y %I:%M %p PH Time")
+
+                voting_open = voting_start <= now <= voting_end
+                voting_closed = now > voting_end
+        except Exception:
+            pass
+
+    if request.method == 'POST':
+        if not voting_open:
+            flash("Voting is not open at this time.", "danger")
+            return redirect(url_for('classroom_dashboard'))
+
+        for position_id, candidate_id in request.form.items():
+            if position_id.isdigit() and candidate_id.isdigit():
+                position_id_int = int(position_id)
+                candidate_id_int = int(candidate_id)
+
+                vote_resp = supabase.table('votes').select('*').eq(
+                    'student_id', school_id).eq('position_id',
+                                                position_id_int).execute()
+                if not vote_resp.data:
+                    encrypted_candidate_id = encrypt_vote(
+                        str(candidate_id_int))
+
+                    supabase.table('votes').insert({
+                        'student_id': school_id,
+                        'position_id': position_id_int,
+                        'candidate_id': encrypted_candidate_id,
+                        'candidate_ref': candidate_id_int,
+                        'department': department
+                    }).execute()
+
+                    supabase.table('logs').insert({
+                        'user_id': user['id'],
+                        'action': 'CAST_VOTE',
+                        'table_name': 'votes',
+                        'query_type': 'INSERT',
+                        'target': f"Position ID: {position_id_int}",
+                        'new_data': f"Encrypted Candidate ID: {encrypted_candidate_id}",
+                        'timestamp': datetime.now().isoformat()
+                    }).execute()
+
+                    hashed_student_id = hashlib.sha256(
+                        school_id.encode()).hexdigest()
+                    vote_blockchain.add_block({
+                        "student_id": hashed_student_id,
+                        "position_id": position_id_int,
+                        "candidate_id": encrypted_candidate_id,
+                        "timestamp": str(time.time())
+                    })
+
+        flash('Your vote has been submitted successfully!', 'success')
+        return redirect(url_for('classroom_dashboard'))
+
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', department).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    candidates_per_position = {}
+    votable_positions = []
+    for pos in positions:
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates = cands_resp.data if cands_resp.data else []
+        candidates_per_position[pos['id']] = candidates
+        if candidates:
+            votable_positions.append(pos)
+
+    voted_positions_resp = supabase.table('votes').select('position_id').eq(
+        'student_id', school_id).execute()
+    voted_positions = [v['position_id'] for v in voted_positions_resp.data
+                       ] if voted_positions_resp.data else []
+    all_voted = bool(votable_positions) and all(pos['id'] in voted_positions
+                                                for pos in votable_positions)
+
+    voting_not_started = voting_start and now < voting_start
+
+    return render_template(
+        'classroom_dashboard.html',
+        user=user,
+        dept_logo=dept_logo,
+        voting_deadline=voting_end,
+        voting_start=voting_start,
+        voting_end=voting_end,
+        voting_start_display=voting_start_display,
+        voting_end_display=voting_end_display,
+        now=now,
+        voting_closed=voting_closed,
+        positions=positions,
+        voted_positions=voted_positions,
+        candidates_per_position=candidates_per_position,
+        all_voted=all_voted,
+        voting_not_started=voting_not_started,
+        votable_positions=votable_positions
     )
 
 
@@ -2372,6 +2758,7 @@ def vote_receipt():
 
 import re
 
+
 def normalize_name(name):
     name = name.strip().lower()
     name = re.sub(r'[^\w\s]', '', name)
@@ -2379,8 +2766,10 @@ def normalize_name(name):
     name = re.sub(r'\s+', ' ', name)
     return name
 
+
 def words_set(name):
     return set(normalize_name(name).split())
+
 
 @app.route('/manage_poll', methods=['GET', 'POST'])
 def manage_poll():
@@ -2388,9 +2777,11 @@ def manage_poll():
         flash("You must be an admin to access this page.", "danger")
         return redirect(url_for('login'))
 
-    admin_resp = supabase.table('user').select('*').eq('school_id', session['school_id']).single().execute()
+    admin_resp = supabase.table('user').select('*').eq(
+        'school_id', session['school_id']).single().execute()
     admin = admin_resp.data
-    admin_department = admin.get('department', admin.get('course', '')) if admin else ''
+    admin_department = admin.get('department', admin.get('course',
+                                                         '')) if admin else ''
     message = ""
 
     filing_start = filing_end = None
@@ -2398,15 +2789,19 @@ def manage_poll():
     filing_open = False
 
     try:
-        settings_resp = supabase.table('settings').select('filing_start', 'filing_end').order('id', desc=True).limit(1).execute()
+        settings_resp = supabase.table('settings').select(
+            'filing_start', 'filing_end').order('id',
+                                                desc=True).limit(1).execute()
         if settings_resp.data:
             filing_start = settings_resp.data[0]['filing_start']
             filing_end = settings_resp.data[0]['filing_end']
 
         now_ph = datetime.now(PH_TZ)
         if filing_start and filing_end:
-            filing_start_dt = datetime.fromisoformat(filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
-            filing_end_dt = datetime.fromisoformat(filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_start_dt = datetime.fromisoformat(
+                filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_end_dt = datetime.fromisoformat(
+                filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
             filing_open = filing_start_dt <= now_ph < filing_end_dt
             filing_start_iso = filing_start_dt.isoformat()
             filing_end_iso = filing_end_dt.isoformat()
@@ -2419,27 +2814,36 @@ def manage_poll():
         else:
             position_name = request.form.get('position_name', '').strip()
             new_words = words_set(position_name)
-            all_positions_resp = supabase.table('positions').select('name').eq('department', admin_department).execute()
+            all_positions_resp = supabase.table('positions').select('name').eq(
+                'department', admin_department).execute()
             all_positions = all_positions_resp.data if all_positions_resp.data else []
             duplicate_found = any(
-                any(ew in nw or nw in ew for nw in new_words for ew in words_set(pos['name']))
-                for pos in all_positions
-            )
+                any(ew in nw or nw in ew for nw in new_words
+                    for ew in words_set(pos['name'])) for pos in all_positions)
             if duplicate_found:
                 message = f"The position '{position_name}' (or a similar one) already exists in this department."
             elif position_name:
                 supabase.table('positions').insert({
-                    'name': position_name,
-                    'department': admin_department
+                    'name':
+                    position_name,
+                    'department':
+                    admin_department
                 }).execute()
                 supabase.table('logs').insert({
-                    'user_id': admin['id'],
-                    'action': 'ADD_POSITION',
-                    'table_name': 'positions',
-                    'query_type': 'INSERT',
-                    'target': position_name,
-                    'new_data': f"Department: {admin_department}",
-                    'timestamp': datetime.now().isoformat()
+                    'user_id':
+                    admin['id'],
+                    'action':
+                    'ADD_POSITION',
+                    'table_name':
+                    'positions',
+                    'query_type':
+                    'INSERT',
+                    'target':
+                    position_name,
+                    'new_data':
+                    f"Department: {admin_department}",
+                    'timestamp':
+                    datetime.now().isoformat()
                 }).execute()
                 message = "Position added successfully!"
 
@@ -2464,12 +2868,13 @@ def manage_poll():
             note = request.form.get('note', '').strip()
             image_path = ''
 
-            all_candidates_resp = supabase.table('candidates').select('name').eq('department', admin_department).execute()
+            all_candidates_resp = supabase.table('candidates').select(
+                'name').eq('department', admin_department).execute()
             all_candidates = all_candidates_resp.data if all_candidates_resp.data else []
             duplicate_found = any(
-                any(ew in nw or nw in ew for nw in new_words for ew in words_set(cand['name']))
-                for cand in all_candidates
-            )
+                any(ew in nw or nw in ew for nw in new_words
+                    for ew in words_set(cand['name']))
+                for cand in all_candidates)
             if duplicate_found:
                 message = f"A candidate with the name '{candidate_name}' (or a similar one) already exists in this department."
             else:
@@ -2483,48 +2888,77 @@ def manage_poll():
                     else:
                         file.seek(0)
                         os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
-                        filename = secure_filename(f"{position_id}_{file.filename}")
+                        filename = secure_filename(
+                            f"{position_id}_{file.filename}")
                         image_path = f"uploads/candidates/{filename}"
-                        full_save_path = os.path.join(app.root_path, 'static', 'uploads', 'candidates', filename)
+                        full_save_path = os.path.join(app.root_path, 'static',
+                                                      'uploads', 'candidates',
+                                                      filename)
                         file.save(full_save_path)
 
                 if candidate_name and position_id and not message:
                     supabase.table('candidates').insert({
-                        'position_id': int(position_id),
-                        'name': candidate_name,
-                        'image': image_path,
-                        'campaign_message': campaign_message,
-                        'department': admin_department,
-                        'year_level': year_level,
-                        'course': course,
-                        'skills': skills,
-                        'platform': platform,
-                        'goals': goals,
-                        'sg_years': sg_years,
-                        'previous_role': previous_role,
-                        'experience': experience,
-                        'achievements': achievements,
-                        'slogan': slogan,
-                        'note': note
+                        'position_id':
+                        int(position_id),
+                        'name':
+                        candidate_name,
+                        'image':
+                        image_path,
+                        'campaign_message':
+                        campaign_message,
+                        'department':
+                        admin_department,
+                        'year_level':
+                        year_level,
+                        'course':
+                        course,
+                        'skills':
+                        skills,
+                        'platform':
+                        platform,
+                        'goals':
+                        goals,
+                        'sg_years':
+                        sg_years,
+                        'previous_role':
+                        previous_role,
+                        'experience':
+                        experience,
+                        'achievements':
+                        achievements,
+                        'slogan':
+                        slogan,
+                        'note':
+                        note
                     }).execute()
                     supabase.table('logs').insert({
-                        'user_id': admin['id'],
-                        'action': 'ADD_CANDIDATE',
-                        'table_name': 'candidates',
-                        'query_type': 'INSERT',
-                        'target': f"Position ID: {position_id}",
-                        'new_data': f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
-                        'timestamp': datetime.now().isoformat()
+                        'user_id':
+                        admin['id'],
+                        'action':
+                        'ADD_CANDIDATE',
+                        'table_name':
+                        'candidates',
+                        'query_type':
+                        'INSERT',
+                        'target':
+                        f"Position ID: {position_id}",
+                        'new_data':
+                        f"Name: {candidate_name}, Year: {year_level}, Course: {course}",
+                        'timestamp':
+                        datetime.now().isoformat()
                     }).execute()
                     message = "Candidate added successfully!"
 
-    positions_resp = supabase.table('positions').select('*').eq('department', admin_department).execute()
+    positions_resp = supabase.table('positions').select('*').eq(
+        'department', admin_department).execute()
     positions = positions_resp.data if positions_resp.data else []
 
     candidates_per_position = {}
     for pos in positions:
-        cands_resp = supabase.table('candidates').select('*').eq('position_id', pos['id']).execute()
-        candidates_per_position[pos['id']] = cands_resp.data if cands_resp.data else []
+        cands_resp = supabase.table('candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates_per_position[
+            pos['id']] = cands_resp.data if cands_resp.data else []
 
     return render_template('admin_manage_poll.html',
                            admin_department=admin_department,
@@ -2534,8 +2968,6 @@ def manage_poll():
                            filing_start_iso=filing_start_iso,
                            filing_end_iso=filing_end_iso,
                            filing_open=filing_open)
-
-
 
 
 @app.route('/manage_candidates', methods=['GET', 'POST'])
@@ -3393,6 +3825,7 @@ def activity():
         f"{current_user.get('first_name', '')} {current_user.get('last_name', '')}"
     )
 
+
 @app.route('/delete_position/<int:id>', methods=['POST'])
 def delete_position(id):
     if 'school_id' not in session or session.get('role') != 'admin':
@@ -3400,19 +3833,24 @@ def delete_position(id):
         return redirect(url_for('manage_poll'))
 
     # Optionally: Check if filing period is open before allowing delete
-    settings_resp = supabase.table('settings').select('filing_start', 'filing_end').order('id', desc=True).limit(1).execute()
+    settings_resp = supabase.table('settings').select(
+        'filing_start', 'filing_end').order('id',
+                                            desc=True).limit(1).execute()
     filing_open = False
     if settings_resp.data:
         filing_start = settings_resp.data[0]['filing_start']
         filing_end = settings_resp.data[0]['filing_end']
         now_ph = datetime.now(PH_TZ)
         if filing_start and filing_end:
-            filing_start_dt = datetime.fromisoformat(filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
-            filing_end_dt = datetime.fromisoformat(filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_start_dt = datetime.fromisoformat(
+                filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_end_dt = datetime.fromisoformat(
+                filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
             filing_open = filing_start_dt <= now_ph < filing_end_dt
 
     if not filing_open:
-        flash("You can only delete positions during the filing period.", "error")
+        flash("You can only delete positions during the filing period.",
+              "error")
         return redirect(url_for('manage_poll'))
 
     # Delete candidates for this position first (optional, or set up DB cascade)
@@ -3421,6 +3859,734 @@ def delete_position(id):
     supabase.table('positions').delete().eq('id', id).execute()
     flash("Position deleted successfully.", "success")
     return redirect(url_for('manage_poll'))
+
+
+@app.route('/register_ssc_admin', methods=['GET', 'POST'])
+def register_ssc_admin():
+    if request.method == 'POST':
+        school_id = request.form.get('school_id', '').strip()
+        password = request.form.get('password', '')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+
+        # You can add course/department if needed
+        course = 'SSC'
+        department = 'SSC'
+
+        if not all([school_id, password, first_name, last_name]):
+            flash("Please fill in all required fields.", 'danger')
+            return redirect(url_for('register_ssc_admin'))
+
+        email = f"{school_id}@ssc.local"
+
+        # Check for duplicate school_id or email
+        resp = supabase.table('user').select('id').or_(
+            f'school_id.eq.{school_id},email.eq.{email}').execute()
+        if resp.data:
+            flash("School ID or generated email already exists.", 'danger')
+            return redirect(url_for('register_ssc_admin'))
+
+        password_hash = generate_password_hash(password)
+        short_uuid = str(uuid.uuid4())[:6]
+        fake_phone = f"ssc-{short_uuid}"
+
+        supabase.table('user').insert({
+            'school_id': school_id,
+            'course': course,
+            'department': department,
+            'email': email,
+            'password_hash': password_hash,
+            'first_name': first_name,
+            'last_name': last_name,
+            'role': 'ssc_admin',
+            'phone': fake_phone,
+            'id_photo_front': 'N/A',
+            'id_photo_back': 'N/A'
+        }).execute()
+
+        supabase.table('logs').insert({
+            'user_id': None,
+            'action': 'SSC_ADMIN_REGISTRATION',
+            'table_name': 'user',
+            'query_type': 'INSERT',
+            'target': f"SSC Admin School ID: {school_id}",
+            'new_data': f"Email: {email}, Role: ssc_admin",
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
+        flash("SSC Admin registered successfully!", "success")
+        return redirect(url_for('system_admin'))  # <-- FIXED
+        return redirect(url_for('system_admin'))  # <-- FIXED
+
+
+@app.route('/set_ssc_filing_period', methods=['POST'])
+def set_ssc_filing_period():
+    filing_start_date = request.form['filing_start_date']
+    filing_start_time = request.form['filing_start_time']
+    filing_end_date = request.form['filing_end_date']
+    filing_end_time = request.form['filing_end_time']
+
+    filing_start = f"{filing_start_date}T{filing_start_time}:00"
+    filing_end = f"{filing_end_date}T{filing_end_time}:00"
+
+    # Insert into global_settings table
+    supabase.table('global_settings').insert({
+        'filing_start': filing_start,
+        'filing_end': filing_end,
+        'filing_enabled': True
+    }).execute()
+    flash('SSC Filing period successfully set!', 'success')
+    return redirect(url_for('system_admin'))  # <-- FIXED
+    return redirect(url_for('system_admin'))  # <-- FIXED
+
+# CLASSROOM FUNCTIONSSSSSSSSSSS --- VONNY
+
+@app.route('/classroom_admin_dashboard')
+def classroom_admin_dashboard():
+    if 'school_id' not in session or session.get('role') != 'classroom_admin':
+        print("Session role:", session.get('role'), "Session school_id:", session.get('school_id'))
+        flash("You must be a classroom admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+
+    # Get classroom admin info
+    admin_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    admin = admin_resp.data
+
+    # Get classroom context
+    course = admin.get('course', '')
+    year_level = admin.get('year_level', '')
+    section = admin.get('section', '')
+    track = admin.get('track', '')
+
+    # Get active users in same classroom
+    active_users_resp = supabase.table('user').select('*') \
+        .eq('active', 'ACTIVE') \
+        .eq('course', course) \
+        .eq('year_level', year_level) \
+        .eq('section', section) \
+        .eq('track', track).execute()
+    active_users = active_users_resp.data
+
+    supabase.table('logs').insert({
+        'user_id': admin['id'],
+        'action': 'VIEW_CLASSROOM_ADMIN_DASHBOARD',
+        'table_name': 'user',
+        'query_type': 'READ',
+        'target': f"Classroom: {course} {year_level} {section} {track}",
+        'new_data': f"Fetched {len(active_users)} active users",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
+    return render_template('classroom_admin_dash.html',
+                           admin=admin,
+                           active_users=active_users)
+
+@app.route('/classroom_candidates')
+def classroom_candidates():
+    if 'school_id' not in session:
+        flash("You must be logged in to view candidates.", "danger")
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    user_resp = supabase.table('user').select('*').eq(
+        'school_id', school_id).single().execute()
+    user = user_resp.data
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    # --- Place your mapping here ---
+    course_map = {
+        "BSIT": "Bachelor of Science in Information Technology",
+        "BSIndTech": "Bachelor of Science in Industrial Technology",
+        "BSCS": "Bachelor of Science in Computer Science",
+        "BSEMC": "Bachelor of Science in Entertainment and Multimedia Computing",
+        "BSBA": "Bachelor of Science in Business Administration",
+        "BSM": "Bachelor of Science in Management",
+        "BSHM": "Bachelor of Science in Hospitality Management",
+        "BSTM": "Bachelor of Science in Tourism Management",
+        "BSAIS": "Bachelor of Science in Accounting Information System",
+        "BSMA": "Bachelor of Science in Management Accounting",
+        "BSEntrep": "Bachelor of Science in Entrepreneurship",
+        "BSLM": "Bachelor of Science in Legal Management",
+        "BSCRIM": "Bachelor of Science in Criminology",
+        "BSED": "Bachelor of Secondary Education",
+        "BEED": "Bachelor of Elementary Education",
+        "BPEd": "Bachelor of Physical Education",
+        "BAELS": "Bachelor of Arts in English Language Studies",
+        "BAPS": "Bachelor of Arts in Political Science",
+        "DAS": "Diploma in Agricultural Sciences"
+    }
+    course_map_reverse = {v: k for k, v in course_map.items()}
+
+    classroom_course = user.get('course', '')
+    # Convert full course name to abbreviation if needed
+    if classroom_course in course_map_reverse:
+        classroom_course = course_map_reverse[classroom_course]
+    # --- End mapping ---
+
+    classroom_year_level = user.get('year_level', '')
+    classroom_section = user.get('section', '')
+    classroom_track = user.get('track', '')
+
+    print("DEBUG classroom_course:", classroom_course)
+    print("DEBUG classroom_year_level:", classroom_year_level)
+    print("DEBUG classroom_section:", classroom_section)
+    print("DEBUG classroom_track:", classroom_track)
+
+    positions_resp = supabase.table('classroom_positions').select('*') \
+        .eq('course', classroom_course) \
+        .eq('year_level', classroom_year_level) \
+        .eq('section', classroom_section) \
+        .eq('track', classroom_track) \
+        .order('name', desc=False).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    positions_with_candidates = []
+    for pos in positions:
+        cands_resp = supabase.table('classroom_candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates = cands_resp.data if cands_resp.data else []
+        positions_with_candidates.append({
+            'position': pos,
+            'candidates': candidates
+        })
+
+    supabase.table('logs').insert({
+        'user_id': user['id'],
+        'action': 'VIEW_CLASSROOM_CANDIDATES',
+        'table_name': 'classroom_candidates',
+        'query_type': 'READ',
+        'target': f"Classroom: {classroom_course} {classroom_year_level} {classroom_section} {classroom_track}",
+        'new_data': f"{len(positions_with_candidates)} positions accessed",
+        'timestamp': datetime.now().isoformat()
+    }).execute()
+
+    return render_template(
+        'classroom_candidates.html',
+        classroom_course=classroom_course,
+        classroom_year_level=classroom_year_level,
+        classroom_section=classroom_section,
+        classroom_track=classroom_track,
+        positions_with_candidates=positions_with_candidates
+    )
+
+@app.route('/classroom_manage_candidates', methods=['GET', 'POST'])
+def classroom_manage_candidates():
+    if 'school_id' not in session or session.get('role') != 'classroom_admin':
+        print("Session role:", session.get('role'), "Session school_id:", session.get('school_id'))
+        flash("You must be a classroom admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    classroom_school_id = session.get('school_id')
+    classroom_data = supabase.table('user').select('*').eq('school_id', classroom_school_id).single().execute().data
+
+    if not classroom_data:
+        return "Classroom admin not found", 404
+
+    course = classroom_data.get('course', '')
+    year_level = classroom_data.get('year_level', '')
+    section = classroom_data.get('section', '')
+    track = classroom_data.get('track', '')
+
+    # Fetch filing period settings
+    settings_resp = supabase.table('classroom_settings') \
+        .select('filing_start', 'filing_end') \
+        .eq('course', course) \
+        .eq('year_level', year_level) \
+        .eq('section', section) \
+        .eq('track', track) \
+        .order('id', desc=True).limit(1).execute()
+
+    settings_row = settings_resp.data[0] if settings_resp.data else None
+    filing_start = settings_row['filing_start'] if settings_row else None
+    filing_end = settings_row['filing_end'] if settings_row else None
+
+    filing_start_display = format_ph_time(filing_start) if filing_start else 'Not set'
+    filing_end_display = format_ph_time(filing_end) if filing_end else 'Not set'
+
+    filing_start_iso = ''
+    filing_end_iso = ''
+    filing_open = False
+
+    now_ph = datetime.now(PH_TZ)
+    if filing_start and filing_end:
+        try:
+            filing_start_dt = datetime.fromisoformat(
+                filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_end_dt = datetime.fromisoformat(
+                filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_open = filing_start_dt <= now_ph < filing_end_dt
+            filing_start_iso = filing_start_dt.isoformat()
+            filing_end_iso = filing_end_dt.isoformat()
+        except Exception as e:
+            print(f"Error parsing filing period: {e}")
+            filing_open = False
+            filing_start_iso = ''
+            filing_end_iso = ''
+
+    if request.method == 'POST':
+        if not filing_open:
+            flash("Candidate/position management is only allowed during the filing period.", "error")
+            return redirect(url_for('classroom_manage_candidates'))
+
+        if 'add_candidate' in request.form:
+            name = request.form.get('name', '').strip()
+            position_id = request.form.get('position_id')
+            campaign_message = request.form.get('campaign_message', '').strip()
+            year_level = request.form.get('year_level', '').strip()
+            course = request.form.get('course', '').strip()
+            section = request.form.get('section', '').strip()
+            track = request.form.get('track', '').strip()
+            skills = request.form.get('skills', '').strip()
+            platform = request.form.get('platform', '').strip()
+            goals = request.form.get('goals', '').strip()
+            sg_years = request.form.get('sg_years', '').strip()
+            previous_role = request.form.get('previous_role', '').strip()
+            experience = request.form.get('experience', '').strip()
+            achievements = request.form.get('achievements', '').strip()
+            slogan = request.form.get('slogan', '').strip()
+            note = request.form.get('note', '').strip()
+            image_path = None
+
+            dup_resp = supabase.table('candidates') \
+                .select('id') \
+                .eq('course', course) \
+                .eq('year_level', year_level) \
+                .eq('section', section) \
+                .eq('track', track) \
+                .ilike('name', name) \
+                .execute()
+            if dup_resp.data:
+                flash("A candidate with this name already exists in this classroom.", "error")
+                return redirect(url_for('classroom_manage_candidates'))
+
+            file = request.files.get('image')
+            if file and file.filename:
+                os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
+                filename = secure_filename(f"{position_id}_{file.filename}")
+                image_path = f"uploads/candidates/{filename}"
+                full_save_path = os.path.join(app.root_path, 'static', 'uploads', 'candidates', filename)
+                file.save(full_save_path)
+
+            supabase.table('candidates').insert({
+                'position_id': int(position_id),
+                'name': name,
+                'image': image_path,
+                'campaign_message': campaign_message,
+                'course': course,
+                'year_level': year_level,
+                'section': section,
+                'track': track,
+                'skills': skills,
+                'platform': platform,
+                'goals': goals,
+                'sg_years': sg_years,
+                'previous_role': previous_role,
+                'experience': experience,
+                'achievements': achievements,
+                'slogan': slogan,
+                'note': note
+            }).execute()
+
+            supabase.table('logs').insert({
+                'user_id': session.get('user_id'),
+                'action': 'ADD_CANDIDATE',
+                'table_name': 'candidates',
+                'query_type': 'INSERT',
+                'target': name,
+                'new_data': f"Position ID: {position_id}, Classroom: {course} {year_level} {section} {track}",
+                'timestamp': datetime.now(PH_TZ).isoformat()
+            }).execute()
+
+            flash("Candidate added successfully!", "success")
+            return redirect(url_for('classroom_manage_candidates'))
+
+    positions_resp = supabase.table('positions') \
+        .select('*') \
+        .eq('course', course) \
+        .eq('year_level', year_level) \
+        .eq('section', section) \
+        .eq('track', track) \
+        .order('name', desc=False).execute()
+    positions = positions_resp.data or []
+
+    candidates_resp = supabase.table('candidates') \
+        .select('*,positions(name)') \
+        .eq('course', course) \
+        .eq('year_level', year_level) \
+        .eq('section', section) \
+        .eq('track', track).execute()
+    candidates = candidates_resp.data or []
+
+    return render_template('classroom_manage_candidates.html',
+                           filing_start_display=filing_start_display,
+                           filing_end_display=filing_end_display,
+                           filing_start_iso=filing_start_iso,
+                           filing_end_iso=filing_end_iso,
+                           positions=positions,
+                           candidates=candidates,
+                           filing_open=filing_open)
+
+
+# ...existing code...
+
+@app.route('/classroom_manage_poll', methods=['GET', 'POST'])
+def classroom_manage_poll():
+    if 'school_id' not in session or session.get('role') != 'classroom_admin':
+        print("Session role:", session.get('role'), "Session school_id:", session.get('school_id'))
+        flash("You must be a classroom admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    classroom_resp = supabase.table('user').select('*').eq(
+        'school_id', session['school_id']).single().execute()
+    classroom = classroom_resp.data
+
+    classroom_course = classroom.get('course', '') if classroom else ''
+    classroom_year_level = classroom.get('year_level', '') if classroom else ''
+    classroom_section = classroom.get('section') or '' if classroom else ''
+    classroom_track = classroom.get('track', '') if classroom else ''
+    message = ""
+
+    filing_start = filing_end = None
+    filing_start_iso = filing_end_iso = ''
+    filing_open = False
+
+    try:
+        # First, try classroom-specific settings
+        settings_resp = supabase.table('classroom_settings').select(
+            'filing_start', 'filing_end'
+        ).eq('course', classroom_course
+        ).eq('year_level', classroom_year_level
+        ).eq('section', classroom_section
+        ).eq('track', classroom_track
+        ).order('id', desc=True).limit(1).execute()
+
+        # Fallback to ALL if not found
+        if not settings_resp.data:
+            settings_resp = supabase.table('classroom_settings').select(
+                'filing_start', 'filing_end'
+            ).eq('course', 'ALL'
+            ).eq('year_level', 'ALL'
+            ).eq('section', 'ALL'
+            ).eq('track', 'ALL'
+            ).order('id', desc=True).limit(1).execute()
+
+        if settings_resp.data:
+            filing_start = settings_resp.data[0]['filing_start']
+            filing_end = settings_resp.data[0]['filing_end']
+
+        now_ph = datetime.now(PH_TZ)
+        if filing_start and filing_end:
+            # Convert UTC to Asia/Manila timezone
+            filing_start_dt = datetime.fromisoformat(
+                filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_end_dt = datetime.fromisoformat(
+                filing_end.replace('Z', '+00:00')).astimezone(PH_TZ)
+            filing_open = filing_start_dt <= now_ph < filing_end_dt
+            filing_start_iso = filing_start_dt.isoformat()
+            filing_end_iso = filing_end_dt.isoformat()
+    except Exception as e:
+        print(f"[ERROR] Filing period parsing failed: {e}")
+
+    if request.method == 'POST':
+        if not filing_open:
+            message = "You can only add positions or candidates during the filing period."
+        else:
+            # Handle adding a position
+            if 'position_name' in request.form:
+                position_name = request.form.get('position_name', '').strip()
+                supabase.table('classroom_positions').insert({
+                    'name': position_name,
+                    'course': classroom_course,
+                    'year_level': classroom_year_level,
+                    'section': classroom_section,
+                    'track': classroom_track
+                }).execute()
+                message = "Position added successfully!"
+            # Handle adding a candidate
+            elif 'candidate_name' in request.form and 'position_id' in request.form:
+                candidate_name = request.form.get('candidate_name', '').strip()
+                position_id = request.form.get('position_id')
+                campaign_message = request.form.get('campaign_message', '').strip()
+                year_level = request.form.get('year_level', '').strip()
+                course = request.form.get('course', '').strip()
+                section = request.form.get('section', '').strip()
+                track = request.form.get('track', '').strip()
+                skills = request.form.get('skills', '').strip()
+                platform = request.form.get('platform', '').strip()
+                goals = request.form.get('goals', '').strip()
+                sg_years = request.form.get('sg_years', '').strip()
+                previous_role = request.form.get('previous_role', '').strip()
+                experience = request.form.get('experience', '').strip()
+                achievements = request.form.get('achievements', '').strip()
+                slogan = request.form.get('slogan', '').strip()
+                note = request.form.get('note', '').strip()
+                image_path = ''
+
+                file = request.files.get('candidate_image')
+                if file and file.filename:
+                    allowed_types = {'image/jpeg', 'image/png', 'image/gif'}
+                    if file.mimetype not in allowed_types:
+                        message = "Only JPG, PNG, and GIF files are allowed."
+                    elif len(file.read()) > 5 * 1024 * 1024:
+                        message = "Image size must be less than 5MB."
+                    else:
+                        file.seek(0)
+                        import os
+                        from werkzeug.utils import secure_filename
+                        CANDIDATE_UPLOAD_FOLDER = os.path.join('static', 'uploads', 'candidates')
+                        os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
+                        filename = secure_filename(f"{position_id}_{file.filename}")
+                        image_path = f"uploads/candidates/{filename}"
+                        full_save_path = os.path.join('static', 'uploads', 'candidates', filename)
+                        file.save(full_save_path)
+
+                supabase.table('classroom_candidates').insert({
+                    'position_id': int(position_id),
+                    'name': candidate_name,
+                    'image': image_path,
+                    'campaign_message': campaign_message,
+                    'year_level': year_level,
+                    'course': course,
+                    'section': section,
+                    'track': track,
+                    'skills': skills,
+                    'platform': platform,
+                    'goals': goals,
+                    'sg_years': sg_years,
+                    'previous_role': previous_role,
+                    'experience': experience,
+                    'achievements': achievements,
+                    'slogan': slogan,
+                    'note': note
+                }).execute()
+                message = "Candidate added successfully!"
+
+    positions_resp = supabase.table('classroom_positions').select('*') \
+        .eq('course', classroom_course) \
+        .eq('year_level', classroom_year_level) \
+        .eq('section', classroom_section) \
+        .eq('track', classroom_track).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    candidates_per_position = {}
+    for pos in positions:
+        cands_resp = supabase.table('classroom_candidates').select('*').eq(
+            'position_id', pos['id']).execute()
+        candidates_per_position[pos['id']] = cands_resp.data if cands_resp.data else []
+
+    return render_template(
+        'classroom_manage_poll.html',
+        classroom_course=classroom_course,
+        classroom_year_level=classroom_year_level,
+        classroom_section=classroom_section,
+        classroom_track=classroom_track,
+        message=message,
+        positions=positions,
+        candidates_per_position=candidates_per_position,
+        filing_start_iso=filing_start_iso,
+        filing_end_iso=filing_end_iso,
+        filing_open=filing_open
+    )
+# ...existing code...
+
+@app.route('/classroom_manage_settings', methods=['GET', 'POST'])
+def classroom_manage_settings():
+    if 'school_id' not in session or session.get('role') != 'classroom_admin':
+        flash("You must be a classroom admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    admin_resp = supabase.table('user').select('*').eq(
+        'school_id', session['school_id']).single().execute()
+    admin = admin_resp.data
+
+    course = admin.get('course', '')
+    year_level = admin.get('year_level', '')
+    section = admin.get('section', '')
+    track = admin.get('track', '')
+    message = ""
+    voting_start = None
+    voting_end = None
+
+    # Load latest voting period for classroom
+    setting_resp = supabase.table('classroom_settings').select('*') \
+        .eq('course', course) \
+        .eq('year_level', year_level) \
+        .eq('section', section) \
+        .eq('track', track) \
+        .order('id', desc=True).limit(1).execute()
+    if setting_resp.data:
+        setting = setting_resp.data[0]
+        start_str = setting.get('start_time')
+        end_str = setting.get('end_time')
+        try:
+            if start_str:
+                voting_start = datetime.fromisoformat(start_str)
+                if voting_start.tzinfo is None:
+                    voting_start = voting_start.replace(tzinfo=PH_TZ)
+            if end_str:
+                voting_end = datetime.fromisoformat(end_str)
+                if voting_end.tzinfo is None:
+                    voting_end = voting_end.replace(tzinfo=PH_TZ)
+        except Exception:
+            voting_start = None
+            voting_end = None
+
+    can_set = not voting_start or not voting_end
+
+    if request.method == 'POST':
+        if not can_set:
+            flash("Voting period can only be set once and cannot be changed.", "danger")
+            return redirect(url_for('classroom_manage_settings'))
+        start_str = request.form.get('voting_start')
+        end_str = request.form.get('voting_end')
+        if start_str and end_str:
+            try:
+                start_dt = datetime.strptime(start_str, "%Y-%m-%dT%H:%M").replace(tzinfo=PH_TZ)
+                end_dt = datetime.strptime(end_str, "%Y-%m-%dT%H:%M").replace(tzinfo=PH_TZ)
+                supabase.table('classroom_settings').insert({
+                    'course': course,
+                    'year_level': year_level,
+                    'section': section,
+                    'track': track,
+                    'start_time': start_dt.isoformat(),
+                    'end_time': end_dt.isoformat()
+                }).execute()
+                supabase.table('logs').insert({
+                    'user_id': admin['id'],
+                    'action': 'SET_VOTING_PERIOD',
+                    'table_name': 'classroom_settings',
+                    'query_type': 'INSERT',
+                    'target': f"Classroom: {course} {year_level} {section} {track}",
+                    'new_data': f"Start: {start_dt.isoformat()}, End: {end_dt.isoformat()}",
+                    'timestamp': datetime.now().isoformat()
+                }).execute()
+                voting_start = start_dt
+                voting_end = end_dt
+                message = f"Voting period set for {course} {year_level} {section} {track}!"
+                can_set = False
+            except Exception:
+                voting_start = None
+                voting_end = None
+                message = "Invalid date format."
+
+    return render_template('classroom_manage_settings.html',
+                           course=course,
+                           year_level=year_level,
+                           section=section,
+                           track=track,
+                           voting_start=voting_start,
+                           voting_end=voting_end,
+                           message=message,
+                           can_set=can_set)
+
+@app.route('/register_classroom_admin', methods=['GET', 'POST'])
+def register_classroom_admin():
+    if request.method == 'POST':
+        school_id = request.form.get('school_id', '').strip()
+        password = request.form.get('password', '')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        department = request.form.get('department', '').strip()
+        course = request.form.get('course', '').strip()
+        track = request.form.get('track', '').strip()
+        year_level = request.form.get('year_level', '').strip()
+        section = request.form.get('section', '').strip()
+
+        if not all([
+                school_id, password, first_name, last_name, department, course,
+                track, year_level, section
+        ]):
+            flash("Please fill in all required fields.", 'danger')
+            return redirect(url_for('register_classroom_admin'))
+
+        email = f"{school_id}@classroom.local"
+
+        resp = supabase.table('user').select('id').or_(
+            f'school_id.eq.{school_id},email.eq.{email}').execute()
+        if resp.data:
+            flash("School ID or generated email already exists.", 'danger')
+            return redirect(url_for('register_classroom_admin'))
+
+        password_hash = generate_password_hash(password)
+        short_uuid = str(uuid.uuid4())[:6]
+        fake_phone = f"class-{short_uuid}"
+
+        supabase.table('user').insert({
+            'school_id': school_id,
+            'course': course,
+            'department': department,
+            'track': track,
+            'year_level': year_level,
+            'section': section,
+            'email': email,
+            'password_hash': password_hash,
+            'first_name': first_name,
+            'last_name': last_name,
+            'role': 'classroom_admin',
+            'phone': fake_phone,
+            'id_photo_front': 'N/A',
+            'id_photo_back': 'N/A'
+        }).execute()
+
+        supabase.table('logs').insert({
+            'user_id': None,
+            'action': 'CLASSROOM_ADMIN_REGISTRATION',
+            'table_name': 'user',
+            'query_type': 'INSERT',
+            'target': f"Classroom Admin School ID: {school_id}",
+            'new_data':
+            f"Email: {email}, Role: classroom_admin, Section: {section}",
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
+        flash('Classroom Admin successfully registered!', 'success')
+        return redirect(url_for('system_admin'))  # <-- FIXED
+        return redirect(url_for('system_admin'))  # <-- FIXED
+
+
+@app.route('/set_classroom_filing_period', methods=['POST'])
+def set_classroom_filing_period():
+    if 'school_id' not in session or session.get('role') != 'SysAdmin':
+        flash("You must be a SysAdmin to set the filing period.", "danger")
+        return redirect(url_for('login'))
+
+    filing_start_date = request.form['filing_start_date']
+    filing_start_time = request.form['filing_start_time']
+    filing_end_date = request.form['filing_end_date']
+    filing_end_time = request.form['filing_end_time']
+
+    # Combine date and time, localize to PH_TZ, then convert to UTC
+    try:
+        start_naive = datetime.strptime(f"{filing_start_date} {filing_start_time}", "%Y-%m-%d %H:%M")
+        end_naive = datetime.strptime(f"{filing_end_date} {filing_end_time}", "%Y-%m-%d %H:%M")
+        start_local = PH_TZ.localize(start_naive)
+        end_local = PH_TZ.localize(end_naive)
+        start_utc = start_local.astimezone(timezone.utc)
+        end_utc = end_local.astimezone(timezone.utc)
+        # Save as ISO format in UTC
+        filing_start = start_utc.isoformat()
+        filing_end = end_utc.isoformat()
+    except Exception as e:
+        flash("Invalid date or time format.", "danger")
+        return redirect(url_for('system_admin'))
+
+    # Apply to all classrooms
+    supabase.table('classroom_settings').insert({
+        'course': 'ALL',
+        'year_level': 'ALL',
+        'section': 'ALL',
+        'track': 'ALL',
+        'filing_start': filing_start,
+        'filing_end': filing_end,
+        'filing_enabled': True
+    }).execute()
+    flash('Classroom Filing period successfully set for all classrooms!', 'success')
+    return redirect(url_for('system_admin'))
 
 
 @app.route('/pyinfo')

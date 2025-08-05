@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNIVOTE: CLASSROOM ADMIN MANAGE POLL</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dash.css') }}">
+  <style>
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+      padding: 32px 28px 24px 28px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #f9f9f9;
+      font-size: 1rem;
+    }
+
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    input[type="file"] {
+      margin-top: 4px;
+    }
+
+    button[type="submit"] {
+      background-color: var(--header-bg);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 0;
+      font-size: 1.08rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    button[type="submit"]:hover {
+      background-color: var(--primary-dark);
+    }
+
+    hr {
+      margin: 32px 0;
+      border: none;
+      border-top: 2px solid #e0e0e0;
+    }
+
+    img {
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background: #fafafa;
+      max-width: 60px;
+      max-height: 60px;
+    }
+
+    .message {
+      text-align: center;
+      margin: 18px 0;
+      color: #21532a;
+      font-weight: bold;
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        padding: 10px 2vw;
+      }
+
+      h2,
+      h3,
+      h4 {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1>UNIVOTE<h5>MANAGE POLL</h5>
+        </h1>
+        <div class="header-actions">
+          <button id="theme-toggle" class="btn">🌙 Dark Mode</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="dashboard-nav">
+      <div class="nav-container">
+        <button class="nav-toggle" onclick="toggleNav()">☰</button>
+        <ul class="nav-list" id="navMenu">
+          <li class="nav-item"><a href="{{ url_for('classroom_admin_dashboard') }}" class="active">Home</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_poll') }}">Manage Poll</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_candidates') }}">Manage Candidates</a></li>
+          <li class="nav-item"><a href="{{ url_for('classroom_manage_settings') }}">Manage Voting Settings</a></li>
+          <!--<li class="nav-item"><a href="{{ url_for('activity') }}">Activity</a></li>-->
+          <li class="nav-item"><a href="{{ url_for('logout') }}"
+              onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+          <li class="nav-item"><a href="#">Help</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main class="dashboard-content">
+      <div id="app">
+        <div class="container">
+          <p style="margin-bottom: 18px;">
+            <strong>Time Remaining for Filing Period:</strong>
+            <span id="countdown" style="color:#2e7d32;font-weight:bold;">
+              {% if not filing_open %}Filing period closed.{% endif %}
+            </span>
+          </p>
+
+          <h2>Manage Voting Positions and Candidates<br>
+            <span style="font-size:1rem;color:#2980b9;">
+              {{ classroom_course }} {{ classroom_year_level }} {{ classroom_section }} {{ classroom_track }}
+            </span>
+          </h2>
+
+          {% if message %}
+          <div class="message">{{ message }}</div>
+          {% endif %}
+
+          {% if filing_open %}
+          <h3>Add Position</h3>
+          <form method="post">
+            <input type="text" name="position_name" placeholder="Position Name (e.g., President)" required>
+            <small style="color:#c0392b;font-weight:bold;">
+              ⚠️ Note: Use <u>VP</u> instead of "Vice President" to avoid duplicate detection issues.
+            </small>
+            <button type="submit">Add Position</button>
+          </form>
+
+          <hr>
+
+          <h3>Add Candidate</h3>
+          <form method="post" enctype="multipart/form-data">
+            <select name="position_id" required>
+              <option value="" disabled selected>Select Position</option>
+              {% for pos in positions %}
+              <option value="{{ pos.id }}">{{ pos.name }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="candidate_name" placeholder="Candidate Name" required>
+            <textarea name="campaign_message" placeholder="Campaign Message" required></textarea>
+            <input type="text" name="year_level" placeholder="Year Level" value="{{ classroom_year_level }}" readonly>
+            <input type="text" name="course" placeholder="Course" value="{{ classroom_course }}" readonly>
+            <input type="text" name="section" placeholder="Section" value="{{ classroom_section }}" readonly>
+            <input type="text" name="track" placeholder="Track" value="{{ classroom_track }}" readonly>
+            <input type="text" name="skills" placeholder="Core Skills">
+            <textarea name="platform" placeholder="Platform"></textarea>
+            <textarea name="goals" placeholder="Goals"></textarea>
+            <input type="text" name="sg_years" placeholder="Student Gov Years">
+            <input type="text" name="previous_role" placeholder="Previous Role">
+            <textarea name="experience" placeholder="Leadership Experience"></textarea>
+            <textarea name="achievements" placeholder="Achievements & Recognition"></textarea>
+            <input type="text" name="slogan" placeholder="Campaign Slogan">
+            <textarea name="note" placeholder="Candidate's Note"></textarea>
+            <input type="file" name="candidate_image" accept="image/*" required>
+            <button type="submit">Add Candidate</button>
+          </form>
+
+          <hr>
+          {% else %}
+          <div style="text-align:center; font-weight:bold; color:#c0392b; font-size:1.2rem;">
+            You can only add positions and candidates during the filing period.
+          </div>
+          <hr>
+          {% endif %}
+
+          <h3>Current Positions and Candidates</h3>
+          {% for pos in positions %}
+          <div
+            style="margin-bottom: 32px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background: #fdfdfd;">
+            <h4 style="margin-bottom: 12px; color: #2c3e50;">{{ pos.name }}</h4>
+            <form method="post" action="{{ url_for('delete_position', id=pos.id) }}" style="display:inline;"
+              onsubmit="return confirm('Delete this position and all its candidates?');">
+              <button type="submit"
+                style="background:#c0392b;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.98em;">Delete
+                Position</button>
+            </form>
+
+            {% if candidates_per_position[pos.id] %}
+            <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+              {% for cand in candidates_per_position[pos.id] %}
+              <div
+                style="flex: 1 1 300px; border: 1px solid #e0e0e0; padding: 14px; border-radius: 10px; background: #ffffff;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  {% if cand.image %}
+                  <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}" width="60" height="60">
+                  {% endif %}
+                  <div>
+                    <strong style="font-size: 1.1em; color: #333;">{{ cand.name }}</strong><br>
+                    <small style="color: #777;">{{ cand.year_level }} {{ cand.course }}</small>
+                  </div>
+                </div>
+
+                {% if cand.campaign_message %}
+                <p style="margin-top: 10px; font-style: italic; color: #555;">"{{ cand.campaign_message }}"</p>
+                {% endif %}
+
+                <ul style="margin-top: 10px; font-size: 0.95em; color: #444; padding-left: 18px;">
+                  {% if cand.skills %}<li><b>Skills:</b> {{ cand.skills }}</li>{% endif %}
+                  {% if cand.platform %}<li><b>Platform:</b> {{ cand.platform }}</li>{% endif %}
+                  {% if cand.goals %}<li><b>Goals:</b> {{ cand.goals }}</li>{% endif %}
+                  {% if cand.sg_years %}<li><b>SG Years:</b> {{ cand.sg_years }}</li>{% endif %}
+                  {% if cand.previous_role %}<li><b>Previous Role:</b> {{ cand.previous_role }}</li>{% endif %}
+                  {% if cand.experience %}<li><b>Experience:</b> {{ cand.experience }}</li>{% endif %}
+                  {% if cand.achievements %}<li><b>Achievements:</b> {{ cand.achievements }}</li>{% endif %}
+                  {% if cand.slogan %}<li><b>Slogan:</b> "{{ cand.slogan }}"</li>{% endif %}
+                  {% if cand.note %}<li><b>Note:</b> {{ cand.note }}</li>{% endif %}
+                </ul>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p style="color: #999;">No candidates yet for this position.</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggle = document.getElementById('theme-toggle');
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+      const currentTheme = localStorage.getItem('theme') ||
+        (prefersDarkScheme.matches ? 'dark' : 'light');
+      if (currentTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀️ Light Mode';
+      }
+      themeToggle.addEventListener('click', () => {
+        let theme;
+        if (document.body.getAttribute('data-theme') === 'dark') {
+          document.body.removeAttribute('data-theme');
+          theme = 'light';
+          themeToggle.textContent = '🌙 Dark Mode';
+        } else {
+          document.body.setAttribute('data-theme', 'dark');
+          theme = 'dark';
+          themeToggle.textContent = '☀️ Light Mode';
+        }
+        localStorage.setItem('theme', theme);
+      });
+    });
+    function toggleNav() {
+      document.getElementById('navMenu').classList.toggle('show');
+    }
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const countdownEl = document.getElementById('countdown');
+      const filingEndIso = "{{ filing_end_iso }}";
+      const filingStartIso = "{{ filing_start_iso }}";
+      const filingOpen = {{'true' if filing_open else 'false' }};
+
+    function formatCountdown(distance) {
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    // If not open, check if we're before the start
+    if (!filingOpen && filingStartIso) {
+      const startDate = new Date(filingStartIso).getTime();
+      const now = new Date().getTime();
+      if (now < startDate) {
+        // Countdown to start of filing period
+        const timer = setInterval(function () {
+          const now2 = new Date().getTime();
+          const distance = startDate - now2;
+          if (distance <= 0) {
+            clearInterval(timer);
+            countdownEl.textContent = "Filing period started!";
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+            return;
+          }
+          countdownEl.textContent = "Opens in: " + formatCountdown(distance);
+        }, 1000);
+        return;
+      }
+    }
+
+    // If open, countdown to end
+    if (filingOpen && filingEndIso) {
+      const endDate = new Date(filingEndIso).getTime();
+      const timer = setInterval(function () {
+        const now = new Date().getTime();
+        const distance = endDate - now;
+        if (distance <= 0) {
+          clearInterval(timer);
+          countdownEl.textContent = "Filing closed.";
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          return;
+        }
+        countdownEl.textContent = formatCountdown(distance);
+      }, 1000);
+      return;
+    }
+
+    // If closed and not before start, just show closed
+    countdownEl.textContent = "Filing closed.";
+    });
+  </script>
+</body>
+
+</html>

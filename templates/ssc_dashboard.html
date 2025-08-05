@@ -10,9 +10,6 @@
 </head>
 
 <body>
-  <!-- Sidebar Overlay for Mobile -->
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
   <header class="page-header">
     <button id="sidebarToggle" aria-label="Toggle Sidebar">☰</button>
     <div class="logo-container">
@@ -31,8 +28,8 @@
     {% if dept_logo %}
     <div style="text-align:center; margin-bottom:18px;">
       <img src="{{ url_for('static', filename='images/' ~ dept_logo) }}" alt="Department Logo"
-        style="height:70px;max-width:120px;object-fit:contain;border-radius:12px;box-shadow:0 4px 8px rgba(0,0,0,0.1);">
-      <div style="color:#34d399; font-size:15px; margin-top:6px; font-weight:600;">{{ user.department }}</div>
+        style="height:70px;max-width:120px;object-fit:contain;">
+      <div style="color:#fff; font-size:15px; margin-top:6px;">{{ user.department }}</div>
     </div>
     {% endif %}
     <div class="user-divider">
@@ -56,22 +53,24 @@
       <i class="fa-solid fa-users"></i>
       <span>Candidates</span>
     </a>
-    <!--
-    {% if voting_closed %}
-    <a href="{{ url_for('view_results') }}">
+    <!-- ...existing sidebar code... -->
+    <!-- {% if voting_closed %}
+   <a href="{{ url_for('view_results') }}">
       <i class="fa-solid fa-chart-bar"></i>
       <span>View Results</span>
     </a>
     {% endif %}
+    <!-- ...existing sidebar code... 
     <a href="{{ url_for('activity') }}">
       <i class="fa-solid fa-list-check"></i>
       <span>View Activities</span>
-    </a>-->
+    </a> -->
     <!--
     <a href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?');">
       <i class="fa-solid fa-right-from-bracket"></i>
       <span>Logout</span>
-    </a>-->
+    </a>
+    -->
   </div>
 
   <div class="main-content">
@@ -83,7 +82,8 @@
       {% endfor %}
       {% endif %}
       {% endwith %}
-      <h2>{{ user.department }} Department Dashboard</h2>
+      <!--<h2>{{ user.department }} Department Dashboard</h2> -->
+      <h2>SSC Dashboard</h2>
       <div class="voting-info-box">
         <div class="voting-info-row">
           <span class="voting-info-icon">🗓️</span>
@@ -108,38 +108,41 @@
         </div>
       </div>
 
+
+
+
       <div class="sketch-container">
         {% if not voting_start or not voting_end %}
-        <div class="status-message error">
+        <div style="text-align:center; color:#e74c3c; font-size:1.2em; font-weight:bold; margin:40px 0;">
           There's no Voting Schedule yet. Please come back once it's been set.
         </div>
         {% else %}
         {% if voting_closed %}
-        <div class="status-message error">
+        <div style="text-align:center; color:#e74c3c; font-size:1.2em; font-weight:bold; margin:40px 0;">
           Voting has ended.<br>
           Thank you for your participation.<br>
         </div>
         {% elif positions|length == 0 %}
-        <div class="status-message warning">
+        <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
           No voting positions are available for your department at this time.
         </div>
         {% elif votable_positions|length == 0 %}
-        <div class="status-message warning">
+        <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
           The Admin hasn't set any candidates yet for the election.<br>
           Please check back later once candidates are available.
         </div>
         {% elif all_voted %}
-        <div class="status-message success">
+        <div style="text-align:center; color:#25c18c; font-size:1.2em; font-weight:bold; margin:40px 0;">
           You already voted in all available positions,<br>
           Thank you for participating.<br>
         </div>
         {% elif voting_not_started %}
-        <div class="status-message warning">
+        <div style="text-align:center; color:#f39c12; font-size:1.2em; font-weight:bold; margin:40px 0;">
           Voting has not started yet. Please wait until {{ voting_start_display }}.
         </div>
         {% elif voting_start and voting_end and voting_start <= now <=voting_end %} <p>Welcome, {{ user.first_name }}!
           Please select your preferred candidates below.</p>
-          <form method="POST" action="" id="votingForm">
+          <form method="POST" action="">
             {% for pos in positions %}
             {% if pos.id not in voted_positions %}
             <div class="position-block">
@@ -161,10 +164,7 @@
             </div>
             {% endif %}
             {% endfor %}
-            <button type="submit" id="submitBtn">
-              <i class="fa-solid fa-check-circle" style="margin-right: 8px;"></i>
-              Submit Vote
-            </button>
+            <button type="submit">Submit Vote</button>
           </form>
           {% endif %}
           {% endif %}
@@ -172,59 +172,10 @@
     </div>
   </div>
 
+
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Enhanced sidebar toggle functionality with overlay
-      const sidebar = document.querySelector('.sidebar');
-      const toggleBtn = document.getElementById('sidebarToggle');
-      const overlay = document.getElementById('sidebarOverlay');
-
-      if (toggleBtn && sidebar && overlay) {
-        toggleBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          sidebar.classList.toggle('active');
-          overlay.classList.toggle('active');
-        });
-
-        // Close sidebar when clicking overlay
-        overlay.addEventListener('click', () => {
-          sidebar.classList.remove('active');
-          overlay.classList.remove('active');
-        });
-
-        // Close sidebar on escape key
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && sidebar.classList.contains('active')) {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-          }
-        });
-
-        // Prevent sidebar clicks from closing it
-        sidebar.addEventListener('click', (e) => {
-          e.stopPropagation();
-        });
-
-        // Close sidebar when clicking sidebar links on mobile
-        const sidebarLinks = sidebar.querySelectorAll('a');
-        sidebarLinks.forEach(link => {
-          link.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-              sidebar.classList.remove('active');
-              overlay.classList.remove('active');
-            }
-          });
-        });
-
-        // Handle window resize to close sidebar on larger screens
-        window.addEventListener('resize', () => {
-          if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-          }
-        });
-      }
-
       const profileLink = document.getElementById('profileLink');
       const profileOverlay = document.getElementById('profileOverlay');
       const closeProfileBtn = document.getElementById('closeProfileBtn');
@@ -242,45 +193,17 @@
           }
         });
       }
-
-      // Enhanced radio button selection with visual feedback
-      const radioButtons = document.querySelectorAll('input[type="radio"]');
-      radioButtons.forEach(radio => {
-        radio.addEventListener('change', function () {
-          // Remove selection styling from other cards in the same group
-          const groupName = this.name;
-          const groupRadios = document.querySelectorAll(`input[name="${groupName}"]`);
-          groupRadios.forEach(r => {
-            const card = r.closest('.candidate-result-card');
-            card.style.borderColor = 'transparent';
-            card.style.background = 'rgba(255, 255, 255, 0.9)';
-            card.style.transform = 'none';
-          });
-
-          // Add selection styling to selected card
-          const selectedCard = this.closest('.candidate-result-card');
-          selectedCard.style.borderColor = 'var(--primary)';
-          selectedCard.style.background = 'rgba(37, 193, 140, 0.1)';
-          selectedCard.style.transform = 'translateY(-4px) scale(1.02)';
-          selectedCard.style.boxShadow = 'var(--shadow-xl)';
-        });
-      });
-
-      // Enhanced form submission with loading state
-      const form = document.getElementById('votingForm');
-      if (form) {
-        form.addEventListener('submit', function (e) {
-          const submitBtn = document.getElementById('submitBtn');
-          if (submitBtn) {
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>Submitting...';
-            submitBtn.style.background = 'var(--text-secondary)';
-            submitBtn.disabled = true;
-          }
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+          sidebar.classList.toggle('active');
         });
       }
     });
+  </script>
 
-    // Live time update functionality (preserved from original)
+  <script>
     const votingStartStr = "{{ voting_start }}";
     const votingEndStr = "{{ voting_end }}";
     let votingStart = null;
@@ -307,15 +230,17 @@
         d1.getMinutes() === d2.getMinutes();
     }
 
-    // Double refresh logic (preserved from original)
+    // Double refresh logic
     function doubleRefresh(key) {
       const state = localStorage.getItem(key);
       if (!state) {
+        // First refresh
         localStorage.setItem(key, "pending_second");
         location.reload();
       }
     }
 
+    // On page load, check if we need to do the second refresh
     function checkSecondRefresh(key) {
       const state = localStorage.getItem(key);
       if (state === "pending_second") {
