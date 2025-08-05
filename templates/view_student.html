@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Student Profile - {{ student.first_name }} {{ student.last_name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-light: #81C784;
+            --primary-dark: #388E3C;
+            --text: #333;
+            --text-light: #f5f5f5;
+            --bg: #f5f5f5;
+            --header-bg: #4CAF50;
+            --nav-bg: #388E3C;
+            --card-bg: #fff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --border: #e0e0e0;
+            --danger: #f44336;
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FF9800;
+        }
+
+        [data-theme="dark"] {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --text: #f5f5f5;
+            --text-light: #f5f5f5;
+            --bg: #121212;
+            --header-bg: #1B5E20;
+            --nav-bg: #2E7D32;
+            --card-bg: #1E1E1E;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --border: #333;
+            --danger: #d32f2f;
+            --success: #2E7D32;
+            --info: #1976D2;
+            --warning: #F57C00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--header-bg), var(--primary-dark));
+            color: var(--text-light);
+            padding: 2rem 0;
+            margin: -20px -20px 30px -20px;
+            box-shadow: 0 4px 12px var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.05"/><circle cx="10" cy="60" r="1" fill="white" opacity="0.05"/><circle cx="90" cy="40" r="1" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 12px 20px;
+            background: var(--card-bg);
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .back-btn:hover {
+            background: var(--primary-light);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .back-btn::before {
+            content: '←';
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .student-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .student-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+            border: 4px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .student-details h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .student-id {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: inline-block;
+        }
+
+        .profile-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px var(--shadow);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            padding: 24px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: rgba(76, 175, 80, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(76, 175, 80, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background: rgba(76, 175, 80, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .info-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary-dark);
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .academic-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .academic-badge {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .academic-badge:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+        }
+
+        .badge-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .badge-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .badge-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .actions {
+            text-align: center;
+            padding: 24px;
+            background: rgba(76, 175, 80, 0.02);
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            margin: 0 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow);
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                margin: -10px -10px 20px -10px;
+                padding: 1.5rem 0;
+            }
+
+            .student-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .student-details h1 {
+                font-size: 2rem;
+            }
+
+            .student-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+            }
+
+            .back-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 14px 20px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .info-item {
+                padding: 16px;
+            }
+
+            .info-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .academic-info {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .academic-badge {
+                padding: 12px;
+            }
+
+            .badge-icon {
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                display: block;
+                margin: 8px 0;
+                text-align: center;
+            }
+
+            .theme-toggle {
+                top: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .student-details h1 {
+                font-size: 1.8rem;
+            }
+
+            .academic-info {
+                grid-template-columns: 1fr;
+            }
+
+            .info-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
+            }
+        }
+
+        /* Animation for info items */
+        .info-item {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .info-item:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .info-item:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .info-item:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .info-item:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Dark theme specific adjustments */
+        [data-theme="dark"] .info-item {
+            background: rgba(76, 175, 80, 0.08);
+            border-color: rgba(76, 175, 80, 0.2);
+        }
+
+        [data-theme="dark"] .info-item:hover {
+            background: rgba(76, 175, 80, 0.15);
+        }
+
+        .student-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+            border: 4px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .student-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        🌙
+    </div>
+
+    <div class="container">
+        <a href="{{ url_for('classroom_students') }}" class="back-btn">Back to Student List</a>
+
+        <div class="header">
+            <div class="header-content">
+                <div class="student-header">
+                    <div class="student-avatar">
+                        <img src="{{ url_for('static', filename='images/isu.png') }}" alt="Student Avatar" />
+                    </div>
+
+                    <div class="student-details">
+                        <h1>{{ student.first_name }} {{ student.last_name }}</h1>
+                        <div class="student-id">ID: {{ student.school_id }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <div class="card-header">
+                <div class="card-title">Student Profile</div>
+                <div class="card-subtitle">Complete Academic Information</div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon">👤</div>
+                    <div class="info-content">
+                        <div class="info-label">Full Name</div>
+                        <div class="info-value">{{ student.first_name }} {{ student.last_name }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">🆔</div>
+                    <div class="info-content">
+                        <div class="info-label">School ID</div>
+                        <div class="info-value">{{ student.school_id }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">📧</div>
+                    <div class="info-content">
+                        <div class="info-label">Email Address</div>
+                        <div class="info-value">{{ student.email }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">📱</div>
+                    <div class="info-content">
+                        <div class="info-label">Phone Number</div>
+                        <div class="info-value">{{ student.phone }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="academic-info">
+                <div class="academic-badge">
+                    <div class="badge-icon">📚</div>
+                    <div class="badge-label">Course</div>
+                    <div class="badge-value">{{ student.course }}</div>
+                </div>
+
+                <div class="academic-badge">
+                    <div class="badge-icon">🎓</div>
+                    <div class="badge-label">Year Level</div>
+                    <div class="badge-value">{{ student.year_level }}</div>
+                </div>
+
+                <div class="academic-badge">
+                    <div class="badge-icon">📋</div>
+                    <div class="badge-label">Section</div>
+                    <div class="badge-value">{{ student.section }}</div>
+                </div>
+
+                <div class="academic-badge">
+                    <div class="badge-icon">🎯</div>
+                    <div class="badge-label">Track</div>
+                    <div class="badge-value">{{ student.track }}</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="{{ url_for('classroom_students') }}" class="btn btn-primary">
+                    ← Back to Students
+                </a>
+                <a href="#" class="btn btn-outline" onclick="window.print()">
+                    🖨️ Print Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                themeToggle.innerHTML = '🌙';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '☀️';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.querySelector('.theme-toggle');
+
+            if (savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '☀️';
+            }
+
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+
+        // Add print styles
+        const printStyles = `
+            @media print {
+                body, html {
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+
+                [data-theme="dark"],
+                [data-theme="dark"] * {
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                    border-color: #000000 !important;
+                    box-shadow: none !important;
+                }
+
+                .theme-toggle,
+                .back-btn,
+                .actions {
+                    display: none !important;
+                }
+
+                .header {
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                    margin: 0 !important;
+                    box-shadow: none !important;
+                }
+
+                .header::before {
+                    display: none !important;
+                }
+
+                .profile-card {
+                    box-shadow: none !important;
+                    border: 1px solid #000000 !important;
+                }
+
+                .info-item,
+                .academic-badge {
+                    background: #ffffff !important;
+                    border: 1px solid #000000 !important;
+                    color: #000000 !important;
+                    box-shadow: none !important;
+                }
+
+                .info-icon,
+                .badge-icon {
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                }
+
+                .card-header {
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                }
+
+                .container {
+                    padding: 0 !important;
+                }
+
+                a {
+                    color: #000000 !important;
+                    text-decoration: none !important;
+                }
+
+                img {
+                    filter: none !important;
+                }
+            }
+        `;
+
+
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = printStyles;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+
+</html>

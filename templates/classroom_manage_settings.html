@@ -109,10 +109,9 @@
           <li class="nav-item"><a href="{{ url_for('classroom_manage_poll') }}">Manage Poll</a></li>
           <li class="nav-item"><a href="{{ url_for('classroom_manage_candidates') }}">Manage Candidates</a></li>
           <li class="nav-item"><a href="{{ url_for('classroom_manage_settings') }}">Manage Voting Settings</a></li>
-          <!--<li class="nav-item"><a href="{{ url_for('activity') }}">Activity</a></li>-->
           <li class="nav-item"><a href="{{ url_for('logout') }}"
               onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-          <li class="nav-item"><a href="#">Help</a></li>
+
         </ul>
       </div>
     </nav>
@@ -120,7 +119,10 @@
     <main class="dashboard-content">
       <div id="app">
         <div class="card">
-          <h2>Manage Voting Period for {{ admin_department }}</h2>
+          <h2>
+            Manage Voting Period for
+            {{ course }} {{ year_level }} {{ section }} {{ track }}
+          </h2>
           {% if message %}
           <p class="message">{{ message }}</p>
           {% endif %}

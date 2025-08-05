@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Receipt</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            width: 100%;
+            position: relative;
+        }
+
+        .card-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .card-header h2 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .user-info p {
+            margin-bottom: 10px;
+            font-size: 1rem;
+            color: #555;
+        }
+
+        .user-info strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .vote-entries {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .vote-entries::-webkit-scrollbar {
+            display: none;
+        }
+
+        .vote-entries {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .vote-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .vote-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .vote-item p {
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        .vote-item strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+
+        .watermark-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .watermark {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: rgba(0, 0, 0, 0.05);
+            font-size: 1.5rem;
+            font-weight: bold;
+            transform: rotate(-15deg);
+        }
+
+        .expired-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            color: black;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .report-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+
+        .report-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .close-btn {
+            margin-top: 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            align-self: center;
+        }
+
+        .close-btn:hover {
+            background-color: #0b7dda;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 15px;
+            }
+
+            .card-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .user-info p,
+            .vote-item p {
+                font-size: 0.9rem;
+            }
+
+            .report-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="watermark-grid" id="watermarkGrid"></div>
+
+
+    <h1>Your Vote Receipt{% if receipt_timeout_enabled %} {% endif %}</h1>
+
+    <div class="container">
+        <div class="card user-info">
+
+            <div class="card-header">
+                <h2>Your Information</h2>
+            </div>
+            <div class="user-details">
+                <p><strong>Hashed User ID:</strong> {% for user_hash in hashed_users %}
+                    <li style="list-style-type: none;">{{ user_hash }}</li>
+                    {% endfor %}
+                </p>
+                <p><strong>Masked Name: </strong>{{ masked_first }} {{ masked_last }}</p>
+                <p><strong>Course:</strong> {{ course }}</p>
+                <p><strong>Year Level:</strong> {{ year_level }}</p>
+                <p><strong>Section:</strong> {{ section }}</p>
+                <p><strong>Track:</strong> {{ track }}</p>
+            </div>
+        </div>
+
+        <div class="card vote-info">
+
+            <div class="card-header">
+                <h2>Vote Entries</h2>
+            </div>
+            <div class="vote-entries">
+                {% if vote_entries|length == 0 %}
+                <div class="vote-item" style="margin-bottom: 20px; padding: 10px;">
+                    <p style="color: crimson; font-weight: bold;">You didn’t vote.</p>
+                </div>
+                {% else %}
+                {% for vote in vote_entries %}
+                <div class="vote-item" style="margin-bottom: 20px; padding: 10px; border-bottom: 1px solid #ccc;">
+                    <p><strong>Position:</strong> {{ vote.position_name }}</p>
+                    <p><strong>Candidate:</strong>
+                        {% if vote.masked_candidate == "No vote recorded (no candidates available)" %}
+                        <span style="color: gray;">Unfortunately there's no candidate for this position.</span>
+                        {% elif vote.masked_candidate == "No vote recorded (you skipped this)" %}
+                        <span style="color: darkorange;">No vote was submitted for this position.</span>
+                        {% elif vote.masked_candidate == "Vote data error" %}
+                        <span style="color: red;">Candidate data could not be retrieved.</span>
+                        {% else %}
+                        {{ vote.masked_candidate }}
+                        {% endif %}
+                    </p>
+                    <p><strong>Hashed:</strong> {{ vote.hash }}</p>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+
+        </div>
+    </div>
+
+
+    <a href="{{ url_for('classroom_dashboard') }}"><button class="close-btn">Close Receipt</button></a>
+
+
+    {% if receipt_timeout_enabled %}
+    <div id="expired" class="expired-overlay">
+        <div>Receipt viewing time has expired.</div>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            document.body.innerHTML = '';
+            document.getElementById('expired').style.display = 'flex';
+        }, 5 * 60 * 1000); // 5 minutes
+    </script>
+    {% endif %}
+
+    <script>
+        const watermarkText = "{{ session['school_id'] }}";  // Or static fallback: "SCHOOL123"
+        const grid = document.getElementById('watermarkGrid');
+        const total = 25; // 5x5 grid
+
+        for (let i = 0; i < total; i++) {
+            const div = document.createElement('div');
+            div.className = 'watermark';
+            div.textContent = watermarkText;
+            grid.appendChild(div);
+        }
+    </script>
+    <script>
+        const receiptExpiry = new Date("{{ receipt_expiry }}").getTime();
+
+        function checkExpiry() {
+            const now = new Date().getTime();
+            if (now > receiptExpiry) {
+                alert("Viewing time expired. Redirecting to dashboard...");
+                window.location.href = "/dashboard";
+            }
+        }
+
+        setInterval(checkExpiry, 5000); // Check every 5 seconds
+    </script>
+
+</body>
+
+</html>

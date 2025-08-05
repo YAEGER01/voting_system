@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Edit Candidate</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f6f8fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        form {
+            background: #fff;
+            max-width: 480px;
+            margin: 32px auto 0 auto;
+            padding: 32px 28px 24px 28px;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        label {
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #21532a;
+            display: block;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+            font-size: 1rem;
+            margin-bottom: 6px;
+            transition: border 0.2s;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        input[type="file"] {
+            margin-top: 6px;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(90deg, #25c18c 60%, #21532a 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 0;
+            font-size: 1.08rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            background: linear-gradient(90deg, #21532a 60%, #25c18c 100%);
+        }
+
+        img {
+            margin: 4px 0;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            max-width: 60px;
+            max-height: 60px;
+        }
+
+        .back-link {
+            display: block;
+            max-width: 480px;
+            margin: 24px auto 0 auto;
+            padding: 12px 0;
+            text-align: center;
+            text-decoration: none;
+            color: #21532a;
+            font-weight: bold;
+            background: #e6f5ed;
+            border-radius: 8px;
+            border: 1px solid #cde4d9;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .back-link:hover {
+            background: #d0eddc;
+            color: #103d1a;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="{{ url_for('classroom_manage_candidates') }}" class="back-link">&larr; Back to Candidates</a>
+
+    <h2 style="text-align:center;">Edit Candidate</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <label for="name">Candidate Name (cannot edit)</label>
+        <input type="text" id="name" name="name" value="{{ candidate.name }}" required disabled>
+        <input type="hidden" name="name" value="{{ candidate.name }}">
+
+        <label for="position_id">Position (cannot edit)</label>
+        <select id="position_id" name="position_id" required disabled>
+            {% for pos in positions %}
+            <option value="{{ pos.id }}" {% if candidate.position_id==pos.id %}selected{% endif %}>{{ pos.name }}
+            </option>
+            {% endfor %}
+        </select>
+        <input type="hidden" name="position_id" value="{{ candidate.position_id }}">
+
+        <label for="course">Course (cannot edit)</label>
+        <input type="text" id="course" name="course" value="{{ candidate.course or '' }}" disabled>
+        <input type="hidden" name="course" value="{{ candidate.course or '' }}">
+
+        <label for="year_level">Year Level (cannot edit)</label>
+        <input type="text" id="year_level" name="year_level" value="{{ candidate.year_level or '' }}" disabled>
+        <input type="hidden" name="year_level" value="{{ candidate.year_level or '' }}">
+
+        <label for="section">Section (cannot edit)</label>
+        <input type="text" id="section" name="section" value="{{ candidate.section or '' }}" disabled>
+        <input type="hidden" name="section" value="{{ candidate.section or '' }}">
+
+        <label for="track">Track (cannot edit)</label>
+        <input type="text" id="track" name="track" value="{{ candidate.track or '' }}" disabled>
+        <input type="hidden" name="track" value="{{ candidate.track or '' }}">
+
+        <label for="campaign_message">Campaign Message</label>
+        <textarea id="campaign_message" name="campaign_message" required>{{ candidate.campaign_message }}</textarea>
+
+        <label for="skills">Core Skills</label>
+        <input type="text" id="skills" name="skills" value="{{ candidate.skills or '' }}">
+
+        <label for="platform">Platform</label>
+        <textarea id="platform" name="platform">{{ candidate.platform or '' }}</textarea>
+
+        <label for="goals">Goals</label>
+        <textarea id="goals" name="goals">{{ candidate.goals or '' }}</textarea>
+
+        <label for="sg_years">Student Gov Years</label>
+        <input type="text" id="sg_years" name="sg_years" value="{{ candidate.sg_years or '' }}">
+
+        <label for="previous_role">Previous Role</label>
+        <input type="text" id="previous_role" name="previous_role" value="{{ candidate.previous_role or '' }}">
+
+        <label for="experience">Leadership Experience</label>
+        <textarea id="experience" name="experience">{{ candidate.experience or '' }}</textarea>
+
+        <label for="achievements">Achievements & Recognition</label>
+        <textarea id="achievements" name="achievements">{{ candidate.achievements or '' }}</textarea>
+
+        <label for="slogan">Campaign Slogan</label>
+        <input type="text" id="slogan" name="slogan" value="{{ candidate.slogan or '' }}">
+
+        <label for="note">Candidate's Note</label>
+        <textarea id="note" name="note">{{ candidate.note or '' }}</textarea>
+
+        <label for="image">Image</label>
+        {% if candidate.image %}
+        <img src="{{ url_for('static', filename=candidate.image) }}" alt="img">
+        {% endif %}
+        <input type="file" id="image" name="image" accept="image/*">
+
+        <button type="submit">Update Candidate</button>
+    </form>
+</body>
+
+</html>

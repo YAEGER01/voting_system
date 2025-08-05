@@ -151,7 +151,7 @@
                 <p>No candidates for this position yet.</p>
                 {% else %}
                 {% for cand in pos_block.candidates %}
-                <a href="{{ url_for('candidate_details', id=cand.id) }}" class="candidate-card">
+                <a href="{{ url_for('classroom_candidate_details', id=cand.id) }}" class="candidate-card">
                     {% if cand.image %}
                     <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}">
                     {% endif %}

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Classroom Students</title>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-light: #81C784;
+            --primary-dark: #388E3C;
+            --text: #333;
+            --text-light: #f5f5f5;
+            --bg: #f5f5f5;
+            --header-bg: #4CAF50;
+            --nav-bg: #388E3C;
+            --card-bg: #fff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --border: #e0e0e0;
+            --danger: #f44336;
+        }
+
+        [data-theme="dark"] {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --text: #f5f5f5;
+            --text-light: #f5f5f5;
+            --bg: #121212;
+            --header-bg: #1B5E20;
+            --nav-bg: #2E7D32;
+            --card-bg: #1E1E1E;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --border: #333;
+            --danger: #d32f2f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--header-bg), var(--primary-dark));
+            color: var(--text-light);
+            padding: 2rem 0;
+            margin: -20px -20px 30px -20px;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 12px 20px;
+            background: var(--card-bg);
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .back-btn:hover {
+            background: var(--primary-light);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .back-btn::before {
+            content: '←';
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .class-info {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .info-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px var(--shadow);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .table-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .student-count {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--nav-bg);
+            color: white;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--primary-dark);
+        }
+
+        td {
+            padding: 16px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(76, 175, 80, 0.05);
+            transform: translateX(2px);
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .student-email {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .student-phone {
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .track-badge {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--primary-dark);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .section-badge {
+            background: rgba(33, 150, 243, 0.1);
+            color: #1976D2;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .year-badge {
+            background: rgba(255, 152, 0, 0.1);
+            color: #F57C00;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        .view-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid var(--primary);
+        }
+
+        .view-btn:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .view-btn::after {
+            content: '→';
+            font-weight: bold;
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-students-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Mobile-First Responsive Design */
+
+        /* Mobile Cards for very small screens */
+        .mobile-cards {
+            display: none;
+        }
+
+        /* Responsive table wrapper */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 8px;
+        }
+
+        .student-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .student-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin: 0;
+        }
+
+        .card-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .card-info {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-icon {
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--text);
+            min-width: 80px;
+        }
+
+        .info-value {
+            color: #666;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .card-action {
+            text-align: center;
+        }
+
+        /* Responsive Breakpoints */
+
+        /* Extra Small Devices (phones in portrait, less than 576px) */
+        @media (max-width: 575.98px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                margin: -10px -10px 20px -10px;
+                padding: 1.5rem 0;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+                text-align: center;
+                margin-bottom: 15px;
+            }
+
+            .class-info {
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .info-badge {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            .back-btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .theme-toggle {
+                top: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+            }
+
+            /* Make table mobile-friendly instead of hiding it */
+            .table-container {
+                border-radius: 8px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 700px;
+                font-size: 0.8rem;
+            }
+
+            th,
+            td {
+                padding: 10px 6px;
+                font-size: 0.75rem;
+                white-space: nowrap;
+            }
+
+            .student-name {
+                font-size: 0.8rem;
+                min-width: 120px;
+            }
+
+            .student-email {
+                font-size: 0.7rem;
+                max-width: 150px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .student-phone {
+                font-size: 0.7rem;
+                min-width: 100px;
+            }
+
+            .badge {
+                font-size: 0.6rem;
+                padding: 2px 6px;
+                min-width: 60px;
+                text-align: center;
+            }
+
+            .view-btn {
+                padding: 6px 10px;
+                font-size: 0.7rem;
+                min-width: 80px;
+            }
+
+            .table-header {
+                text-align: center;
+                padding: 15px;
+            }
+
+            .table-title {
+                font-size: 1.1rem;
+            }
+
+            .student-count {
+                font-size: 0.8rem;
+            }
+
+            /* Add horizontal scroll indicator */
+            .table-container::after {
+                content: "← Swipe to see more →";
+                display: block;
+                text-align: center;
+                padding: 10px;
+                font-size: 0.7rem;
+                color: #666;
+                background: rgba(76, 175, 80, 0.1);
+                border-top: 1px solid var(--border);
+            }
+        }
+
+        /* Small Devices (phones in landscape, 576px and up) */
+        @media (min-width: 576px) and (max-width: 767.98px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                margin: -15px -15px 25px -15px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .class-info {
+                justify-content: center;
+            }
+
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 700px;
+            }
+
+            th,
+            td {
+                padding: 14px 10px;
+                font-size: 0.9rem;
+            }
+
+            .view-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Medium Devices (tablets, 768px and up) */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 800px;
+            }
+
+            th,
+            td {
+                padding: 15px 12px;
+            }
+        }
+
+        /* Large Devices (desktops, 992px and up) */
+        @media (min-width: 992px) and (max-width: 1199.98px) {
+            .container {
+                max-width: 960px;
+            }
+
+            h1 {
+                font-size: 2.4rem;
+            }
+        }
+
+        /* Extra Large Devices (large desktops, 1200px and up) */
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1140px;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Ultra Wide Screens (1400px and up) */
+        @media (min-width: 1400px) {
+            .container {
+                max-width: 1320px;
+            }
+        }
+
+        /* Landscape orientation adjustments */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .header {
+                padding: 1rem 0;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+            }
+
+            .info-badge {
+                padding: 4px 8px;
+                font-size: 0.7rem;
+            }
+
+            .theme-toggle {
+                width: 40px;
+                height: 40px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* High DPI screens */
+        @media (-webkit-min-device-pixel-ratio: 2),
+        (min-resolution: 192dpi) {
+            .theme-toggle {
+                border-width: 1px;
+            }
+
+            .view-btn,
+            .back-btn {
+                border-width: 1px;
+            }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+
+            .back-btn:hover,
+            .view-btn:hover,
+            .theme-toggle:hover,
+            tbody tr:hover {
+                transform: none;
+            }
+
+            .back-btn:active {
+                background: var(--primary-light);
+                color: white;
+                transform: scale(0.98);
+            }
+
+            .view-btn:active {
+                background: var(--primary-dark);
+                transform: scale(0.98);
+            }
+
+            .theme-toggle:active {
+                background: var(--primary);
+                color: white;
+                transform: scale(0.95);
+            }
+
+            .student-card:active {
+                transform: scale(0.98);
+            }
+        }
+
+        /* Accessibility - Reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            tbody tr {
+                opacity: 1;
+                animation: none;
+            }
+        }
+
+        /* Dark mode specific mobile adjustments */
+        [data-theme="dark"] .student-card {
+            border-color: var(--border);
+        }
+
+        [data-theme="dark"] .info-row {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="dark"] .info-value {
+            color: #ccc;
+        }
+
+        /* Dark theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow);
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Animation for table rows */
+        tbody tr {
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        tbody tr:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        tbody tr:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        tbody tr:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        tbody tr:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        tbody tr:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media print {
+
+            .logo-row img {
+                box-shadow: none !important;
+                background: #fff !important;
+                padding: 0 !important;
+                height: 40px !important;
+            }
+
+            body,
+            .container {
+                background: #fff !important;
+                color: #000 !important;
+            }
+
+            .theme-toggle,
+            .back-btn,
+            .no-students-icon,
+            .view-btn,
+            .print-btn {
+                display: none !important;
+            }
+
+            .header,
+            .table-container {
+                box-shadow: none !important;
+                background: #fff !important;
+                color: #000 !important;
+            }
+
+            .table-header {
+                background: #fff !important;
+                color: #000 !important;
+                padding: 10px !important;
+            }
+
+            table {
+                width: 100% !important;
+                font-size: 12px !important;
+                border: 1px solid #000 !important;
+            }
+
+            th,
+            td {
+                border: 1px solid #000 !important;
+                padding: 6px !important;
+                color: #000 !important;
+                background: #fff !important;
+            }
+
+            .badge,
+            .track-badge,
+            .section-badge,
+            .year-badge {
+                background: none !important;
+                color: #000 !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+
+            .table-wrapper {
+                overflow: visible !important;
+            }
+
+            .student-name,
+            .student-email,
+            .student-phone {
+                color: #000 !important;
+            }
+
+            /* Remove animations for print */
+            tbody tr {
+                opacity: 1 !important;
+                animation: none !important;
+                transform: none !important;
+            }
+
+            /* Fit to one page */
+            @page {
+                size: auto;
+                margin: 10mm;
+            }
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 18px;
+        }
+
+        .logo-row img {
+            height: 60px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+            padding: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        🌙
+    </div>
+
+    <div class="container">
+        <a href="{{ url_for('classroom_admin_dashboard') }}" class="back-btn">Back to Dashboard</a>
+
+        <div class="header">
+            <div class="header-content">
+                <!-- LOGO ROW -->
+                <div class="logo-row">
+                    <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo">
+                    <img src="{{ url_for('static', filename='images/osas.png') }}" alt="OSAS Logo">
+                    <img src="{{ url_for('static', filename='images/ssc.png') }}" alt="SSC Logo">
+                </div>
+                <h1>Students Roster</h1>
+                <div class="class-info">
+                    <span class="info-badge"> {{ year_level }}</span>
+                    <span class="info-badge"> {{ section }}</span>
+                    <span class="info-badge"> {{ track }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+
+            <div class="table-header">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div class="table-title">Class Directory</div>
+                        <div class="student-count">Total Students: {{ students|length }}</div>
+                    </div>
+                    <button onclick="window.print()" class="print-btn" style="
+                        padding: 14px 28px;
+                        background: #f44336;
+                        color: #fff;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 700;
+                        font-size: 1.15rem;
+                        cursor: pointer;
+                        box-shadow: 0 2px 8px var(--shadow);
+                        transition: background 0.2s, transform 0.2s;
+                        letter-spacing: 1px;
+                        outline: 3px solid #fff;
+                        outline-offset: -3px;
+                        ">
+                        🖨️ PRINT CLASS LIST
+                    </button>
+                </div>
+            </div>
+
+            {% if students %}
+            <!-- Responsive Table View -->
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th> Student Name</th>
+                            <th> Email Address</th>
+                            <th> Phone Number</th>
+                            <th> Track</th>
+                            <th> Section</th>
+                            <th> Year Level</th>
+                            <th> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>
+                                <div class="student-name">{{ student.first_name }} {{ student.last_name }}</div>
+                            </td>
+                            <td>
+                                <div class="student-email">{{ student.email }}</div>
+                            </td>
+                            <td>
+                                <div class="student-phone">{{ student.phone }}</div>
+                            </td>
+                            <td>
+                                <span class="badge track-badge">{{ student.track }}</span>
+                            </td>
+                            <td>
+                                <span class="badge section-badge">{{ student.section }}</span>
+                            </td>
+                            <td>
+                                <span class="badge year-badge">{{ student.year_level }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('view_student', school_id=student.school_id) }}"
+                                    class="view-btn">View Profile</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="no-students">
+                <div class="no-students-icon">👥</div>
+                <h3>No Students Found</h3>
+                <p>There are currently no students enrolled in this class.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                themeToggle.innerHTML = '🌙';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '☀️';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.querySelector('.theme-toggle');
+
+            if (savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '☀️';
+            }
+        });
+
+        // Add smooth scrolling for better UX
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

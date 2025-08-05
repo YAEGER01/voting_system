@@ -23,7 +23,7 @@ from pytz import timezone as pytz_timezone
 
 PH_TZ = pytz_timezone('Asia/Manila')
 
-#PH_TZ = timezone(timedelta(hours=8)) <-- posible gamitin ulit
+PH_TZ = timezone(timedelta(hours=8))
 
 
 def format_ph_time(dt_str):
@@ -887,13 +887,20 @@ def login():
 
                 # Log the login action
                 supabase.table('logs').insert({
-                    'user_id': user['id'],
-                    'action': 'LOGIN_SUCCESS',
-                    'table_name': 'user',
-                    'query_type': 'SYSTEM',
-                    'target': f'Login from IP {request.remote_addr} with role {user["role"]}',
-                    'new_data': 'active=ACTIVE',
-                    'timestamp': datetime.now().isoformat()
+                    'user_id':
+                    user['id'],
+                    'action':
+                    'LOGIN_SUCCESS',
+                    'table_name':
+                    'user',
+                    'query_type':
+                    'SYSTEM',
+                    'target':
+                    f'Login from IP {request.remote_addr} with role {user["role"]}',
+                    'new_data':
+                    'active=ACTIVE',
+                    'timestamp':
+                    datetime.now().isoformat()
                 }).execute()
 
                 # Redirect based on role
@@ -926,6 +933,7 @@ def login():
                 flash("Invalid School ID or Password.", 'danger')
     print("Session role:", session.get('role'))
     return render_template('login.html', recaptcha_site_key=RECAPTCHA_SITE_KEY)
+
 
 @app.route('/main_dashboard', methods=['GET', 'POST'])
 def main_dashboard():
@@ -1654,6 +1662,7 @@ def dashboard():
         votable_positions=votable_positions  # <-- add this line
     )
 
+
 @app.route('/ssc_dashboard', methods=['GET', 'POST'])
 def ssc_dashboard():
     if 'school_id' not in session:
@@ -1732,13 +1741,20 @@ def ssc_dashboard():
                     }).execute()
 
                     supabase.table('logs').insert({
-                        'user_id': user['id'],
-                        'action': 'CAST_VOTE',
-                        'table_name': 'votes',
-                        'query_type': 'INSERT',
-                        'target': f"Position ID: {position_id_int}",
-                        'new_data': f"Encrypted Candidate ID: {encrypted_candidate_id}",
-                        'timestamp': datetime.now().isoformat()
+                        'user_id':
+                        user['id'],
+                        'action':
+                        'CAST_VOTE',
+                        'table_name':
+                        'votes',
+                        'query_type':
+                        'INSERT',
+                        'target':
+                        f"Position ID: {position_id_int}",
+                        'new_data':
+                        f"Encrypted Candidate ID: {encrypted_candidate_id}",
+                        'timestamp':
+                        datetime.now().isoformat()
                     }).execute()
 
                     hashed_student_id = hashlib.sha256(
@@ -1776,24 +1792,22 @@ def ssc_dashboard():
 
     voting_not_started = voting_start and now < voting_start
 
-    return render_template(
-        'ssc_dashboard.html',
-        user=user,
-        dept_logo=dept_logo,
-        voting_deadline=voting_end,
-        voting_start=voting_start,
-        voting_end=voting_end,
-        voting_start_display=voting_start_display,
-        voting_end_display=voting_end_display,
-        now=now,
-        voting_closed=voting_closed,
-        positions=positions,
-        voted_positions=voted_positions,
-        candidates_per_position=candidates_per_position,
-        all_voted=all_voted,
-        voting_not_started=voting_not_started,
-        votable_positions=votable_positions
-    )
+    return render_template('ssc_dashboard.html',
+                           user=user,
+                           dept_logo=dept_logo,
+                           voting_deadline=voting_end,
+                           voting_start=voting_start,
+                           voting_end=voting_end,
+                           voting_start_display=voting_start_display,
+                           voting_end_display=voting_end_display,
+                           now=now,
+                           voting_closed=voting_closed,
+                           positions=positions,
+                           voted_positions=voted_positions,
+                           candidates_per_position=candidates_per_position,
+                           all_voted=all_voted,
+                           voting_not_started=voting_not_started,
+                           votable_positions=votable_positions)
 
 
 @app.route('/classroom_dashboard', methods=['GET', 'POST'])
@@ -1809,12 +1823,84 @@ def classroom_dashboard():
         flash("User not found.", "danger")
         return redirect(url_for('login'))
 
-    dept_logo = DEPARTMENT_LOGOS.get(user.get('department', '').upper())
-    now = datetime.now(timezone.utc)
+    # --- Flexible course mapping ---
+    COURSE_MAP = {
+        "bsit": "bachelor of science in information technology",
+        "bsindtech": "bachelor of science in industrial technology",
+        "bscs": "bachelor of science in computer science",
+        "bsemc":
+        "bachelor of science in entertainment and multimedia computing",
+        "bsba": "bachelor of science in business administration",
+        "bsm": "bachelor of science in management",
+        "bshm": "bachelor of science in hospitality management",
+        "bstm": "bachelor of science in tourism management",
+        "bsais": "bachelor of science in accounting information system",
+        "bsma": "bachelor of science in management accounting",
+        "bsentrep": "bachelor of science in entrepreneurship",
+        "bslm": "bachelor of science in legal management",
+        "bscrim": "bachelor of science in criminology",
+        "bsed": "bachelor of secondary education",
+        "beed": "bachelor of elementary education",
+        "bped": "bachelor of physical education",
+        "baels": "bachelor of arts in english language studies",
+        "baps": "bachelor of arts in political science",
+        "das": "diploma in agricultural sciences"
+    }
 
-    department = user.get('department', user.get('course', ''))
-    setting_resp = supabase.table('settings').select('*').eq(
-        'department', department).order('id', desc=True).limit(1).execute()
+    def normalize(val):
+        # Lowercase, strip spaces, and remove all spaces for flexible matching
+        return val.strip().lower().replace(" ", "") if val else ""
+
+    # Normalize user values
+    user_course = normalize(user.get('course', ''))
+    user_year_level = normalize(user.get('year_level', ''))
+    user_section = normalize(user.get('section', ''))
+    user_track = normalize(user.get('track', ''))
+
+    # Try to map course to both abbr and full name
+    course_abbr = None
+    course_full = None
+    for abbr, full in COURSE_MAP.items():
+        if user_course == abbr or user_course == normalize(full):
+            course_abbr = abbr
+            course_full = normalize(full)
+            break
+    # If not found, fallback to user_course
+    course_query_1 = course_abbr if course_abbr else user_course
+    course_query_2 = course_full if course_full else user_course
+
+    print(
+        "Querying with:", {
+            "course": [course_query_1, course_query_2],
+            "year_level": user_year_level,
+            "section": user_section,
+            "track": user_track
+        })
+
+    # Fetch all classroom_settings and match in Python for full flexibility
+    all_settings = supabase.table('classroom_settings').select('*').execute()
+    matched_setting = None
+    for setting in all_settings.data:
+        db_course = normalize(setting.get('course', ''))
+        db_year_level = normalize(setting.get('year_level', ''))
+        db_section = normalize(setting.get('section', ''))
+        db_track = normalize(setting.get('track', ''))
+        if ((db_course == course_query_1 or db_course == course_query_2)
+                and db_year_level == user_year_level
+                and db_section == user_section and db_track == user_track):
+            matched_setting = setting
+            break
+
+    if matched_setting:
+        print("Matched classroom_settings row:", matched_setting)
+        setting_resp = type('obj', (object, ), {'data': [matched_setting]})()
+    else:
+        print(
+            "No classroom_settings row matched. Check all fields for exact value and spacing."
+        )
+        setting_resp = type('obj', (object, ), {'data': []})()
+
+    now = datetime.now(timezone.utc)
 
     voting_start = None
     voting_end = None
@@ -1828,25 +1914,29 @@ def classroom_dashboard():
         try:
             start_str = setting.get('start_time')
             end_str = setting.get('end_time')
-
-            if start_str and end_str:
+            print("start_str:", start_str, "end_str:", end_str)
+            if start_str:
                 voting_start = datetime.fromisoformat(start_str)
-                voting_end = datetime.fromisoformat(end_str)
-
                 if voting_start.tzinfo is None:
                     voting_start = voting_start.replace(tzinfo=timezone.utc)
+            if end_str:
+                voting_end = datetime.fromisoformat(end_str)
                 if voting_end.tzinfo is None:
                     voting_end = voting_end.replace(tzinfo=timezone.utc)
-
+            print("Voting start:", voting_start)
+            print("Voting end:", voting_end)
+            if voting_start:
                 voting_start_display = voting_start.astimezone(PH_TZ).strftime(
                     "%B %d, %Y %I:%M %p PH Time")
+            if voting_end:
                 voting_end_display = voting_end.astimezone(PH_TZ).strftime(
                     "%B %d, %Y %I:%M %p PH Time")
 
+            if voting_start and voting_end:
                 voting_open = voting_start <= now <= voting_end
                 voting_closed = now > voting_end
-        except Exception:
-            pass
+        except Exception as e:
+            print("Error parsing voting period:", e)
 
     if request.method == 'POST':
         if not voting_open:
@@ -1858,29 +1948,47 @@ def classroom_dashboard():
                 position_id_int = int(position_id)
                 candidate_id_int = int(candidate_id)
 
-                vote_resp = supabase.table('votes').select('*').eq(
+                vote_resp = supabase.table('classroom_votes').select('*').eq(
                     'student_id', school_id).eq('position_id',
                                                 position_id_int).execute()
                 if not vote_resp.data:
                     encrypted_candidate_id = encrypt_vote(
                         str(candidate_id_int))
 
-                    supabase.table('votes').insert({
-                        'student_id': school_id,
-                        'position_id': position_id_int,
-                        'candidate_id': encrypted_candidate_id,
-                        'candidate_ref': candidate_id_int,
-                        'department': department
+                    supabase.table('classroom_votes').insert({
+                        'student_id':
+                        school_id,
+                        'position_id':
+                        position_id_int,
+                        'candidate_id':
+                        encrypted_candidate_id,
+                        'candidate_ref':
+                        candidate_id_int,
+                        'course':
+                        user.get('course', ''),
+                        'year_level':
+                        user.get('year_level', ''),
+                        'section':
+                        user.get('section', ''),
+                        'track':
+                        user.get('track', '')
                     }).execute()
 
                     supabase.table('logs').insert({
-                        'user_id': user['id'],
-                        'action': 'CAST_VOTE',
-                        'table_name': 'votes',
-                        'query_type': 'INSERT',
-                        'target': f"Position ID: {position_id_int}",
-                        'new_data': f"Encrypted Candidate ID: {encrypted_candidate_id}",
-                        'timestamp': datetime.now().isoformat()
+                        'user_id':
+                        user['id'],
+                        'action':
+                        'CAST_CLASSROOM_VOTE',
+                        'table_name':
+                        'classroom_votes',
+                        'query_type':
+                        'INSERT',
+                        'target':
+                        f"Position ID: {position_id_int}",
+                        'new_data':
+                        f"Encrypted Candidate ID: {encrypted_candidate_id}",
+                        'timestamp':
+                        datetime.now().isoformat()
                     }).execute()
 
                     hashed_student_id = hashlib.sha256(
@@ -1895,22 +2003,31 @@ def classroom_dashboard():
         flash('Your vote has been submitted successfully!', 'success')
         return redirect(url_for('classroom_dashboard'))
 
-    positions_resp = supabase.table('positions').select('*').eq(
-        'department', department).execute()
-    positions = positions_resp.data if positions_resp.data else []
+    # Get classroom positions (use same normalization logic)
+    positions = []
+    all_positions = supabase.table('classroom_positions').select('*').execute()
+    for pos in all_positions.data:
+        db_course = normalize(pos.get('course', ''))
+        db_year_level = normalize(pos.get('year_level', ''))
+        db_section = normalize(pos.get('section', ''))
+        db_track = normalize(pos.get('track', ''))
+        if ((db_course == course_query_1 or db_course == course_query_2)
+                and db_year_level == user_year_level
+                and db_section == user_section and db_track == user_track):
+            positions.append(pos)
 
     candidates_per_position = {}
     votable_positions = []
     for pos in positions:
-        cands_resp = supabase.table('candidates').select('*').eq(
+        cands_resp = supabase.table('classroom_candidates').select('*').eq(
             'position_id', pos['id']).execute()
         candidates = cands_resp.data if cands_resp.data else []
         candidates_per_position[pos['id']] = candidates
         if candidates:
             votable_positions.append(pos)
 
-    voted_positions_resp = supabase.table('votes').select('position_id').eq(
-        'student_id', school_id).execute()
+    voted_positions_resp = supabase.table('classroom_votes').select(
+        'position_id').eq('student_id', school_id).execute()
     voted_positions = [v['position_id'] for v in voted_positions_resp.data
                        ] if voted_positions_resp.data else []
     all_voted = bool(votable_positions) and all(pos['id'] in voted_positions
@@ -1918,24 +2035,21 @@ def classroom_dashboard():
 
     voting_not_started = voting_start and now < voting_start
 
-    return render_template(
-        'classroom_dashboard.html',
-        user=user,
-        dept_logo=dept_logo,
-        voting_deadline=voting_end,
-        voting_start=voting_start,
-        voting_end=voting_end,
-        voting_start_display=voting_start_display,
-        voting_end_display=voting_end_display,
-        now=now,
-        voting_closed=voting_closed,
-        positions=positions,
-        voted_positions=voted_positions,
-        candidates_per_position=candidates_per_position,
-        all_voted=all_voted,
-        voting_not_started=voting_not_started,
-        votable_positions=votable_positions
-    )
+    return render_template('classroom_dashboard.html',
+                           user=user,
+                           voting_deadline=voting_end,
+                           voting_start=voting_start,
+                           voting_end=voting_end,
+                           voting_start_display=voting_start_display,
+                           voting_end_display=voting_end_display,
+                           now=now,
+                           voting_closed=voting_closed,
+                           positions=positions,
+                           voted_positions=voted_positions,
+                           candidates_per_position=candidates_per_position,
+                           all_voted=all_voted,
+                           voting_not_started=voting_not_started,
+                           votable_positions=votable_positions)
 
 
 @app.route('/blockchain')
@@ -2754,6 +2868,215 @@ def vote_receipt():
         vote_entries=vote_entries,
         receipt_timeout_enabled=True,
         receipt_expiry=view_end.strftime("%Y-%m-%d %H:%M:%S"))
+
+
+@app.route('/classroom_vote_receipt')
+def classroom_vote_receipt():
+    if 'school_id' not in session:
+        flash("Session expired. Please log in.", "warning")
+        print("[DEBUG] Session missing 'school_id'; redirecting to /login")
+        return redirect(url_for('login'))
+
+    school_id = session['school_id']
+    now = datetime.now(PH_TZ)
+    print(f"[DEBUG] Current PH time: {now.isoformat()}")
+
+    # Fetch user with classroom info
+    user_resp = supabase.table("user").select(
+        "id, school_id, first_name, last_name, course, track, year_level, section"
+    ).eq("school_id", school_id).single().execute()
+
+    user = user_resp.data
+    if not user:
+        flash("User not found.", "danger")
+        print(f"[DEBUG] No user found for school_id: {school_id}")
+        return redirect(url_for('classroom_dashboard'))
+
+    # --- Flexible course mapping and normalization ---
+    COURSE_MAP = {
+        "bsit": "bachelor of science in information technology",
+        "bsindtech": "bachelor of science in industrial technology",
+        "bscs": "bachelor of science in computer science",
+        "bsemc":
+        "bachelor of science in entertainment and multimedia computing",
+        "bsba": "bachelor of science in business administration",
+        "bsm": "bachelor of science in management",
+        "bshm": "bachelor of science in hospitality management",
+        "bstm": "bachelor of science in tourism management",
+        "bsais": "bachelor of science in accounting information system",
+        "bsma": "bachelor of science in management accounting",
+        "bsentrep": "bachelor of science in entrepreneurship",
+        "bslm": "bachelor of science in legal management",
+        "bscrim": "bachelor of science in criminology",
+        "bsed": "bachelor of secondary education",
+        "beed": "bachelor of elementary education",
+        "bped": "bachelor of physical education",
+        "baels": "bachelor of arts in english language studies",
+        "baps": "bachelor of arts in political science",
+        "das": "diploma in agricultural sciences"
+    }
+
+    def normalize(val):
+        return val.strip().lower().replace(" ", "") if val else ""
+
+    user_course = normalize(user.get('course', ''))
+    user_year_level = normalize(user.get('year_level', ''))
+    user_section = normalize(user.get('section', ''))
+    user_track = normalize(user.get('track', ''))
+
+    course_abbr = None
+    course_full = None
+    for abbr, full in COURSE_MAP.items():
+        if user_course == abbr or user_course == normalize(full):
+            course_abbr = abbr
+            course_full = normalize(full)
+            break
+    course_query_1 = course_abbr if course_abbr else user_course
+    course_query_2 = course_full if course_full else user_course
+
+    print("[DEBUG] Querying classroom_settings with:", course_query_1,
+          course_query_2, user_year_level, user_section, user_track)
+
+    # Fetch all classroom_settings and match in Python for flexibility
+    all_settings = supabase.table('classroom_settings').select('*').execute()
+    matched_setting = None
+    for setting in all_settings.data:
+        db_course = normalize(setting.get('course', ''))
+        db_year_level = normalize(setting.get('year_level', ''))
+        db_section = normalize(setting.get('section', ''))
+        db_track = normalize(setting.get('track', ''))
+        if ((db_course == course_query_1 or db_course == course_query_2)
+                and db_year_level == user_year_level
+                and db_section == user_section and db_track == user_track
+                and setting.get('end_time')):
+            matched_setting = setting
+            break
+
+    if not matched_setting:
+        flash("No valid end_time found for this classroom.", "warning")
+        print(
+            "[DEBUG] No valid end_time rows available; redirecting to classroom_dashboard"
+        )
+        return redirect(url_for('classroom_dashboard'))
+
+    latest_end = parser.isoparse(matched_setting['end_time']).astimezone(PH_TZ)
+    print(f"[DEBUG] Latest classroom end_time: {latest_end.isoformat()}")
+
+    view_start = latest_end + timedelta(minutes=1)
+    view_end = latest_end + timedelta(minutes=10)
+    print(
+        f"[DEBUG] View window: {view_start.isoformat()} → {view_end.isoformat()}"
+    )
+
+    if now < view_start:
+        flash("Classroom vote receipt viewing not yet available.", "info")
+        print("[DEBUG] Viewing attempt too early")
+        return redirect(url_for('classroom_dashboard'))
+    elif now > view_end:
+        flash("Classroom vote receipt viewing period expired permanently.",
+              "danger")
+        print("[DEBUG] Viewing attempt after expiry")
+        return redirect(url_for('classroom_dashboard'))
+
+    # Name masking
+    def mask_name(name):
+        if len(name) <= 2:
+            return '*' * len(name)
+        elif len(name) <= 4:
+            return name[0] + '*' * (len(name) - 1)
+        else:
+            return name[:2] + '*' * (len(name) - 2)
+
+    masked_first = mask_name(user['first_name'])
+    masked_last = mask_name(user['last_name'])
+
+    # Get all classroom positions (normalize for matching)
+    all_positions = []
+    all_pos_resp = supabase.table("classroom_positions").select("*").execute()
+    for pos in all_pos_resp.data:
+        db_course = normalize(pos.get('course', ''))
+        db_year_level = normalize(pos.get('year_level', ''))
+        db_section = normalize(pos.get('section', ''))
+        db_track = normalize(pos.get('track', ''))
+        if ((db_course == course_query_1 or db_course == course_query_2)
+                and db_year_level == user_year_level
+                and db_section == user_section and db_track == user_track):
+            all_positions.append(pos)
+    print(f"[DEBUG] Retrieved {len(all_positions)} classroom positions")
+
+    # Get user's classroom votes
+    votes_resp = supabase.table("classroom_votes").select("position_id, candidate_id") \
+        .eq("student_id", school_id).execute()
+    voted = votes_resp.data or []
+    print(f"[DEBUG] Retrieved {len(voted)} classroom votes for student_id")
+
+    voted_map = {}
+    for v in voted:
+        try:
+            voted_map[v['position_id']] = int(decrypt_vote(v['candidate_id']))
+        except Exception:
+            print(
+                f"[DEBUG] Failed to decrypt vote for position_id {v['position_id']}"
+            )
+
+    vote_entries = []
+    for pos in all_positions:
+        pos_id = pos['id']
+        position_name = pos['name']
+        candidate_id = voted_map.get(pos_id)
+
+        if candidate_id:
+            cand_resp = supabase.table("classroom_candidates").select("name") \
+                .eq("id", candidate_id).single().execute()
+            cand = cand_resp.data
+            masked_cand = mask_name(
+                cand['name']) if cand else "Vote data error"
+            vote_hash = hashlib.sha256(
+                f"{school_id}:{pos_id}:{candidate_id}".encode()).hexdigest()
+        else:
+            cand_count = supabase.table("classroom_candidates").select("id") \
+                .eq("position_id", pos_id).execute()
+            status = "nocandidate" if not cand_count.data else "skipped"
+            masked_cand = "No vote recorded (no candidates available)" if status == "nocandidate" \
+                else "No vote recorded (you skipped this)"
+            vote_hash = hashlib.sha256(
+                f"{school_id}:{pos_id}:{status}".encode()).hexdigest()
+
+        vote_entries.append({
+            "position_name": position_name,
+            "masked_candidate": masked_cand,
+            "hash": vote_hash
+        })
+
+    print(
+        f"[DEBUG] Compiled {len(vote_entries)} classroom vote receipt entries")
+
+    # Log access
+    supabase.table("logs").insert({
+        "user_id": user['id'],
+        "action": "VIEW_CLASSROOM_VOTE_RECEIPT",
+        "table_name": "classroom_votes",
+        "query_type": "READ",
+        "target":
+        f"Classroom: {user.get('course', '')} {user.get('year_level', '')} {user.get('section', '')} {user.get('track', '')}",
+        "new_data": f"Vote hashes: {[v['hash'] for v in vote_entries]}",
+        "timestamp": now.isoformat()
+    }).execute()
+    print("[DEBUG] Classroom vote receipt access logged")
+
+    return render_template(
+        "classroom_vote_receipt.html",
+        masked_first=masked_first,
+        masked_last=masked_last,
+        course=user.get('course', ''),
+        track=user.get('track', ''),
+        year_level=user.get('year_level', ''),
+        section=user.get('section', ''),
+        hashed_users=[hashlib.sha256(school_id.encode()).hexdigest()],
+        vote_entries=vote_entries,
+        receipt_timeout_enabled=True,
+        receipt_expiry=view_end.strftime("%Y-%m-%d %H:%M:%S"),
+        receipt_title="Classroom Vote Receipt")
 
 
 import re
@@ -3939,12 +4262,15 @@ def set_ssc_filing_period():
     return redirect(url_for('system_admin'))  # <-- FIXED
     return redirect(url_for('system_admin'))  # <-- FIXED
 
+
 # CLASSROOM FUNCTIONSSSSSSSSSSS --- VONNY
+
 
 @app.route('/classroom_admin_dashboard')
 def classroom_admin_dashboard():
     if 'school_id' not in session or session.get('role') != 'classroom_admin':
-        print("Session role:", session.get('role'), "Session school_id:", session.get('school_id'))
+        print("Session role:", session.get('role'), "Session school_id:",
+              session.get('school_id'))
         flash("You must be a classroom admin to access this page.", "danger")
         return redirect(url_for('login'))
 
@@ -3984,6 +4310,7 @@ def classroom_admin_dashboard():
                            admin=admin,
                            active_users=active_users)
 
+
 @app.route('/classroom_candidates')
 def classroom_candidates():
     if 'school_id' not in session:
@@ -4003,7 +4330,8 @@ def classroom_candidates():
         "BSIT": "Bachelor of Science in Information Technology",
         "BSIndTech": "Bachelor of Science in Industrial Technology",
         "BSCS": "Bachelor of Science in Computer Science",
-        "BSEMC": "Bachelor of Science in Entertainment and Multimedia Computing",
+        "BSEMC":
+        "Bachelor of Science in Entertainment and Multimedia Computing",
         "BSBA": "Bachelor of Science in Business Administration",
         "BSM": "Bachelor of Science in Management",
         "BSHM": "Bachelor of Science in Hospitality Management",
@@ -4060,29 +4388,67 @@ def classroom_candidates():
         'action': 'VIEW_CLASSROOM_CANDIDATES',
         'table_name': 'classroom_candidates',
         'query_type': 'READ',
-        'target': f"Classroom: {classroom_course} {classroom_year_level} {classroom_section} {classroom_track}",
+        'target':
+        f"Classroom: {classroom_course} {classroom_year_level} {classroom_section} {classroom_track}",
         'new_data': f"{len(positions_with_candidates)} positions accessed",
         'timestamp': datetime.now().isoformat()
     }).execute()
 
-    return render_template(
-        'classroom_candidates.html',
-        classroom_course=classroom_course,
-        classroom_year_level=classroom_year_level,
-        classroom_section=classroom_section,
-        classroom_track=classroom_track,
-        positions_with_candidates=positions_with_candidates
-    )
+    return render_template('classroom_candidates.html',
+                           classroom_course=classroom_course,
+                           classroom_year_level=classroom_year_level,
+                           classroom_section=classroom_section,
+                           classroom_track=classroom_track,
+                           positions_with_candidates=positions_with_candidates)
+
+
+@app.route('/classroom_candidate/<int:id>')
+def classroom_candidate_details(id):
+    if 'school_id' not in session:
+        flash("You must be logged in to view candidate details.", "danger")
+        return redirect(url_for('login'))
+
+    # Query classroom_candidates safely
+    cand_resp = supabase.table('classroom_candidates').select('*').eq(
+        'id', id).limit(1).execute()
+    candidate = cand_resp.data[0] if cand_resp.data else None
+    if not candidate:
+        flash("Candidate not found.", "danger")
+        return redirect(url_for('classroom_candidates'))
+
+    # Query classroom_positions safely
+    pos_resp = supabase.table('classroom_positions').select('name').eq(
+        'id', candidate['position_id']).limit(1).execute()
+    position_name = pos_resp.data[0]['name'] if pos_resp.data else ''
+
+    # Log classroom candidate detail view
+    user_resp = supabase.table('user').select('id').eq(
+        'school_id', session['school_id']).limit(1).execute()
+    if user_resp.data:
+        supabase.table('logs').insert({
+            'user_id': user_resp.data[0]['id'],
+            'action': 'VIEW_CLASSROOM_CANDIDATE_DETAILS',
+            'table_name': 'classroom_candidates',
+            'query_type': 'READ',
+            'target': f"Candidate ID: {id}, Position: {position_name}",
+            'new_data': 'N/A',
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
+    return render_template('classroom_candidate_details.html',
+                           candidate=candidate,
+                           position_name=position_name)
+
 
 @app.route('/classroom_manage_candidates', methods=['GET', 'POST'])
 def classroom_manage_candidates():
     if 'school_id' not in session or session.get('role') != 'classroom_admin':
-        print("Session role:", session.get('role'), "Session school_id:", session.get('school_id'))
         flash("You must be a classroom admin to access this page.", "danger")
         return redirect(url_for('login'))
 
     classroom_school_id = session.get('school_id')
-    classroom_data = supabase.table('user').select('*').eq('school_id', classroom_school_id).single().execute().data
+    classroom_data = supabase.table('user').select('*').eq(
+        'school_id', classroom_school_id).single().execute().data
 
     if not classroom_data:
         return "Classroom admin not found", 404
@@ -4092,29 +4458,31 @@ def classroom_manage_candidates():
     section = classroom_data.get('section', '')
     track = classroom_data.get('track', '')
 
-    # Fetch filing period settings
-    settings_resp = supabase.table('classroom_settings') \
-        .select('filing_start', 'filing_end') \
-        .eq('course', course) \
-        .eq('year_level', year_level) \
-        .eq('section', section) \
-        .eq('track', track) \
-        .order('id', desc=True).limit(1).execute()
-
-    settings_row = settings_resp.data[0] if settings_resp.data else None
-    filing_start = settings_row['filing_start'] if settings_row else None
-    filing_end = settings_row['filing_end'] if settings_row else None
-
-    filing_start_display = format_ph_time(filing_start) if filing_start else 'Not set'
-    filing_end_display = format_ph_time(filing_end) if filing_end else 'Not set'
-
-    filing_start_iso = ''
-    filing_end_iso = ''
+    filing_start = filing_end = None
+    filing_start_iso = filing_end_iso = ''
     filing_open = False
+    filing_start_display = filing_end_display = 'Not set'
 
-    now_ph = datetime.now(PH_TZ)
-    if filing_start and filing_end:
-        try:
+    try:
+        # Try classroom-specific settings first
+        settings_resp = supabase.table('classroom_settings').select(
+            'filing_start', 'filing_end'
+        ).eq('course', course).eq('year_level', year_level).eq('section', section).eq('track', track) \
+         .order('id', desc=True).limit(1).execute()
+
+        # Fallback to ALL if not found
+        if not settings_resp.data:
+            settings_resp = supabase.table('classroom_settings').select(
+                'filing_start', 'filing_end'
+            ).eq('course', 'ALL').eq('year_level', 'ALL').eq('section', 'ALL').eq('track', 'ALL') \
+             .order('id', desc=True).limit(1).execute()
+
+        if settings_resp.data:
+            filing_start = settings_resp.data[0]['filing_start']
+            filing_end = settings_resp.data[0]['filing_end']
+
+        now_ph = datetime.now(PH_TZ)
+        if filing_start and filing_end:
             filing_start_dt = datetime.fromisoformat(
                 filing_start.replace('Z', '+00:00')).astimezone(PH_TZ)
             filing_end_dt = datetime.fromisoformat(
@@ -4122,15 +4490,19 @@ def classroom_manage_candidates():
             filing_open = filing_start_dt <= now_ph < filing_end_dt
             filing_start_iso = filing_start_dt.isoformat()
             filing_end_iso = filing_end_dt.isoformat()
-        except Exception as e:
-            print(f"Error parsing filing period: {e}")
-            filing_open = False
-            filing_start_iso = ''
-            filing_end_iso = ''
+            filing_start_display = format_ph_time(filing_start)
+            filing_end_display = format_ph_time(filing_end)
+    except Exception as e:
+        print(f"Error parsing filing period: {e}")
+        filing_open = False
+        filing_start_iso = ''
+        filing_end_iso = ''
 
     if request.method == 'POST':
         if not filing_open:
-            flash("Candidate/position management is only allowed during the filing period.", "error")
+            flash(
+                "Candidate/position management is only allowed during the filing period.",
+                "error")
             return redirect(url_for('classroom_manage_candidates'))
 
         if 'add_candidate' in request.form:
@@ -4152,7 +4524,8 @@ def classroom_manage_candidates():
             note = request.form.get('note', '').strip()
             image_path = None
 
-            dup_resp = supabase.table('candidates') \
+            # Check for duplicate in classroom_candidates
+            dup_resp = supabase.table('classroom_candidates') \
                 .select('id') \
                 .eq('course', course) \
                 .eq('year_level', year_level) \
@@ -4161,7 +4534,9 @@ def classroom_manage_candidates():
                 .ilike('name', name) \
                 .execute()
             if dup_resp.data:
-                flash("A candidate with this name already exists in this classroom.", "error")
+                flash(
+                    "A candidate with this name already exists in this classroom.",
+                    "error")
                 return redirect(url_for('classroom_manage_candidates'))
 
             file = request.files.get('image')
@@ -4169,43 +4544,70 @@ def classroom_manage_candidates():
                 os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
                 filename = secure_filename(f"{position_id}_{file.filename}")
                 image_path = f"uploads/candidates/{filename}"
-                full_save_path = os.path.join(app.root_path, 'static', 'uploads', 'candidates', filename)
+                full_save_path = os.path.join(app.root_path, 'static',
+                                              'uploads', 'candidates',
+                                              filename)
                 file.save(full_save_path)
 
-            supabase.table('candidates').insert({
-                'position_id': int(position_id),
-                'name': name,
-                'image': image_path,
-                'campaign_message': campaign_message,
-                'course': course,
-                'year_level': year_level,
-                'section': section,
-                'track': track,
-                'skills': skills,
-                'platform': platform,
-                'goals': goals,
-                'sg_years': sg_years,
-                'previous_role': previous_role,
-                'experience': experience,
-                'achievements': achievements,
-                'slogan': slogan,
-                'note': note
+            supabase.table('classroom_candidates').insert({
+                'position_id':
+                int(position_id),
+                'name':
+                name,
+                'image':
+                image_path,
+                'campaign_message':
+                campaign_message,
+                'course':
+                course,
+                'year_level':
+                year_level,
+                'section':
+                section,
+                'track':
+                track,
+                'skills':
+                skills,
+                'platform':
+                platform,
+                'goals':
+                goals,
+                'sg_years':
+                sg_years,
+                'previous_role':
+                previous_role,
+                'experience':
+                experience,
+                'achievements':
+                achievements,
+                'slogan':
+                slogan,
+                'note':
+                note
             }).execute()
 
             supabase.table('logs').insert({
-                'user_id': session.get('user_id'),
-                'action': 'ADD_CANDIDATE',
-                'table_name': 'candidates',
-                'query_type': 'INSERT',
-                'target': name,
-                'new_data': f"Position ID: {position_id}, Classroom: {course} {year_level} {section} {track}",
-                'timestamp': datetime.now(PH_TZ).isoformat()
+                'user_id':
+                session.get('user_id'),
+                'action':
+                'ADD_CLASSROOM_CANDIDATE',
+                'table_name':
+                'classroom_candidates',
+                'query_type':
+                'INSERT',
+                'target':
+                name,
+                'new_data':
+                f"Position ID: {position_id}, Classroom: {course} {year_level} {section} {track}",
+                'timestamp':
+                datetime.now(PH_TZ).isoformat()
             }).execute()
 
             flash("Candidate added successfully!", "success")
             return redirect(url_for('classroom_manage_candidates'))
 
-    positions_resp = supabase.table('positions') \
+    # Fetch classroom positions
+    positions_resp = supabase.table('classroom_positions') \
         .select('*') \
         .eq('course', course) \
         .eq('year_level', year_level) \
@@ -4214,8 +4616,9 @@ def classroom_manage_candidates():
         .order('name', desc=False).execute()
     positions = positions_resp.data or []
 
-    candidates_resp = supabase.table('candidates') \
-        .select('*,positions(name)') \
+    # Fetch classroom candidates
+    candidates_resp = supabase.table('classroom_candidates') \
+        .select('*') \
         .eq('course', course) \
         .eq('year_level', year_level) \
         .eq('section', section) \
@@ -4229,15 +4632,156 @@ def classroom_manage_candidates():
                            filing_end_iso=filing_end_iso,
                            positions=positions,
                            candidates=candidates,
-                           filing_open=filing_open)
+                           filing_open=filing_open,
+                           classroom_course=course,
+                           classroom_year_level=year_level,
+                           classroom_section=section,
+                           classroom_track=track)
 
 
-# ...existing code...
+@app.route('/edit_classroom_candidate/<int:id>', methods=['GET', 'POST'])
+def edit_classroom_candidate(id):
+    if 'school_id' not in session or session.get('role') != 'classroom_admin':
+        flash("You must be a classroom admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    cand_resp = supabase.table('classroom_candidates').select('*').eq(
+        'id', id).limit(1).execute()
+    candidate = cand_resp.data[0] if cand_resp.data else None
+    if not candidate:
+        flash("Candidate not found.", "danger")
+        return redirect(url_for('classroom_manage_candidates'))
+
+    positions_resp = supabase.table('classroom_positions').select('*') \
+        .eq('course', candidate['course']) \
+        .eq('year_level', candidate['year_level']) \
+        .eq('section', candidate['section']) \
+        .eq('track', candidate['track']) \
+        .order('name', desc=False).execute()
+    positions = positions_resp.data if positions_resp.data else []
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        position_id = request.form.get('position_id')
+        campaign_message = request.form.get('campaign_message', '').strip()
+        year_level = request.form.get('year_level', '').strip()
+        course = request.form.get('course', '').strip()
+        section = request.form.get('section', '').strip()
+        track = request.form.get('track', '').strip()
+        skills = request.form.get('skills', '').strip()
+        platform = request.form.get('platform', '').strip()
+        goals = request.form.get('goals', '').strip()
+        sg_years = request.form.get('sg_years', '').strip()
+        previous_role = request.form.get('previous_role', '').strip()
+        experience = request.form.get('experience', '').strip()
+        achievements = request.form.get('achievements', '').strip()
+        slogan = request.form.get('slogan', '').strip()
+        note = request.form.get('note', '').strip()
+        image_path = candidate['image']
+
+        file = request.files.get('image')
+        if file and file.filename:
+            if image_path:
+                old_path = os.path.join('static', image_path)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
+            filename = secure_filename(f"{position_id}_{file.filename}")
+            image_path = f"uploads/candidates/{filename}"
+            full_save_path = os.path.join(app.root_path, 'static', 'uploads',
+                                          'candidates', filename)
+            file.save(full_save_path)
+
+        supabase.table('classroom_candidates').update({
+            'name':
+            name,
+            'position_id':
+            int(position_id),
+            'campaign_message':
+            campaign_message,
+            'image':
+            image_path,
+            'year_level':
+            year_level,
+            'course':
+            course,
+            'section':
+            section,
+            'track':
+            track,
+            'skills':
+            skills,
+            'platform':
+            platform,
+            'goals':
+            goals,
+            'sg_years':
+            sg_years,
+            'previous_role':
+            previous_role,
+            'experience':
+            experience,
+            'achievements':
+            achievements,
+            'slogan':
+            slogan,
+            'note':
+            note
+        }).eq('id', id).execute()
+
+        supabase.table('logs').insert({
+            'user_id': session.get('user_id'),
+            'action': 'EDIT_CLASSROOM_CANDIDATE',
+            'table_name': 'classroom_candidates',
+            'query_type': 'UPDATE',
+            'target': name,
+            'new_data': f"Candidate ID: {id}, New Position ID: {position_id}",
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+
+        flash("Candidate updated successfully!", "success")
+        return redirect(url_for('classroom_manage_candidates'))
+
+    return render_template('edit_classroom_candidate.html',
+                           candidate=candidate,
+                           positions=positions)
+
+
+@app.route('/delete_classroom_candidate/<int:id>')
+def delete_classroom_candidate(id):
+    if 'school_id' not in session or session.get('role') != 'classroom_admin':
+        flash("You must be a classroom admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    cand_resp = supabase.table('classroom_candidates').select('*').eq(
+        'id', id).limit(1).execute()
+    candidate = cand_resp.data[0] if cand_resp.data else None
+    if candidate:
+        if candidate['image']:
+            image_path = os.path.join('static', candidate['image'])
+            if os.path.exists(image_path):
+                os.remove(image_path)
+        supabase.table('classroom_candidates').delete().eq('id', id).execute()
+        supabase.table('logs').insert({
+            'user_id': session.get('user_id'),
+            'action': 'DELETE_CLASSROOM_CANDIDATE',
+            'table_name': 'classroom_candidates',
+            'query_type': 'DELETE',
+            'target': f"Candidate ID: {id}",
+            'new_data': f"Name: {candidate['name']}",
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+        flash("Candidate deleted successfully!", "success")
+    else:
+        flash("Candidate not found.", "danger")
+    return redirect(url_for('classroom_manage_candidates'))
+
 
 @app.route('/classroom_manage_poll', methods=['GET', 'POST'])
 def classroom_manage_poll():
     if 'school_id' not in session or session.get('role') != 'classroom_admin':
-        print("Session role:", session.get('role'), "Session school_id:", session.get('school_id'))
+        print("Session role:", session.get('role'), "Session school_id:",
+              session.get('school_id'))
         flash("You must be a classroom admin to access this page.", "danger")
         return redirect(url_for('login'))
 
@@ -4258,22 +4802,20 @@ def classroom_manage_poll():
     try:
         # First, try classroom-specific settings
         settings_resp = supabase.table('classroom_settings').select(
-            'filing_start', 'filing_end'
-        ).eq('course', classroom_course
-        ).eq('year_level', classroom_year_level
-        ).eq('section', classroom_section
-        ).eq('track', classroom_track
-        ).order('id', desc=True).limit(1).execute()
+            'filing_start', 'filing_end').eq('course', classroom_course).eq(
+                'year_level',
+                classroom_year_level).eq('section', classroom_section).eq(
+                    'track',
+                    classroom_track).order('id', desc=True).limit(1).execute()
 
         # Fallback to ALL if not found
         if not settings_resp.data:
             settings_resp = supabase.table('classroom_settings').select(
-                'filing_start', 'filing_end'
-            ).eq('course', 'ALL'
-            ).eq('year_level', 'ALL'
-            ).eq('section', 'ALL'
-            ).eq('track', 'ALL'
-            ).order('id', desc=True).limit(1).execute()
+                'filing_start',
+                'filing_end').eq('course', 'ALL').eq('year_level', 'ALL').eq(
+                    'section',
+                    'ALL').eq('track',
+                              'ALL').order('id', desc=True).limit(1).execute()
 
         if settings_resp.data:
             filing_start = settings_resp.data[0]['filing_start']
@@ -4300,18 +4842,24 @@ def classroom_manage_poll():
             if 'position_name' in request.form:
                 position_name = request.form.get('position_name', '').strip()
                 supabase.table('classroom_positions').insert({
-                    'name': position_name,
-                    'course': classroom_course,
-                    'year_level': classroom_year_level,
-                    'section': classroom_section,
-                    'track': classroom_track
+                    'name':
+                    position_name,
+                    'course':
+                    classroom_course,
+                    'year_level':
+                    classroom_year_level,
+                    'section':
+                    classroom_section,
+                    'track':
+                    classroom_track
                 }).execute()
                 message = "Position added successfully!"
             # Handle adding a candidate
             elif 'candidate_name' in request.form and 'position_id' in request.form:
                 candidate_name = request.form.get('candidate_name', '').strip()
                 position_id = request.form.get('position_id')
-                campaign_message = request.form.get('campaign_message', '').strip()
+                campaign_message = request.form.get('campaign_message',
+                                                    '').strip()
                 year_level = request.form.get('year_level', '').strip()
                 course = request.form.get('course', '').strip()
                 section = request.form.get('section', '').strip()
@@ -4338,31 +4886,51 @@ def classroom_manage_poll():
                         file.seek(0)
                         import os
                         from werkzeug.utils import secure_filename
-                        CANDIDATE_UPLOAD_FOLDER = os.path.join('static', 'uploads', 'candidates')
+                        CANDIDATE_UPLOAD_FOLDER = os.path.join(
+                            'static', 'uploads', 'candidates')
                         os.makedirs(CANDIDATE_UPLOAD_FOLDER, exist_ok=True)
-                        filename = secure_filename(f"{position_id}_{file.filename}")
+                        filename = secure_filename(
+                            f"{position_id}_{file.filename}")
                         image_path = f"uploads/candidates/{filename}"
-                        full_save_path = os.path.join('static', 'uploads', 'candidates', filename)
+                        full_save_path = os.path.join('static', 'uploads',
+                                                      'candidates', filename)
                         file.save(full_save_path)
 
                 supabase.table('classroom_candidates').insert({
-                    'position_id': int(position_id),
-                    'name': candidate_name,
-                    'image': image_path,
-                    'campaign_message': campaign_message,
-                    'year_level': year_level,
-                    'course': course,
-                    'section': section,
-                    'track': track,
-                    'skills': skills,
-                    'platform': platform,
-                    'goals': goals,
-                    'sg_years': sg_years,
-                    'previous_role': previous_role,
-                    'experience': experience,
-                    'achievements': achievements,
-                    'slogan': slogan,
-                    'note': note
+                    'position_id':
+                    int(position_id),
+                    'name':
+                    candidate_name,
+                    'image':
+                    image_path,
+                    'campaign_message':
+                    campaign_message,
+                    'year_level':
+                    year_level,
+                    'course':
+                    course,
+                    'section':
+                    section,
+                    'track':
+                    track,
+                    'skills':
+                    skills,
+                    'platform':
+                    platform,
+                    'goals':
+                    goals,
+                    'sg_years':
+                    sg_years,
+                    'previous_role':
+                    previous_role,
+                    'experience':
+                    experience,
+                    'achievements':
+                    achievements,
+                    'slogan':
+                    slogan,
+                    'note':
+                    note
                 }).execute()
                 message = "Candidate added successfully!"
 
@@ -4377,22 +4945,24 @@ def classroom_manage_poll():
     for pos in positions:
         cands_resp = supabase.table('classroom_candidates').select('*').eq(
             'position_id', pos['id']).execute()
-        candidates_per_position[pos['id']] = cands_resp.data if cands_resp.data else []
+        candidates_per_position[
+            pos['id']] = cands_resp.data if cands_resp.data else []
 
-    return render_template(
-        'classroom_manage_poll.html',
-        classroom_course=classroom_course,
-        classroom_year_level=classroom_year_level,
-        classroom_section=classroom_section,
-        classroom_track=classroom_track,
-        message=message,
-        positions=positions,
-        candidates_per_position=candidates_per_position,
-        filing_start_iso=filing_start_iso,
-        filing_end_iso=filing_end_iso,
-        filing_open=filing_open
-    )
+    return render_template('classroom_manage_poll.html',
+                           classroom_course=classroom_course,
+                           classroom_year_level=classroom_year_level,
+                           classroom_section=classroom_section,
+                           classroom_track=classroom_track,
+                           message=message,
+                           positions=positions,
+                           candidates_per_position=candidates_per_position,
+                           filing_start_iso=filing_start_iso,
+                           filing_end_iso=filing_end_iso,
+                           filing_open=filing_open)
+
+
 # ...existing code...
+
 
 @app.route('/classroom_manage_settings', methods=['GET', 'POST'])
 def classroom_manage_settings():
@@ -4419,60 +4989,79 @@ def classroom_manage_settings():
         .eq('section', section) \
         .eq('track', track) \
         .order('id', desc=True).limit(1).execute()
-    if setting_resp.data:
-        setting = setting_resp.data[0]
+    setting = setting_resp.data[0] if setting_resp.data else None
+    if setting:
         start_str = setting.get('start_time')
         end_str = setting.get('end_time')
         try:
             if start_str:
-                voting_start = datetime.fromisoformat(start_str)
-                if voting_start.tzinfo is None:
-                    voting_start = voting_start.replace(tzinfo=PH_TZ)
+                # Always convert from UTC to PH Time for display
+                voting_start = datetime.fromisoformat(start_str).astimezone(
+                    PH_TZ)
             if end_str:
-                voting_end = datetime.fromisoformat(end_str)
-                if voting_end.tzinfo is None:
-                    voting_end = voting_end.replace(tzinfo=PH_TZ)
-        except Exception:
+                voting_end = datetime.fromisoformat(end_str).astimezone(PH_TZ)
+        except Exception as e:
+            print("Date parse error:", e)
             voting_start = None
             voting_end = None
 
-    can_set = not voting_start or not voting_end
+    can_set = setting is None  # Only allow setting if no record exists
 
     if request.method == 'POST':
         if not can_set:
-            flash("Voting period can only be set once and cannot be changed.", "danger")
+            flash("Voting period can only be set once and cannot be changed.",
+                  "danger")
             return redirect(url_for('classroom_manage_settings'))
         start_str = request.form.get('voting_start')
         end_str = request.form.get('voting_end')
         if start_str and end_str:
             try:
-                start_dt = datetime.strptime(start_str, "%Y-%m-%dT%H:%M").replace(tzinfo=PH_TZ)
-                end_dt = datetime.strptime(end_str, "%Y-%m-%dT%H:%M").replace(tzinfo=PH_TZ)
+                # Parse as PH Time
+                start_dt = datetime.strptime(
+                    start_str, "%Y-%m-%dT%H:%M").replace(tzinfo=PH_TZ)
+                end_dt = datetime.strptime(
+                    end_str, "%Y-%m-%dT%H:%M").replace(tzinfo=PH_TZ)
+                # Convert to UTC before saving
+                start_dt_utc = start_dt.astimezone(timezone.utc)
+                end_dt_utc = end_dt.astimezone(timezone.utc)
                 supabase.table('classroom_settings').insert({
-                    'course': course,
-                    'year_level': year_level,
-                    'section': section,
-                    'track': track,
-                    'start_time': start_dt.isoformat(),
-                    'end_time': end_dt.isoformat()
+                    'course':
+                    course,
+                    'year_level':
+                    year_level,
+                    'section':
+                    section,
+                    'track':
+                    track,
+                    'start_time':
+                    start_dt_utc.isoformat(),
+                    'end_time':
+                    end_dt_utc.isoformat()
                 }).execute()
                 supabase.table('logs').insert({
-                    'user_id': admin['id'],
-                    'action': 'SET_VOTING_PERIOD',
-                    'table_name': 'classroom_settings',
-                    'query_type': 'INSERT',
-                    'target': f"Classroom: {course} {year_level} {section} {track}",
-                    'new_data': f"Start: {start_dt.isoformat()}, End: {end_dt.isoformat()}",
-                    'timestamp': datetime.now().isoformat()
+                    'user_id':
+                    admin['id'],
+                    'action':
+                    'SET_VOTING_PERIOD',
+                    'table_name':
+                    'classroom_settings',
+                    'query_type':
+                    'INSERT',
+                    'target':
+                    f"Classroom: {course} {year_level} {section} {track}",
+                    'new_data':
+                    f"Start: {start_dt_utc.isoformat()}, End: {end_dt_utc.isoformat()}",
+                    'timestamp':
+                    datetime.now().isoformat()
                 }).execute()
                 voting_start = start_dt
                 voting_end = end_dt
                 message = f"Voting period set for {course} {year_level} {section} {track}!"
                 can_set = False
-            except Exception:
+            except Exception as e:
                 voting_start = None
                 voting_end = None
-                message = "Invalid date format."
+                message = f"Invalid date format. {e}"
 
     return render_template('classroom_manage_settings.html',
                            course=course,
@@ -4483,6 +5072,63 @@ def classroom_manage_settings():
                            voting_end=voting_end,
                            message=message,
                            can_set=can_set)
+
+
+def normalize(val):
+    return val.strip().lower().replace(" ", "") if val else ""
+
+
+@app.route('/classroom_students')
+def classroom_students():
+    if 'school_id' not in session or session.get('role') != 'classroom_admin':
+        flash("You must be a classroom admin to access this page.", "danger")
+        return redirect(url_for('login'))
+
+    admin_resp = supabase.table('user').select('*').eq(
+        'school_id', session['school_id']).single().execute()
+    admin = admin_resp.data
+
+    year_level = normalize(admin.get('year_level', ''))
+    section = normalize(admin.get('section', ''))
+    track = normalize(admin.get('track', ''))
+
+    all_users_resp = supabase.table('user').select(
+        'school_id, first_name, last_name, email, phone, track, section, year_level, role'
+    ).execute()
+
+    print("Admin classroom:", year_level, section, track)
+    students = [
+        s for s in all_users_resp.data or []
+        if normalize(s.get('year_level', '')) == year_level
+        and normalize(s.get('section', '')) == section
+        and normalize(s.get('track', '')) == track
+        and s.get('role', '') == 'user'
+        and s.get('year_level', '').strip() != ''
+        and s.get('section', '').strip() != ''
+        and s.get('track', '').strip() != ''
+    ]
+
+    print("Matched students:",
+          [f"{stu['first_name']} {stu['last_name']}" for stu in students])
+
+    return render_template('classroom_students.html',
+                           students=students,
+                           year_level=admin.get('year_level', ''),
+                           section=admin.get('section', ''),
+                           track=admin.get('track', ''))
+
+
+@app.route('/view_student/<school_id>')
+def view_student(school_id):
+    student_resp = supabase.table('user').select(
+        'school_id, first_name, last_name, email, phone, course, year_level, section, track'
+    ).eq('school_id', school_id).single().execute()
+    student = student_resp.data
+    if not student:
+        flash("Student not found.", "danger")
+        return redirect(url_for('classroom_students'))
+    return render_template('view_student.html', student=student)
+
 
 @app.route('/register_classroom_admin', methods=['GET', 'POST'])
 def register_classroom_admin():
@@ -4562,8 +5208,10 @@ def set_classroom_filing_period():
 
     # Combine date and time, localize to PH_TZ, then convert to UTC
     try:
-        start_naive = datetime.strptime(f"{filing_start_date} {filing_start_time}", "%Y-%m-%d %H:%M")
-        end_naive = datetime.strptime(f"{filing_end_date} {filing_end_time}", "%Y-%m-%d %H:%M")
+        start_naive = datetime.strptime(
+            f"{filing_start_date} {filing_start_time}", "%Y-%m-%d %H:%M")
+        end_naive = datetime.strptime(f"{filing_end_date} {filing_end_time}",
+                                      "%Y-%m-%d %H:%M")
         start_local = PH_TZ.localize(start_naive)
         end_local = PH_TZ.localize(end_naive)
         start_utc = start_local.astimezone(timezone.utc)
@@ -4585,7 +5233,8 @@ def set_classroom_filing_period():
         'filing_end': filing_end,
         'filing_enabled': True
     }).execute()
-    flash('Classroom Filing period successfully set for all classrooms!', 'success')
+    flash('Classroom Filing period successfully set for all classrooms!',
+          'success')
     return redirect(url_for('system_admin'))
 
 

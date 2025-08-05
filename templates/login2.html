@@ -4,328 +4,656 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UNIVOTE: Campus Elections Reimagined - Login</title>
+  <title>Voting System Login</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     :root {
-      --primary: #4CAF50;
-      --primary-light: #81C784;
-      --primary-dark: #388E3C;
-      --text: #333;
-      --bg: #f5f5f5;
-      --card-bg: #fff;
-      --nav-btn: #2E7D32;
-      --nav-btn-hover: #1B5E20;
-      --error: #ED2939;
-    }
-
-    [data-theme="dark"] {
-      --primary: #689F38;
-      --primary-light: #8BC34A;
-      --primary-dark: #33691E;
-      --text: #f5f5f5;
-      --bg: #121212;
-      --card-bg: #1E1E1E;
-      --nav-btn: #4CAF50;
-      --nav-btn-hover: #81C784;
-      --error: #FF5252;
+      --primary: #10b981;
+      --primary-dark: #047857;
+      --secondary: #ffffff;
+      --accent-purple: #8b5cf6;
+      --accent-orange: #f97316;
+      --error: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --text-light: #f8fafc;
+      --text-dark: #1e293b;
+      --grid-color: rgba(139, 92, 246, 0.1);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --rounded-sm: 0.125rem;
+      --rounded-md: 0.375rem;
+      --rounded-lg: 0.5rem;
+      --rounded-xl: 0.75rem;
+      --rounded-2xl: 1rem;
     }
 
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-      transition: background-color 0.3s, color 0.3s;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
+      display: grid;
+      place-items: center;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      background-color: var(--primary);
-      color: white;
+      background-color: var(--secondary);
+      background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+      background-size: 40px 40px;
       padding: 1rem;
-      text-align: center;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      color: var(--text-dark);
     }
 
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+    .login-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
     }
 
-    .theme-toggle {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-
-    main {
-      flex: 1;
+    .logo-display {
+      position: relative;
+      height: 100%;
+      min-height: 500px;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      padding: 2rem;
+      align-items: center;
     }
 
-    .login-container {
-      background-color: var(--card-bg);
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    .logo-stack {
+      position: relative;
       width: 100%;
       max-width: 500px;
+      height: 400px;
+    }
+
+    .logo-item {
+      position: absolute;
+      background: white;
+      border-radius: var(--rounded-xl);
+      padding: 2rem;
+      box-shadow: var(--shadow-xl);
+      transition: all 0.4s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .logo-item img {
+      width: 100%;
+      height: auto;
+      max-height: 120px;
+      object-fit: contain;
+    }
+
+    .logo-item:nth-child(1) {
+      width: 80%;
+      height: 80%;
+      top: 0;
+      left: 0;
+      z-index: 3;
+      transform: rotate(-5deg);
+      background: linear-gradient(135deg, var(--secondary) 0%, #f0fdf4 100%);
+    }
+
+    .logo-item:nth-child(2) {
+      width: 75%;
+      height: 75%;
+      top: 15%;
+      left: 15%;
+      z-index: 2;
+      transform: rotate(3deg);
+      background: linear-gradient(135deg, var(--secondary) 0%, #ecfdf5 100%);
+    }
+
+    .logo-item:nth-child(3) {
+      width: 70%;
+      height: 70%;
+      top: 25%;
+      left: 25%;
+      z-index: 1;
+      transform: rotate(-2deg);
+      background: linear-gradient(135deg, var(--secondary) 0%, #f0fdf4 100%);
+    }
+
+    .logo-item:hover {
+      transform: rotate(0deg) scale(1.05);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      z-index: 4;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: var(--rounded-2xl);
+      padding: 3rem;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      width: 100%;
+      margin-left: auto;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent-purple) 50%, var(--accent-orange) 100%);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
     }
 
     .login-title {
-      text-align: center;
-      margin-bottom: 1.5rem;
+      font-size: 2rem;
+      font-weight: 700;
       color: var(--primary-dark);
+      margin-bottom: 0.5rem;
+      position: relative;
+      display: inline-block;
     }
 
-    .error-message {
+    .login-title::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: var(--accent-purple);
+      border-radius: 3px;
+    }
+
+    .login-subtitle {
+      color: var(--text-dark);
+      font-size: 1rem;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+
+    .message-container {
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert-message {
+      padding: 1rem;
+      border-radius: var(--rounded-md);
+      margin-bottom: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: relative;
+      animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .alert-error {
+      background-color: rgba(239, 68, 68, 0.1);
       color: var(--error);
-      text-align: center;
-      margin-bottom: 1rem;
+      border-left: 4px solid var(--error);
+    }
+
+    .alert-success {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border-left: 4px solid var(--success);
+    }
+
+    .alert-warning {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+      border-left: 4px solid var(--warning);
+    }
+
+    .alert-info {
+      background-color: rgba(59, 130, 246, 0.1);
+      color: var(--accent-purple);
+      border-left: 4px solid var(--accent-purple);
+    }
+
+    .alert-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .alert-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 1.25rem;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .alert-close:hover {
+      opacity: 1;
+    }
+
+    .login-form {
+      display: grid;
+      gap: 1.25rem;
+      width: 100%;
     }
 
     .form-group {
       position: relative;
-      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
     }
 
-    .form-group img {
+    .form-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
       position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 20px;
-      height: 20px;
-      filter: invert(50%);
+      left: 1rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--primary-dark);
     }
 
-    [data-theme="dark"] .form-group img {
-      filter: invert(80%);
-    }
-
-    input {
+    .form-input {
       width: 100%;
-      padding: 12px 12px 12px 40px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
-      background-color: var(--card-bg);
-      color: var(--text);
+      padding: 0.875rem 1rem 0.875rem 2.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--rounded-md);
+      font-size: 0.9375rem;
+      color: var(--text-dark);
+      transition: all 0.2s ease;
+      background-color: #f9fafb;
     }
 
-    input:focus {
+    .form-input:focus {
       outline: none;
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      background-color: white;
     }
 
-    .toggle-password {
-      left: auto !important;
-      right: 15px;
+    .password-toggle {
+      position: absolute;
+      right: 1rem;
       cursor: pointer;
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--primary-dark);
+      transition: all 0.2s ease;
+    }
+
+    .password-toggle:hover {
+      color: var(--accent-purple);
+      transform: scale(1.1);
     }
 
     .forgot-password {
       text-align: right;
-      margin-bottom: 1.5rem;
+      margin-top: -0.5rem;
     }
 
     .forgot-password a {
       color: var(--primary-dark);
+      font-size: 0.8125rem;
+      font-weight: 500;
       text-decoration: none;
+      transition: color 0.2s ease;
     }
 
     .forgot-password a:hover {
+      color: var(--accent-purple);
       text-decoration: underline;
     }
 
-    .login-btn {
-      width: 100%;
-      padding: 12px;
-      background-color: var(--nav-btn);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.2s;
+    .captcha-container {
+      margin: 1rem 0;
     }
 
-    .login-btn:hover {
-      background-color: var(--nav-btn-hover);
+    .login-button {
+      width: 100%;
+      padding: 0.875rem;
+      border: none;
+      border-radius: var(--rounded-md);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .login-button:hover {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .login-button:hover::before {
+      left: 100%;
     }
 
     .divider {
-      height: 1px;
-      background-color: #ddd;
+      display: flex;
+      align-items: center;
       margin: 1.5rem 0;
+      color: var(--primary-dark);
+      font-size: 0.875rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+
+    .divider::before {
+      margin-right: 1rem;
+    }
+
+    .divider::after {
+      margin-left: 1rem;
     }
 
     .signup-link {
       text-align: center;
-      margin-bottom: 1.5rem;
+      font-size: 0.9375rem;
+      color: var(--text-dark);
     }
 
     .signup-link a {
-      color: var(--primary-dark);
+      color: var(--accent-purple);
+      font-weight: 600;
       text-decoration: none;
-      font-weight: bold;
+      transition: color 0.2s ease;
     }
 
     .signup-link a:hover {
+      color: var(--accent-orange);
       text-decoration: underline;
     }
 
-    .developer {
+    .homepage-link {
       text-align: center;
-      font-size: 0.8rem;
-      color: #777;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
     }
 
-    .logo-container {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
+    .home-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: white;
+      color: var(--primary-dark);
+      border-radius: var(--rounded-lg);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid #e5e7eb;
     }
 
-    .logo-container img {
-      height: 60px;
-      margin: 0 1rem;
-      object-fit: contain;
+    .home-btn:hover {
+      background: var(--primary-dark);
+      color: white;
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--primary-dark);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .login-wrapper {
+        grid-template-columns: 1fr;
+      }
+
+      .logo-display {
+        min-height: 300px;
+        margin-bottom: 2rem;
+      }
+
+      .logo-stack {
+        height: 300px;
+      }
+
+      .login-card {
+        margin: 0 auto;
+      }
     }
 
     @media (max-width: 768px) {
-      .login-container {
+      .login-card {
+        padding: 2rem;
+      }
+
+      .logo-item {
         padding: 1.5rem;
       }
 
-      .logo-container img {
-        height: 50px;
-        margin: 0.5rem;
+      .logo-item img {
+        max-height: 100px;
       }
     }
 
     @media (max-width: 480px) {
-      .login-container {
-        padding: 1rem;
+      .login-card {
+        padding: 1.5rem;
       }
 
-      .logo-container {
-        flex-direction: column;
-        align-items: center;
+      .login-title {
+        font-size: 1.75rem;
       }
 
-      .logo-container img {
-        margin: 0.5rem 0;
+      .logo-stack {
+        height: 250px;
+      }
+
+      .logo-item img {
+        max-height: 80px;
       }
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <button class="theme-toggle" id="themeToggle">🌓</button>
-    <h1>UNIVOTE</h1>
-    <p>Campus Elections Reimagined</p>
-  </header>
-
-  <main>
-    <div class="logo-container">
-      <img src="{{ url_for('static', filename='images/ssc.png') }}" alt="SSC Logo" />
-      <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" />
-      <img src="{{ url_for('static', filename='images/ccsict.png') }}" alt="CCSICT Logo" />
+  <div class="login-wrapper">
+    <div class="logo-display">
+      <div class="logo-stack">
+        <div class="logo-item">
+          <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" />
+        </div>
+        <div class="logo-item">
+          <img src="{{ url_for('static', filename='images/ccsict.png') }}" alt="CCSICT Logo" />
+        </div>
+        <div class="logo-item">
+          <img src="{{ url_for('static', filename='images/voting-logo.png') }}" alt="Voting Logo" />
+        </div>
+      </div>
     </div>
 
-    <div class="login-container">
-      <h2 class="login-title">VOTING SYSTEM LOGIN</h2>
-
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      {% for category, message in messages %}
-      <div class="error-message alert-{{ category }}">
-        {{ message }}
+    <div class="login-card">
+      <div class="login-header">
+        <h1 class="login-title">Voting System</h1>
+        <p class="login-subtitle">Secure access to your voting portal</p>
       </div>
-      {% endfor %}
-      {% endif %}
-      {% endwith %}
 
-      <form method="POST" action="">
+      <div class="message-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert-message alert-{{ category }}">
+          {% if category == 'error' %}
+          <svg class="alert-icon" viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+          </svg>
+          {% elif category == 'success' %}
+          <svg class="alert-icon" viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+          {% elif category == 'warning' %}
+          <svg class="alert-icon" viewBox="0 0 24 24">
+            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+          </svg>
+          {% else %}
+          <svg class="alert-icon" viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+          </svg>
+          {% endif %}
+          <span>{{ message }}</span>
+          <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+      </div>
+
+      <form method="POST" action="" class="login-form">
         <div class="form-group">
-          <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="User Icon" />
-          <input type="text" name="school_id" placeholder="School ID" required />
+          <label for="school_id" class="form-label">School ID</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <input type="text" id="school_id" name="school_id" class="form-input" placeholder="Enter your school ID"
+              required />
+          </div>
         </div>
 
         <div class="form-group">
-          <img src="https://cdn-icons-png.flaticon.com/512/3064/3064155.png" alt="Lock Icon" />
-          <input type="password" name="password" placeholder="Password" id="passwordInput" required />
-          <img src="https://cdn-icons-png.flaticon.com/512/709/709612.png" alt="Toggle Password" class="toggle-password"
-            id="togglePassword" />
+          <label for="password" class="form-label">Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password"
+              required />
+            <svg id="togglePassword" class="password-toggle" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </div>
+          <div class="forgot-password">
+            <a href="{{ url_for('forgot_password') }}">Forgot password?</a>
+          </div>
         </div>
 
-        <div class="forgot-password">
-          <a href="#">Forgot Password?</a>
+        <div class="captcha-container">
+          <div class="g-recaptcha" data-sitekey="6Lf6ioErAAAAAMgfS8qXBOmQ-lMUJXoHEK544AEe"></div>
         </div>
 
-        <button type="submit" class="login-btn">LOGIN</button>
+        <button type="submit" class="login-button">Sign In</button>
       </form>
 
-      <div class="divider"></div>
+      <div class="divider">or</div>
 
-      <div class="signup-link">
-        Don't have an account?
-        <a href="{{ url_for('register') }}">Sign up</a>
+      <p class="signup-link">
+        Don't have an account? <a href="{{ url_for('register') }}">Sign up</a>
+      </p>
+
+      <div class="homepage-link">
+        <a href="{{ url_for('index') }}" class="home-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"
+            style="width: 1rem; height: 1rem;">
+            <path
+              d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+          </svg>
+          Return to Homepage
+        </a>
       </div>
-
     </div>
-  </main>
+  </div>
 
   <script>
     const togglePassword = document.getElementById("togglePassword");
-    const passwordInput = document.getElementById("passwordInput");
+    const passwordInput = document.getElementById("password");
 
     togglePassword.addEventListener("click", () => {
-      const isPasswordHidden = passwordInput.type === "password";
-      passwordInput.type = isPasswordHidden ? "text" : "password";
-      togglePassword.src = isPasswordHidden
-        ? "https://cdn-icons-png.flaticon.com/512/159/159604.png"
-        : "https://cdn-icons-png.flaticon.com/512/709/709612.png";
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      togglePassword.innerHTML = isHidden
+        ? `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`
+        : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
     });
 
-    const themeToggle = document.getElementById('themeToggle');
-    const html = document.documentElement;
-
-    // Check for saved theme preference or use preferred color scheme
-    const savedTheme = localStorage.getItem('theme') ||
-      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-
-    // Apply the saved theme
-    html.setAttribute('data-theme', savedTheme);
-
-    themeToggle.addEventListener('click', () => {
-      const currentTheme = html.getAttribute('data-theme');
-      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-
-      html.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-    });
+    // Auto-hide messages after 5 seconds
+    setTimeout(() => {
+      const messages = document.querySelectorAll('.alert-message');
+      messages.forEach(msg => {
+        msg.style.animation = 'slideIn 0.3s ease-out reverse';
+        setTimeout(() => msg.remove(), 300);
+      });
+    }, 5000);
 
     window.addEventListener('pageshow', function (event) {
       if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {

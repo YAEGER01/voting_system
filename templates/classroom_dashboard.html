@@ -45,7 +45,7 @@
     <a href="{{ url_for('main_dashboard') }}" class="sidebar-link">
       <i class="fa-solid fa-house"></i> Main Dashboard
     </a>
-    <a href="{{ url_for('vote_receipt') }}">
+    <a href="{{ url_for('classroom_vote_receipt') }}">
       <i class="fa-solid fa-receipt"></i>
       <span>Receipt Tab</span>
     </a>
@@ -84,6 +84,9 @@
       {% endwith %}
       <!--<h2>{{ user.department }} Department Dashboard</h2> -->
       <h2>CLASSROOM Dashboard</h2>
+      <div class="classroom-info">
+        <b>Classroom:</b> {{ user.course }} {{ user.year_level }} {{ user.section }} {{ user.track }}
+      </div>
       <div class="voting-info-box">
         <div class="voting-info-row">
           <span class="voting-info-icon">🗓️</span>

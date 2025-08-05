@@ -1,8 +1,8 @@
-modules = ["python-3.12", "web", "c-clang14", "postgresql-17", "pyright", "docker", "elixir-1_17", "nodejs-14", "python-3.10", "postgresql-16"]
+modules = ["python-3.12", "web", "c-clang14"]
 run = "python app.py"
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
 
 [deployment]
 run = ["sh", "-c", "python app.py"]
