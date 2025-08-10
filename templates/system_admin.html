@@ -2,1058 +2,881 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>System Admin Dashboard!</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>System Admin Dashboard</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
   <style>
     :root {
-      --primary-color: #2c3e50;
-      --secondary-color: #34495e;
-      --accent-color: #3498db;
-      --text-color: #ecf0f1;
-      --card-bg: #fff;
-      --card-text: #2c3e50;
-      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --bg: #f3fbf6;
+      --surface: #ffffff;
+      --muted: #6b776b;
+      --accent: #16a34a;
+      --accent-600: #15803d;
+      --accent-300: #bbf7d0;
+      --text-dark: #05220f;
+      --card-shadow: 0 10px 30px rgba(6, 24, 6, 0.06);
+      --glass: rgba(255, 255, 255, 0.6);
     }
-
 
     * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      box-sizing: border-box
     }
 
+    html,
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f5f7fa;
-      color: var(--text-color);
-      line-height: 1.6;
-      width: 90%;
-      padding: 10px;
-      margin: 0 auto;
+      height: 100%;
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background: var(--bg);
+      color: var(--text-dark);
+      -webkit-font-smoothing: antialiased
     }
 
-    /* Header and Navigation */
-    .header {
-      background-color: var(--primary-color);
-      color: var(--text-color);
-      padding: 1rem 2rem;
+    .page {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 18px;
+    }
+
+    /* Header */
+    .topbar {
       display: flex;
-      justify-content: space-between;
+      gap: 12px;
       align-items: center;
-      box-shadow: var(--shadow);
-      position: relative;
+      justify-content: space-between;
+      background: linear-gradient(180deg, var(--accent), var(--accent-600));
+      color: white;
+      padding: 14px 18px;
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
     }
 
-    .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
     }
 
-    .nav-direct a {
-      background-color: #e74c3c;
+    .brand .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.14);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .brand .title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.2px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      background: white;
+      color: var(--accent-600);
+      border: none;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(2, 8, 4, 0.06);
+    }
+
+    .btn.ghost {
+      background: transparent;
+      color: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(6, 20, 10, 0.03);
+    }
+
+    .sidebar h3 {
+      margin: 0 0 10px 0;
+      font-size: 0.98rem
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      text-decoration: none;
+      color: var(--text-dark);
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(240, 255, 245, 0.6), var(--surface));
+      border: 1px solid rgba(6, 20, 10, 0.03);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .nav a:hover {
+      transform: translateX(6px);
+      box-shadow: 0 10px 22px rgba(6, 24, 6, 0.04)
+    }
+
+    .nav a i {
+      width: 20px;
+      text-align: center;
+      color: var(--accent-600)
+    }
+
+    .logout {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-600));
       color: white;
       text-decoration: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      font-weight: bold;
-      transition: background-color 0.3s ease;
+      justify-content: center;
+      font-weight: 700;
     }
 
-    .nav-direct a:hover {
-      background-color: #c0392b;
+    /* Main content */
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
 
-    /* Content Area */
-    .content {
-      padding: 2rem;
-    }
-
-    .card-grid {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
     }
 
     .card {
-      background-color: var(--card-bg);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(6, 20, 10, 0.03);
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      color: var(--card-text);
     }
 
     .card-header {
-      background-color: var(--accent-color);
-      color: white;
-      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
     }
 
     .card-header h3 {
       margin: 0;
-      font-size: 1.2rem;
+      font-size: 1rem
     }
 
-    .card-content {
-      padding: 1rem;
-      flex-grow: 1;
-      overflow: auto;
+    .card-body {
+      padding-top: 6px
     }
 
-    .card-content p {
-      margin-bottom: 0.5rem;
+    /* Controls, buttons inside cards */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center
     }
 
-    /* Form Container */
-    .form-container {
-      padding: 1rem;
-    }
-
-    .form-container h2 {
-      margin-bottom: 1rem;
-      color: var(--card-text);
-    }
-
-    .form-container label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: var(--card-text);
-    }
-
-    .form-container input,
-    .form-container select {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    .form-container button {
-      background-color: var(--accent-color);
+    .controls .primary {
+      background: linear-gradient(180deg, var(--accent), var(--accent-600));
       color: white;
-      padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 1rem;
+      font-weight: 700;
     }
 
-    .form-container button:hover {
-      background-color: #2980b9;
+    .controls .secondary {
+      background: transparent;
+      border: 1px solid rgba(6, 20, 10, 0.04);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
     }
 
-    /* Responsive Layout */
-    @media (max-width: 992px) {
-      .card-grid {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      }
-
-      .nav-direct a {
-        font-size: 0.95rem;
-        padding: 0.5rem 0.75rem;
-      }
+    .search {
+      flex: 1;
+      min-width: 160px;
+      display: flex;
     }
 
-    @media (max-width: 768px) {
-      .content {
-        padding: 1rem;
-      }
+    .search input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(6, 20, 10, 0.06);
+    }
 
-      .card-grid {
+    /* Terminal style */
+    .terminal {
+      background: #0b0f0b;
+      color: #dff4e6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+      padding: 12px;
+      border-radius: 10px;
+      max-height: 300px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    /* Forms */
+    form label {
+      display: block;
+      margin: 10px 0 6px 0;
+      font-weight: 600;
+      color: var(--text-dark)
+    }
+
+    form input[type="text"],
+    form input[type="password"],
+    form input[type="date"],
+    form input[type="time"],
+    form select {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(6, 20, 10, 0.06);
+      background: transparent;
+    }
+
+    form button[type="submit"] {
+      margin-top: 12px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-600));
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* Responsive */
+    @media (max-width: 980px) {
+      .layout {
         grid-template-columns: 1fr;
       }
 
-      .logo {
-        font-size: 1.3rem;
+      .grid {
+        grid-template-columns: 1fr;
       }
     }
 
-    @media (max-width: 576px) {
-      .nav-direct a {
-        padding: 0.4rem 0.7rem;
-        font-size: 0.9rem;
+    @media (max-width: 520px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px
       }
 
-      .card-content {
-        padding: 0.75rem;
+      .brand .title {
+        font-size: 1rem
       }
     }
 
-    .nav-link,
-    .logout-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      text-decoration: none;
-      color: white;
-      /* Changed to white */
-      background: #3498db;
-      /* Added blue background */
-      transition: all 0.2s ease;
-      margin: 10px auto;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-      /* Fixed box-shadow syntax */
+    /* subtle helper */
+    .note {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 6px
     }
 
-    .nav-link:hover,
-    .logout-link:hover {
-      background: #2980b9;
-      /* Darker blue on hover */
-      transform: translateX(4px);
-      color: white;
-      /* Ensured text stays white */
-    }
-
-    .nav-link i,
-    .logout-link i {
-      width: 20px;
-      text-align: center;
-      color: white;
-      /* Icons now white */
-    }
-
-    .nav-button {
-      display: block;
-      margin-top: 8px;
-    }
-
-    .nav-button button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: #3498db;
-      /* Blue */
-      color: white;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      /* Consolidated transitions */
-    }
-
-    .nav-button button:hover {
-      background: #2980b9;
-      /* Darker blue */
-      transform: translateX(4px);
-    }
-
-    .logout-link {
-      margin-top: 16px;
-      color: white;
-      /* Changed to white */
-      background: #3498db;
-      /* Blue (same as others) */
-    }
-
-    .logout-link i {
-      color: white;
-      /* Icons now white */
-    }
-
-    .logout-link:hover {
-      background: #2980b9;
-      /* Darker blue on hover */
-    }
-
-    @media (max-width: 480px) {
-      .card {
-        border-radius: 0;
-        max-width: 100%;
-      }
-
-      .card-content {
-        padding: 12px;
-      }
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-300);
+      color: var(--accent-600);
+      font-weight: 700
     }
   </style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-  <header class="header">
-
-
-    <div class="logo">System Admin</div>
-
-
-
-  </header>
-
-
-
-  <main class="content">
-    <div class="card-grid">
-      <div class="card">
-        <div class="card-header">
-          <h3>NAVIGATIONS</h3>
-        </div>
-
-
-        <div class="card-content">
-
-          <a href="{{ url_for('voting_statistics') }}" class="nav-link">
-            <span>Go to Voting Statistics</span>
-          </a>
-
-          <a class="nav-link" href="{{ url_for('blockchain_html') }}">
-
-            <span>Vote Audit Trail</span>
-          </a>
-          <br>
-
-          <hr>
-
-          <a class="logout-link" href="{{ url_for('logout') }}"
-            onclick="return confirm('Are you sure you want to logout?');">
-            <i class="fa-solid fa-right-from-bracket"></i>
-            <span>Logout</span>
-          </a>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">SA</div>
+        <div>
+          <div class="title">System Admin</div>
+          <div style="font-size:0.9rem;opacity:0.95">Administrative Control Panel</div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <h3>User Activity Logs</h3>
-        </div>
-        <div class="card-content">
-          <div class="log-controls"
-            style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 15px;">
-            <button id="loadBtn" onclick="loadLogs()"
-              style="background-color:#3498db; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
-              Load Logs
-            </button>
+      <div class="top-actions">
 
-            <button id="reloadBtn" onclick="reloadLogs()"
-              style="display:none; background-color:#27ae60; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
-              Reload Logs
-            </button>
-
-            <button id="endBtn" onclick="endLogs()"
-              style="display:none; background-color:#e74c3c; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
-              End View
-            </button>
-
-            <select id="sortOrder" onchange="filterLogs()"
-              style="padding:8px; border:1px solid #ccc; border-radius:5px;">
-              <option value="desc">Sort: Newest First</option>
-              <option value="asc">Sort: Oldest First</option>
-            </select>
-
-            <input type="text" id="logSearch" placeholder="Search by School ID, Name, or Role" oninput="filterLogs()"
-              style="flex-grow:1; padding:8px; border:1px solid #ccc; border-radius:5px; min-width:200px;">
-          </div>
-
-
-          <div id="logTerminal"
-            style="display:none; background:#000; color:#fff; font-family:monospace; padding:5px; margin-top:5px; border-radius:8px; max-height:300px; overflow-y:auto; white-space:pre-wrap; -ms-overflow-style: none; scrollbar-width: none;">
-
-            <div id="logOutput">Loading...</div>
-          </div>
-        </div>
+        <a class="btn" href="{{ url_for('logout') }}"
+          onclick="return confirm('Are you sure you want to logout?')">Logout</a>
       </div>
+    </header>
 
-      <!-- VOTE TALLY TERMINAL VIEW -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Vote Data</h3>
-        </div>
-        <div class="card-content">
-          <div class="log-controls"
-            style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 15px;">
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <h3>NAVIGATIONS</h3>
+        <nav class="nav">
+          <a href="{{ url_for('voting_statistics') }}"><i class="fa-solid fa-chart-line"></i> Voting Statistics</a>
+          <a href="{{ url_for('blockchain_html') }}"><i class="fa-solid fa-shield-halved"></i> Vote Audit Trail</a>
+        </nav>
 
-            <button id="startTallyBtn" onclick="loadTally()"
-              style="background-color:#3498db; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
-              Start
-            </button>
+        <a class="logout" href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to logout?')">
+          <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        </a>
+      </aside>
 
-            <button id="reloadTallyBtn" onclick="reloadTally()"
-              style="display:none; background-color:#27ae60; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
-              Reload
-            </button>
+      <!-- Main -->
+      <main class="main">
+        <div class="grid">
+          <!-- User Activity Logs -->
+          <section class="card">
+            <div class="card-header">
+              <h3>User Activity Logs</h3>
+              <div class="controls">
+                <button id="loadBtn" class="primary" onclick="loadLogs()">Load</button>
+                <button id="reloadBtn" class="secondary" style="display:none" onclick="reloadLogs()">Reload</button>
+                <button id="endBtn" class="secondary" style="display:none" onclick="endLogs()">End</button>
+              </div>
+            </div>
 
-            <button id="endTallyBtn" onclick="endTally()"
-              style="display:none; background-color:#e74c3c; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
-              End View
-            </button>
-
-            <input type="text" id="tallySearch" placeholder="Search by position, dept, candidate..."
-              oninput="filterTally()"
-              style="flex-grow:1; padding:8px; border:1px solid #ccc; border-radius:5px; min-width:200px;">
-
-            <button onclick="exportTally('txt')"
-              style="background-color:#8e44ad; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
-              Export TXT
-            </button>
-
-            <button onclick="exportTally('json')"
-              style="background-color:#f39c12; color:white; padding:8px 16px; border:none; border-radius:5px; cursor:pointer;">
-              Export JSON
-            </button>
-          </div>
-
-          <div id="tallyTerminal"
-            style="display:none; background:#000; color:#fff; font-family:monospace; padding:5px; margin-top:5px; border-radius:8px; max-height:300px; overflow-y:auto; white-space:pre-wrap; scrollbar-width: none;">
-            <div id="tallyOutput">Vote tally not loaded.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-content" style="display: flex; justify-content: center; align-items: center; height: 150px;">
-          <h1 style="font-size: 2rem; color: var(--card-text);">DEPARTMENT ADMIN SECTION FEATURES</h1>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h3>Admin Registration</h3>
-        </div>
-        <div class="card-content">
-          <div id="AccCreate" class="tab-content">
-            <div class="form-container">
-              <h2>REGISTRATION OF DEPARTMENT ADMIN</h2>
-              {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-              {% for category, message in messages %}
-              <p class="{{ category }}">{{ message }}</p>
-              {% endfor %}
-              {% endif %}
-              {% endwith %}
-
-              <form method="post" action="{{ url_for('register_admin') }}">
-                <label for="school_id">School ID:</label>
-                <input type="text" id="school_id" name="school_id" required>
-
-                <label for="course">Department:</label>
-                <select id="course" name="course" required>
-                  <option value="" disabled selected>Select your Department</option>
-                  <option value="CCSICT">CCSICT</option>
-                  <option value="CCJE">CCJE</option>
-                  <option value="PS">PS</option>
-                  <option value="CED">CED</option>
-                  <option value="CBM">CBM</option>
-                  <option value="SAS">SAS</option>
-                  <option value="IAT">IAT</option>
+            <div class="card-body">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+                <select id="sortOrder" onchange="applyLogsSort()"
+                  style="padding:8px;border-radius:8px;border:1px solid rgba(6,20,10,0.06)">
+                  <option value="desc">Newest first</option>
+                  <option value="asc">Oldest first</option>
                 </select>
 
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-
-                <label for="first_name">First Name:</label>
-                <input type="text" id="first_name" name="first_name" required>
-
-                <label for="last_name">Last Name:</label>
-                <input type="text" id="last_name" name="last_name" required>
-
-                <button type="submit">Register Admin</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h3>Manage Filing Period</h3>
-        </div>
-        <div class="card-content">
-          <div class="form-container">
-            <h2>Set Filing Period for All Departments</h2>         
-            {% if can_set %}   
-            <form id="filingPeriodForm" method="POST" action="{{ url_for('set_filing_period') }}">
-              <label for="filing_start_date">Filing Start Date:</label>
-              <input type="date" id="filing_start_date" name="filing_start_date" required>
-              <label for="filing_start_time">Filing Start Time:</label>
-              <input type="time" id="filing_start_time" name="filing_start_time" required>
-
-              <label for="filing_end_date">Filing End Date:</label>
-              <input type="date" id="filing_end_date" name="filing_end_date" required>
-              <label for="filing_end_time">Filing End Time:</label>
-              <input type="time" id="filing_end_time" name="filing_end_time" required>
-
-              <button type="submit" id="setFilingBtn">Set Filing Period</button>
-              <div style="margin-top:0.5rem; color:#e67e22; font-weight:bold;">
-                NOTE: This can only be set ONCE. You cannot change the filing period once it is set.
+                <div class="search">
+                  <input id="logSearch" placeholder="Search School ID, Name, Role" oninput="filterLogs()" />
+                </div>
               </div>
-            </form>
-            <script>
-              document.getElementById('filingPeriodForm').addEventListener('submit', function (e) {
-                document.getElementById('setFilingBtn').disabled = true;
-                document.getElementById('setFilingBtn').textContent = "Submitting...";
-              });
-            </script>
-            {% else %}
-            <div style="color:#c0392b;font-weight:bold; margin-bottom:1rem;">
-              You cannot change the filing period anymore.<br>
+
+              <div id="logTerminal" class="terminal" style="display:none">
+                <div id="logOutput">No logs loaded</div>
+              </div>
             </div>
-            {% endif %}
-            <div style="margin-top:1rem;">
-              <strong>Current Filing Period:</strong><br>
-              Start: {{ filing_start_display }}<br>
-              End: {{ filing_end_display }}
+          </section>
+
+          <!-- Vote Tally -->
+          <section class="card">
+            <div class="card-header">
+              <h3>Vote Data Terminal</h3>
+              <div class="controls">
+                <button id="startTallyBtn" class="primary" onclick="loadTally()">Start</button>
+                <button id="reloadTallyBtn" class="secondary" style="display:none"
+                  onclick="reloadTally()">Reload</button>
+                <button id="endTallyBtn" class="secondary" style="display:none" onclick="endTally()">End</button>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-content" style="display: flex; justify-content: center; align-items: center; height: 150px;">
-          <h1 style="font-size: 2rem; color: var(--card-text);">SSC ADMIN SECTION FEATURES</h1>
-        </div>
-      </div>
+            <div class="card-body">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+                <div class="search">
+                  <input id="tallySearch" placeholder="Search by position, dept, candidate..."
+                    oninput="filterTally()" />
+                </div>
 
-      <div class="card">
-        <div class="card-header">
-          <h3>SSC Admin Registration</h3>
-        </div>
-        <div class="card-content">
-          <div class="form-container">
-            <h2>REGISTRATION OF SSC ADMIN</h2>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="flash-container">
-              {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">{{ message }}</div>
-              {% endfor %}
+                <div style="display:flex;gap:8px">
+                  <button class="secondary" onclick="exportTally('txt')">Export TXT</button>
+                  <button class="secondary" onclick="exportTally('json')">Export JSON</button>
+                </div>
+              </div>
+
+              <div id="tallyTerminal" class="terminal" style="display:none">
+                <div id="tallyOutput">Vote tally not loaded.</div>
+              </div>
             </div>
-            {% endif %}
-            {% endwith %}
-            <form method="post" action="{{ url_for('register_ssc_admin') }}">
-              <label for="ssc_school_id">School ID:</label>
-              <input type="text" id="ssc_school_id" name="school_id" required>
+          </section>
 
-              <label for="ssc_password">Password:</label>
-              <input type="password" id="ssc_password" name="password" required>
+          <!-- Admin Registration -->
+          <section class="card">
+            <div class="card-header">
+              <h3>Admin Registration</h3>
+            </div>
 
-              <label for="ssc_first_name">First Name:</label>
-              <input type="text" id="ssc_first_name" name="first_name" required>
+            <div class="card-body">
+              <div class="form-container">
+                <h4>Register Department Admin</h4>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="note">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
 
-              <label for="ssc_last_name">Last Name:</label>
-              <input type="text" id="ssc_last_name" name="last_name" required>
+                <form method="post" action="{{ url_for('register_admin') }}" id="deptAdminForm">
+                  <label for="school_id_admin">School ID</label>
+                  <input type="text" id="school_id_admin" name="school_id" required />
 
-              <button type="submit">Register SSC Admin</button>
-            </form>
-          </div>
+                  <label for="course_admin">Department</label>
+                  <select id="course_admin" name="course" required>
+                    <option value="" disabled selected>Select Department</option>
+                    <option value="CCSICT">CCSICT</option>
+                    <option value="CCJE">CCJE</option>
+                    <option value="PS">PS</option>
+                    <option value="CED">CED</option>
+                    <option value="CBM">CBM</option>
+                    <option value="SAS">SAS</option>
+                    <option value="IAT">IAT</option>
+                  </select>
+
+                  <label for="password_admin">Password</label>
+                  <input type="password" id="password_admin" name="password" required />
+
+                  <label for="first_name_admin">First Name</label>
+                  <input type="text" id="first_name_admin" name="first_name" required />
+
+                  <label for="last_name_admin">Last Name</label>
+                  <input type="text" id="last_name_admin" name="last_name" required />
+
+                  <button type="submit">Register Admin</button>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <!-- Manage Filing Period -->
+          <section class="card">
+            <div class="card-header">
+              <h3>Manage Filing Period</h3>
+              <div class="badge">One-time</div>
+            </div>
+
+            <div class="card-body">
+              <div class="form-container">
+                <h4>Set Filing Period for All Departments</h4>
+
+                {% if can_set %}
+                <form id="filingPeriodForm" method="POST" action="{{ url_for('set_filing_period') }}">
+                  <label for="filing_start_date">Filing Start Date</label>
+                  <input type="date" id="filing_start_date" name="filing_start_date" required />
+                  <label for="filing_start_time">Filing Start Time</label>
+                  <input type="time" id="filing_start_time" name="filing_start_time" required />
+
+                  <label for="filing_end_date">Filing End Date</label>
+                  <input type="date" id="filing_end_date" name="filing_end_date" required />
+                  <label for="filing_end_time">Filing End Time</label>
+                  <input type="time" id="filing_end_time" name="filing_end_time" required />
+
+                  <button type="submit" id="setFilingBtn">Set Filing Period</button>
+                  <div class="note" style="color:#b45309;font-weight:700">NOTE: This can only be set ONCE. It cannot be
+                    changed later.</div>
+                </form>
+                {% else %}
+                <div style="color:#9b1c1c;font-weight:700">You cannot change the filing period anymore.</div>
+                {% endif %}
+
+                <div class="note" style="margin-top:10px">
+                  <strong>Current Filing Period</strong><br>
+                  Start: {{ filing_start_display }}<br>
+                  End: {{ filing_end_display }}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- SSC Admin / Filing -->
+          <section class="card">
+            <div class="card-header">
+              <h3>SSC Admin</h3>
+            </div>
+
+            <div class="card-body">
+              <div class="form-container">
+                <h4>Register SSC Admin</h4>
+                <form method="post" action="{{ url_for('register_ssc_admin') }}" id="sscAdminForm">
+                  <label for="ssc_school_id">School ID</label>
+                  <input type="text" id="ssc_school_id" name="school_id" required />
+
+                  <label for="ssc_password">Password</label>
+                  <input type="password" id="ssc_password" name="password" required />
+
+                  <label for="ssc_first_name">First Name</label>
+                  <input type="text" id="ssc_first_name" name="first_name" required />
+
+                  <label for="ssc_last_name">Last Name</label>
+                  <input type="text" id="ssc_last_name" name="last_name" required />
+
+                  <button type="submit">Register SSC Admin</button>
+                </form>
+
+                <hr style="margin:14px 0">
+
+                <h4>Set SSC Filing Period</h4>
+                <form method="POST" action="{{ url_for('set_ssc_filing_period') }}" id="sscFilingForm">
+                  <label for="ssc_filing_start_date">Filing Start Date</label>
+                  <input type="date" id="ssc_filing_start_date" name="filing_start_date" required />
+                  <label for="ssc_filing_start_time">Filing Start Time</label>
+                  <input type="time" id="ssc_filing_start_time" name="filing_start_time" required />
+                  <label for="ssc_filing_end_date">Filing End Date</label>
+                  <input type="date" id="ssc_filing_end_date" name="filing_end_date" required />
+                  <label for="ssc_filing_end_time">Filing End Time</label>
+                  <input type="time" id="ssc_filing_end_time" name="filing_end_time" required />
+                  <button type="submit">Set SSC Filing Period</button>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <!-- Classroom Admin / Filing / Manage Dashboards -->
+          <section class="card">
+            <div class="card-header">
+              <h3>Classroom Admin & Dashboards</h3>
+            </div>
+
+            <div class="card-body">
+              <div class="form-container">
+                <h4>Register Classroom Admin</h4>
+                <form method="post" action="{{ url_for('register_classroom_admin') }}" id="classAdminForm">
+                  <label for="class_school_id">School ID</label>
+                  <input type="text" id="class_school_id" name="school_id" required />
+
+                  <label for="class_password">Password</label>
+                  <input type="password" id="class_password" name="password" required />
+
+                  <label for="class_first_name">First Name</label>
+                  <input type="text" id="class_first_name" name="first_name" required />
+
+                  <label for="class_last_name">Last Name</label>
+                  <input type="text" id="class_last_name" name="last_name" required />
+
+                  <label for="class_department">Department</label>
+                  <select id="class_department" name="department" required>
+                    <option value="" disabled selected>Select your Department</option>
+                    <option value="CCSICT">COLLEGE OF COMPUTING, STUDIES, INFORMATION AND COMMUNICATION TECHNOLOGY
+                    </option>
+                    <option value="CBM">COLLEGE OF BUSINESS AND MANAGEMENT</option>
+                    <option value="CCJE">COLLEGE OF CRIMINAL JUSTICE EDUCATION</option>
+                    <option value="CED">COLLEGE OF EDUCATION</option>
+                    <option value="PS">POLYTECHNIC SCHOOL</option>
+                    <option value="SAS">SCHOOL OF ARTS AND SCIENCES</option>
+                    <option value="IAT">ISU CAUAYAN-AURORA EXTENSION INSTITUTE OF AGRICULTURAL TECHNOLOGY</option>
+                  </select>
+
+                  <label for="class_course">Course</label>
+                  <select id="class_course" name="course" required disabled>
+                    <option value="" disabled selected>Select your Course</option>
+                  </select>
+
+                  <label for="class_track">Track</label>
+                  <select id="class_track" name="track" required disabled>
+                    <option value="" disabled selected>Select your Track</option>
+                  </select>
+
+                  <label for="class_year">Year Level</label>
+                  <select id="class_year" name="year_level" required>
+                    <option value="" disabled selected>Select Year Level</option>
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                  </select>
+
+                  <label for="class_section">Section</label>
+                  <select id="class_section" name="section" required>
+                    <option value="" disabled selected>Select Section</option>
+                    <option value="1A">1A</option>
+                    <option value="1B">1B</option>
+                    <option value="1C">1C</option>
+                    <option value="2A">2A</option>
+                    <option value="2B">2B</option>
+                    <option value="2C">2C</option>
+                    <option value="3A">3A</option>
+                    <option value="3B">3B</option>
+                    <option value="3C">3C</option>
+                    <option value="4A">4A</option>
+                    <option value="4B">4B</option>
+                    <option value="4C">4C</option>
+                  </select>
+
+                  <button type="submit">Register Classroom Admin</button>
+                </form>
+
+                <hr style="margin:14px 0">
+
+                <h4>Set Classroom Filing Period</h4>
+                <form method="POST" action="{{ url_for('set_classroom_filing_period') }}" id="classFilingForm">
+                  <label for="class_filing_start_date">Filing Start Date</label>
+                  <input type="date" id="class_filing_start_date" name="filing_start_date" required />
+                  <label for="class_filing_start_time">Filing Start Time</label>
+                  <input type="time" id="class_filing_start_time" name="filing_start_time" required />
+                  <label for="class_filing_end_date">Filing End Date</label>
+                  <input type="date" id="class_filing_end_date" name="filing_end_date" required />
+                  <label for="class_filing_end_time">Filing End Time</label>
+                  <input type="time" id="class_filing_end_time" name="filing_end_time" required />
+                  <button type="submit">Set Classroom Filing Period</button>
+                </form>
+
+                <hr style="margin:14px 0">
+
+                <h4>Manage Dashboards</h4>
+                <p class="note">To activate a dashboard check its box. To deactivate uncheck it. Click Update to save.
+                </p>
+
+                <form method="POST" action="{{ url_for('system_admin') }}" id="manageDashForm">
+                  {% for dash in dashboards %}
+                  <div
+                    style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(6,20,10,0.03)">
+                    <div>
+                      <strong>{{ dash.label }}</strong><br>
+                      {% if dash.description is defined and dash.description %}
+                      <small class="note">{{ dash.description }}</small>
+                      {% endif %}
+                    </div>
+                    <div>
+                      <input type="checkbox" id="dash_{{ loop.index }}" name="{{ dash.name }}" {% if
+                        status_map.get(dash.name) %}checked{% endif %} />
+                    </div>
+                  </div>
+                  {% endfor %}
+
+                  <div style="margin-top:12px">
+                    <button type="submit">Update Dashboard Status</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
         </div>
-      </div>
-
-
-
-      <div class="card">
-        <div class="card-header">
-          <h3>SSC Manage Filing Period</h3>
-        </div>
-        <div class="card-content">
-          <div class="form-container">
-            <h2>Set SSC Filing Period</h2>
-            <form method="POST" action="{{ url_for('set_ssc_filing_period') }}">
-              <label for="ssc_filing_start_date">Filing Start Date:</label>
-              <input type="date" id="ssc_filing_start_date" name="filing_start_date" required>
-
-              <label for="ssc_filing_start_time">Filing Start Time:</label>
-              <input type="time" id="ssc_filing_start_time" name="filing_start_time" required>
-
-              <label for="ssc_filing_end_date">Filing End Date:</label>
-              <input type="date" id="ssc_filing_end_date" name="filing_end_date" required>
-
-              <label for="ssc_filing_end_time">Filing End Time:</label>
-              <input type="time" id="ssc_filing_end_time" name="filing_end_time" required>
-
-              <button type="submit">Set SSC Filing Period</button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-content" style="display: flex; justify-content: center; align-items: center; height: 150px;">
-          <h1 style="font-size: 2rem; color: var(--card-text);">CLASSROOM ADMIN SECTION FEATURES</h1>
-        </div>
-      </div>
-
-
-      <div class="card">
-        <div class="card-header">
-          <h3>Classroom Admin Registration</h3>
-        </div>
-        <div class="card-content">
-          <div class="form-container">
-            <h2>REGISTRATION OF CLASSROOM ADMIN</h2>
-            <form method="post" action="{{ url_for('register_classroom_admin') }}">
-              <label for="school_id">School ID:</label>
-              <input type="text" id="school_id" name="school_id" required>
-
-              <label for="password">Password:</label>
-              <input type="password" id="password" name="password" required>
-
-              <label for="first-name">First Name</label>
-              <input type="text" id="first-name" name="first_name" required />
-
-              <label for="last-name">Last Name</label>
-              <input type="text" id="last-name" name="last_name" required />
-
-              <label for="class_department">Department</label>
-              <select id="class_department" name="department" required>
-                <option value="" disabled selected>Select your Department</option>
-                <option value="CCSICT">COLLEGE OF COMPUTING, STUDIES, INFORMATION AND COMMUNICATION TECHNOLOGY</option>
-                <option value="CBM">COLLEGE OF BUSINESS AND MANAGEMENT</option>
-                <option value="CCJE">COLLEGE OF CRIMINAL JUSTICE EDUCATION</option>
-                <option value="CED">COLLEGE OF EDUCATION</option>
-                <option value="PS">POLYTECHNIC SCHOOL</option>
-                <option value="SAS">SCHOOL OF ARTS AND SCIENCES</option>
-                <option value="IAT">ISU CAUAYAN-AURORA EXTENSION INSTITUTE OF AGRICULTURAL TECHNOLOGY</option>
-              </select>
-
-              <label for="class_course">Course</label>
-              <select id="class_course" name="course" required disabled>
-                <option value="" disabled selected>Select your Course</option>
-              </select>
-
-              <label for="class_track">Track</label>
-              <select id="class_track" name="track" required disabled>
-                <option value="" disabled selected>Select your Track</option>
-              </select>
-
-              <label for="year">Year Level</label>
-              <select id="year" name="year_level" required>
-                <option value="" disabled selected>Select Year Level</option>
-                <option value="1st Year">1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-              </select>
-
-              <label for="section">Section</label>
-              <select id="section" name="section" required>
-                <option value="" disabled selected>Select Section</option>
-                <option value="1A">1A</option>
-                <option value="1B">1B</option>
-                <option value="1C">1C</option>
-                <option value="2A">2A</option>
-                <option value="2B">2B</option>
-                <option value="2C">2C</option>
-                <option value="3A">3A</option>
-                <option value="3B">3B</option>
-                <option value="3C">3C</option>
-                <option value="4A">4A</option>
-                <option value="4B">4B</option>
-                <option value="4C">4C</option>
-              </select>
-
-              <button type="submit">Register Classroom Admin</button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-
-      <div class="card">
-        <div class="card-header">
-          <h3>Classroom Manage Filing Period</h3>
-        </div>
-        <div class="card-content">
-          <div class="form-container">
-            <h2>Set Classroom Filing Period</h2>
-            <form method="POST" action="{{ url_for('set_classroom_filing_period') }}">
-              <label for="class_filing_start_date">Filing Start Date:</label>
-              <input type="date" id="class_filing_start_date" name="filing_start_date" required>
-
-              <label for="class_filing_start_time">Filing Start Time:</label>
-              <input type="time" id="class_filing_start_time" name="filing_start_time" required>
-
-              <label for="class_filing_end_date">Filing End Date:</label>
-              <input type="date" id="class_filing_end_date" name="filing_end_date" required>
-
-              <label for="class_filing_end_time">Filing End Time:</label>
-              <input type="time" id="class_filing_end_time" name="filing_end_time" required>
-
-              <button type="submit">Set Classroom Filing Period</button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-
-
-
-
+      </main>
     </div>
-  </main>
+  </div>
 
-  <script src="script.js">
-    document.addEventListener('DOMContentLoaded', function () {
-      const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-      const mobileNav = document.querySelector('.mobile-nav');
-
-      mobileMenuBtn.addEventListener('click', function () {
-        mobileNav.classList.toggle('active');
-      });
-
-      // Close mobile menu when clicking outside
-      document.addEventListener('click', function (e) {
-        if (!mobileNav.contains(e.target) && e.target !== mobileMenuBtn) {
-          mobileNav.classList.remove('active');
-        }
-      });
-    });
-
-  </script>
   <script>
+    // Utility: safe query
+    function $id(id) {return document.getElementById(id)}
+
+    // Logs
     let allLogs = [];
-
     function loadLogs() {
-      const terminal = document.getElementById("logTerminal");
-      const output = document.getElementById("logOutput");
-      const loadBtn = document.getElementById("loadBtn");
-      const reloadBtn = document.getElementById("reloadBtn");
-      const endBtn = document.getElementById("endBtn");
-
-      terminal.style.display = "block";
-      output.textContent = "Loading logs...";
-
-      fetch('/get_data_logs')
-        .then(res => res.json())
-        .then(data => {
-          allLogs = sortLogs(data);
-          filterLogs();
-
-          loadBtn.style.display = "none";
-          reloadBtn.style.display = "inline-block";
-          endBtn.style.display = "inline-block";
-        })
-        .catch(() => {
-          output.textContent = "Error loading logs.";
-        });
+      const terminal = $id('logTerminal'), out = $id('logOutput');
+      terminal.style.display = 'block'; out.textContent = 'Loading logs...';
+      fetch('/get_data_logs').then(r => r.json()).then(data => {
+        allLogs = data || [];
+        applyLogsSort();
+        document.getElementById('loadBtn').style.display = 'none';
+        document.getElementById('reloadBtn').style.display = 'inline-block';
+        document.getElementById('endBtn').style.display = 'inline-block';
+      }).catch(() => {out.textContent = 'Error loading logs.'})
     }
 
-    function reloadLogs() {
-      const output = document.getElementById("logOutput");
-      output.textContent = "Reloading logs...";
+    function reloadLogs() {$id('logOutput').textContent = 'Reloading...'; loadLogs()}
+    function endLogs() {$id('logTerminal').style.display = 'block'; $id('logOutput').textContent = 'Log viewing ended.'; document.getElementById('loadBtn').style.display = 'inline-block'; document.getElementById('reloadBtn').style.display = 'none'; document.getElementById('endBtn').style.display = 'none'; allLogs = []}
 
-      fetch('/get_data_logs')
-        .then(res => res.json())
-        .then(data => {
-          allLogs = sortLogs(data);
-          filterLogs();
-        })
-        .catch(() => {
-          output.textContent = "Error reloading logs.";
-        });
-    }
-
-    function endLogs() {
-      const terminal = document.getElementById("logTerminal");
-      const output = document.getElementById("logOutput");
-      const loadBtn = document.getElementById("loadBtn");
-      const reloadBtn = document.getElementById("reloadBtn");
-      const endBtn = document.getElementById("endBtn");
-
-      terminal.style.display = "block";
-      output.textContent = "Log viewing ended.";
-
-      loadBtn.style.display = "inline-block";
-      reloadBtn.style.display = "none";
-      endBtn.style.display = "none";
-      allLogs = [];
+    function applyLogsSort() {
+      const order = $id('sortOrder').value;
+      allLogs.sort((a, b) => {const A = new Date(a.timestamp || 0), B = new Date(b.timestamp || 0); return order === 'asc' ? A - B : B - A})
+      filterLogs()
     }
 
     function filterLogs() {
-      const output = document.getElementById("logOutput");
-      const search = document.getElementById("logSearch").value.toLowerCase();
+      const search = ($id('logSearch').value || '').toLowerCase();
+      const out = $id('logOutput');
       const filtered = allLogs.filter(log => {
-        const sid = (log.school_id || "").toLowerCase();
-        const name = `${log.first_name || ""} ${log.last_name || ""}`.toLowerCase();
-        const role = (log.role || "").toLowerCase();
+        const sid = (log.school_id || '').toLowerCase();
+        const name = ((log.first_name || '') + ' ' + (log.last_name || '')).toLowerCase();
+        const role = (log.role || '').toLowerCase();
         return sid.includes(search) || name.includes(search) || role.includes(search);
-      });
-
-      const rendered = filtered.map(log => {
-        return `[${log.timestamp}]
-    USER: ${log.school_id || 'N/A'} | ${log.first_name || 'N/A'} ${log.last_name || ''} | ${log.course || 'N/A'} | ${log.year_level || 'N/A'}
-    → ACTION: ${log.action || 'N/A'} on ${log.table_name || 'N/A'} (${log.query_type || 'N/A'})
-    → TARGET: ${log.target || 'N/A'}
-    → NEW: ${log.new_data || 'N/A'}\n`;
-      }).join("\n");
-
-      output.textContent = rendered || "No matching logs found.";
+      })
+      const rendered = filtered.map(log => `[${log.timestamp || 'N/A'}]\nUSER: ${log.school_id || 'N/A'} | ${log.first_name || ''} ${log.last_name || ''}\n→ ACTION: ${log.action || 'N/A'} on ${log.table_name || 'N/A'} (${log.query_type || 'N/A'})\n→ TARGET: ${log.target || 'N/A'}\n→ NEW: ${log.new_data || 'N/A'}`).join('\n\n');
+      out.textContent = rendered || 'No matching logs found.';
     }
 
-    function sortLogs(logs) {
-      const sortOrder = document.getElementById("sortOrder").value;
-      return logs.sort((a, b) => {
-        const aTime = new Date(a.timestamp);
-        const bTime = new Date(b.timestamp);
-        return sortOrder === 'asc' ? aTime - bTime : bTime - aTime;
-      });
-    }
-  </script>
-  <script>
+    // Vote tally
     let allTallyData = [];
-    let currentTallyRender = "";
+    let currentTallyRender = '';
 
-    function loadTally() {
-      const term = document.getElementById("tallyTerminal");
-      const out = document.getElementById("tallyOutput");
-      const start = document.getElementById("startTallyBtn");
-      const reload = document.getElementById("reloadTallyBtn");
-      const end = document.getElementById("endTallyBtn");
-
-      term.style.display = "block";
-      out.textContent = "fetching vote data...";
-
-      fetch("/fetch_candidates")
-        .then(res => res.json())
-        .then(async data => {
-          allTallyData = [];
-
-          for (const block of data) {
-            for (const candidate of block.candidates) {
-              const breakdown = await fetch(`/vote_breakdown/${candidate.id}`).then(r => r.json()).catch(() => null);
-              allTallyData.push({
-                candidate,
-                position: block.position.name,
-                department: block.position.department || 'N/A',
-                breakdown
-              });
-            }
+    async function loadTally() {
+      const term = $id('tallyTerminal'), out = $id('tallyOutput');
+      term.style.display = 'block'; out.textContent = 'Fetching vote data...';
+      try {
+        const res = await fetch('/fetch_candidates'); const data = await res.json();
+        allTallyData = [];
+        for (const block of data) {
+          for (const candidate of block.candidates) {
+            let breakdown = null;
+            try {breakdown = await fetch(`/vote_breakdown/${candidate.id}`).then(r => r.json())} catch (e) {breakdown = null}
+            allTallyData.push({candidate, position: block.position.name, department: block.position.department || 'N/A', breakdown})
           }
-
-          start.style.display = "none";
-          reload.style.display = "inline-block";
-          end.style.display = "inline-block";
-
-          filterTally();
-        })
-        .catch(() => {
-          out.textContent = "Error loading.";
-        });
+        }
+        $id('startTallyBtn').style.display = 'none';
+        $id('reloadTallyBtn').style.display = 'inline-block';
+        $id('endTallyBtn').style.display = 'inline-block';
+        filterTally()
+      } catch (e) {
+        out.textContent = 'Error loading tally.'
+      }
     }
 
-    function reloadTally() {
-      document.getElementById("tallyOutput").textContent = "reloading...";
-      loadTally();
-    }
-
-    function endTally() {
-      document.getElementById("tallyTerminal").style.display = "block";
-      document.getElementById("tallyOutput").textContent = "viewing ended.";
-
-      document.getElementById("startTallyBtn").style.display = "inline-block";
-      document.getElementById("reloadTallyBtn").style.display = "none";
-      document.getElementById("endTallyBtn").style.display = "none";
-
-      allTallyData = [];
-      currentTallyRender = "";
-    }
+    function reloadTally() {$id('tallyOutput').textContent = 'Reloading...'; loadTally()}
+    function endTally() {$id('tallyTerminal').style.display = 'block'; $id('tallyOutput').textContent = 'Viewing ended.'; $id('startTallyBtn').style.display = 'inline-block'; $id('reloadTallyBtn').style.display = 'none'; $id('endTallyBtn').style.display = 'none'; allTallyData = []; currentTallyRender = ''}
 
     function filterTally() {
-      const query = document.getElementById("tallySearch").value.toLowerCase().trim();
-      const out = document.getElementById("tallyOutput");
-
-      const terms = query.split(/\s+/);
+      const q = ($id('tallySearch').value || '').toLowerCase().trim();
+      const terms = q.split(/\s+/).filter(Boolean);
+      const out = $id('tallyOutput');
       const matches = allTallyData.filter(entry => {
         const str = `${entry.candidate.name} ${entry.position} ${entry.department}`.toLowerCase();
-        return terms.every(term => str.includes(term));
+        return terms.every(t => str.includes(t));
       });
 
       const rendered = matches.map(entry => {
-        const {candidate, position, department, breakdown} = entry;
-        let line = `[${position.toUpperCase()} - ${department.toUpperCase()}]\n  → ${candidate.name}: ${candidate.vote_count} vote${candidate.vote_count !== 1 ? 's' : ''}`;
-
-        if (!breakdown || !breakdown.nested) {
-          line += `\n     ↳ No breakdown available`;
-          return line;
-        }
-
-        for (const year in breakdown.nested) {
+        const c = entry.candidate, pos = entry.position, dept = entry.department, br = entry.breakdown;
+        let line = `[${pos.toUpperCase()} - ${dept.toUpperCase()}]\n  → ${c.name}: ${c.vote_count} vote${c.vote_count !== 1 ? 's' : ''}`;
+        if (!br || !br.nested) {line += `\n     ↳ No breakdown available`; return line}
+        for (const year in br.nested) {
           line += `\n     • Year: ${year}`;
-          for (const dept in breakdown.nested[year]) {
-            line += `\n       Dept: ${dept}`;
-            for (const course in breakdown.nested[year][dept]) {
+          for (const dept2 in br.nested[year]) {
+            line += `\n       Dept: ${dept2}`;
+            for (const course in br.nested[year][dept2]) {
               line += `\n         Course: ${course}`;
-              for (const track in breakdown.nested[year][dept][course]) {
-                const votes = breakdown.nested[year][dept][course][track];
+              for (const track in br.nested[year][dept2][course]) {
+                const votes = br.nested[year][dept2][course][track];
                 line += `\n           → ${track}: ${votes}`;
               }
             }
           }
         }
-
-        line += `\n     ↳ Total: ${breakdown.total_votes} votes`;
+        line += `\n     ↳ Total: ${br.total_votes || 0} votes`;
         return line;
-      });
+      }).join('\n\n');
 
-      currentTallyRender = rendered.join("\n\n");
-      out.textContent = currentTallyRender || "No matching candidates.";
+      currentTallyRender = rendered;
+      out.textContent = rendered || 'No matching candidates.';
     }
 
     function exportTally(type) {
-      if (!currentTallyRender) {
-        alert("No data to export. Load and filter first.");
-        return;
-      }
-
+      if (!currentTallyRender) {alert('No data to export. Load and filter first.'); return }
       let blob, filename;
-
-      if (type === 'txt') {
-        blob = new Blob([currentTallyRender], {type: "text/plain"});
-        filename = "vote_tally.txt";
-      } else if (type === 'json') {
-        const jsonExport = allTallyData.map(e => ({
-          candidate: e.candidate.name,
-          position: e.position,
-          department: e.department,
-          votes: e.candidate.vote_count,
-          breakdown: e.breakdown.nested || {},
-          total_votes: e.breakdown.total_votes || 0
-        }));
-        blob = new Blob([JSON.stringify(jsonExport, null, 2)], {type: "application/json"});
-        filename = "vote_tally.json";
+      if (type === 'txt') {blob = new Blob([currentTallyRender], {type: 'text/plain'}); filename = 'vote_tally.txt'}
+      else {
+        const jsonExport = allTallyData.map(e => ({candidate: e.candidate.name, position: e.position, department: e.department, votes: e.candidate.vote_count, breakdown: e.breakdown ? nested || {} : {}, total_votes: e.breakdown ? e.breakdown.total_votes || 0 : 0}));
+        blob = new Blob([JSON.stringify(jsonExport, null, 2)], {type: 'application/json'}); filename = 'vote_tally.json'
       }
-
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
+      const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
-  </script>
 
-  <script>
-    function toggleNav() {
-      document.getElementById('navMenu').classList.toggle('show');
-    }
-  </script>
-  <script>
-    // Department → Course → Track logic
+    // Department -> Course -> Track data and logic
     const courseData = {
       "CCSICT": {
-        "BSIT": [
-          "Networking and Security",
-          "Business Analytics",
-          "Service Management for Business Process",
-          "Web and Mobile Application Development"
-        ],
-        "BSCS": [
-          "Data Mining",
-          "Business Analytics"
-        ],
-        "BSEMC": [
-          "Game Development",
-          "Digital Animation"
-        ]
+        "BSIT": ["Networking and Security", "Business Analytics", "Service Management for Business Process", "Web and Mobile Application Development"],
+        "BSCS": ["Data Mining", "Business Analytics"],
+        "BSEMC": ["Game Development", "Digital Animation"]
       },
-      "CBM": {
-        "BSBA": [],
-        "BSM": [],
-        "BSHM": [],
-        "BSTM": [],
-        "BSAIS": [],
-        "BSMA": [],
-        "BSEntrep": [],
-        "BSLM": []
-      },
-      "CCJE": {
-        "BSCRIM": []
-      },
-      "CED": {
-        "BSED": [
-          "English",
-          "Filipino",
-          "Math",
-          "Science"
-        ],
-        "BEED": [],
-        "BPEd": []
-      },
-      "PS": {
-        "BSIndTech": [
-          "Automotive Technology",
-          "Electronics Technology"
-        ]
-      },
-      "SAS": {
-        "BAELS": [],
-        "BAPS": []
-      },
-      "IAT": {
-        "DAS": []
-      }
+      "CBM": {"BSBA": [], "BSM": [], "BSHM": [], "BSTM": [], "BSAIS": [], "BSMA": [], "BSEntrep": [], "BSLM": []},
+      "CCJE": {"BSCRIM": []},
+      "CED": {"BSED": ["English", "Filipino", "Math", "Science"], "BEED": [], "BPEd": []},
+      "PS": {"BSIndTech": ["Automotive Technology", "Electronics Technology"]},
+      "SAS": {"BAELS": [], "BAPS": []},
+      "IAT": {"DAS": []}
     };
 
     const courseFullNames = {
-      "BSIT": "Bachelor of Science in Information Technology",
-      "BSIndTech": "Bachelor of Science in Industrial Technology",
-      "BSCS": "Bachelor of Science in Computer Science",
-      "BSEMC": "Bachelor of Science in Entertainment and Multimedia Computing",
-      "BSBA": "Bachelor of Science in Business Administration",
-      "BSM": "Bachelor of Science in Management",
-      "BSHM": "Bachelor of Science in Hospitality Management",
-      "BSTM": "Bachelor of Science in Tourism Management",
-      "BSAIS": "Bachelor of Science in Accounting Information System",
-      "BSMA": "Bachelor of Science in Management Accounting",
-      "BSEntrep": "Bachelor of Science in Entrepreneurship",
-      "BSLM": "Bachelor of Science in Legal Management",
-      "BSCRIM": "Bachelor of Science in Criminology",
-      "BSED": "Bachelor of Secondary Education",
-      "BEED": "Bachelor of Elementary Education",
-      "BPEd": "Bachelor of Physical Education",
-      "BAELS": "Bachelor of Arts in English Language Studies",
-      "BAPS": "Bachelor of Arts in Political Science",
-      "DAS": "Diploma in Agricultural Sciences"
+      "BSIT": "Bachelor of Science in Information Technology", "BSIndTech": "Bachelor of Science in Industrial Technology",
+      "BSCS": "Bachelor of Science in Computer Science", "BSEMC": "Bachelor of Science in Entertainment and Multimedia Computing",
+      "BSBA": "Bachelor of Science in Business Administration", "BSM": "Bachelor of Science in Management",
+      "BSHM": "Bachelor of Science in Hospitality Management", "BSTM": "Bachelor of Science in Tourism Management",
+      "BSAIS": "Bachelor of Science in Accounting Information System", "BSMA": "Bachelor of Science in Management Accounting",
+      "BSEntrep": "Bachelor of Science in Entrepreneurship", "BSLM": "Bachelor of Science in Legal Management",
+      "BSCRIM": "Bachelor of Science in Criminology", "BSED": "Bachelor of Secondary Education",
+      "BEED": "Bachelor of Elementary Education", "BPEd": "Bachelor of Physical Education", "BAELS": "Bachelor of Arts in English Language Studies",
+      "BAPS": "Bachelor of Arts in Political Science", "DAS": "Diploma in Agricultural Sciences"
     };
 
-    // Use unique IDs for classroom admin form
-    const classDepartmentSelect = document.getElementById('class_department');
-    const classCourseSelect = document.getElementById('class_course');
-    const classTrackSelect = document.getElementById('class_track');
+    // classroom admin selects
+    const classDept = $id('class_department'), classCourse = $id('class_course'), classTrack = $id('class_track');
+    if (classDept) {
+      classDept.addEventListener('change', function () {
+        const dept = this.value;
+        classCourse.innerHTML = '<option value="" disabled selected>Select your Course</option>';
+        classTrack.innerHTML = '<option value="" disabled selected>Select your Track</option>';
+        classTrack.disabled = true;
+        if (courseData[dept]) {Object.keys(courseData[dept]).forEach(sn => {const opt = document.createElement('option'); opt.value = sn; opt.textContent = sn + (courseFullNames[sn] ? ` (${courseFullNames[sn]})` : ''); classCourse.appendChild(opt)}); classCourse.disabled = false}
+        else {classCourse.disabled = true}
+      });
+    }
+    if (classCourse) {
+      classCourse.addEventListener('change', function () {
+        const dept = classDept.value, course = this.value;
+        classTrack.innerHTML = '<option value="" disabled selected>Select your Track</option>';
+        if (courseData[dept] && courseData[dept][course] && courseData[dept][course].length > 0) {
+          courseData[dept][course].forEach(track => {const opt = document.createElement('option'); opt.value = track; opt.textContent = track; classTrack.appendChild(opt)}); classTrack.disabled = false;
+        } else classTrack.disabled = true;
+      });
+    }
 
-    classDepartmentSelect.addEventListener('change', function () {
-      const dept = this.value;
-      classCourseSelect.innerHTML = '<option value="" disabled selected>Select your Course</option>';
-      classTrackSelect.innerHTML = '<option value="" disabled selected>Select your Track</option>';
-      classTrackSelect.disabled = true;
-      if (courseData[dept]) {
-        Object.keys(courseData[dept]).forEach(function (shortName) {
-          const opt = document.createElement('option');
-          opt.value = shortName;
-          opt.textContent = shortName + (courseFullNames[shortName] ? ` (${courseFullNames[shortName]})` : '');
-          classCourseSelect.appendChild(opt);
+    // Prevent duplicate IDs issues: attach submit handlers safely
+    document.addEventListener('DOMContentLoaded', function () {
+      // filing form submit disable
+      const filingForm = $id('filingPeriodForm');
+      if (filingForm) {
+        filingForm.addEventListener('submit', function (e) {
+          const btn = $id('setFilingBtn');
+          if (btn) {btn.disabled = true; btn.textContent = 'Submitting...'}
         });
-        classCourseSelect.disabled = false;
-      } else {
-        classCourseSelect.disabled = true;
       }
-    });
 
-    classCourseSelect.addEventListener('change', function () {
-      const dept = classDepartmentSelect.value;
-      const course = this.value;
-      classTrackSelect.innerHTML = '<option value="" disabled selected>Select your Track</option>';
-      if (courseData[dept] && courseData[dept][course] && courseData[dept][course].length > 0) {
-        courseData[dept][course].forEach(function (track) {
-          const opt = document.createElement('option');
-          opt.value = track;
-          opt.textContent = track;
-          classTrackSelect.appendChild(opt);
+      // ssc and class filings disable
+      const sscForm = $id('sscFilingForm');
+      if (sscForm) {sscForm.addEventListener('submit', function () { })}
+
+      const classF = $id('classFilingForm');
+      if (classF) {classF.addEventListener('submit', function () { })}
+
+      // small accessibility: make card rows clickable for manage dash (if present)
+      const manageForm = $id('manageDashForm');
+      if (manageForm) {
+        manageForm.querySelectorAll('div[style]').forEach(row => {
+          row.style.cursor = 'pointer';
+          row.addEventListener('click', function (e) {
+            // avoid toggling if clicking on inputs
+            if (e.target.tagName.toLowerCase() === 'input') return;
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            if (checkbox) {checkbox.checked = !checkbox.checked}
+          });
         });
-        classTrackSelect.disabled = false;
-      } else {
-        classTrackSelect.disabled = true;
       }
-    });
-  </script>
-  <script>
-    document.getElementById('filingPeriodForm').addEventListener('submit', function (e) {
-      document.getElementById('setFilingBtn').disabled = true;
-      document.getElementById('setFilingBtn').textContent = "Submitting...";
     });
   </script>
 </body>

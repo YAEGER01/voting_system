@@ -1,0 +1,338 @@
+/* Green theme - Classroom Election Results */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+:root {
+  --bg: #f3fbf6;
+  /* very light green */
+  --card: #ffffff;
+  --muted: #6b776b;
+  --accent: #16a34a;
+  /* green-600 */
+  --accent-dark: #15803d;
+  /* green-700 */
+  --accent-300: #bbf7d0;
+  --text: #0f1720;
+  --glass: rgba(255, 255, 255, 0.7);
+  --shadow-soft: 0 10px 28px rgba(6, 24, 6, 0.06);
+  --progress-bg: #eaf8ef;
+  --winner-bg: rgba(22, 163, 74, 0.08);
+}
+
+[data-theme="dark"] {
+  --bg: #071811;
+  --card: #071911;
+  --muted: #9fb9a9;
+  --accent: #34d399;
+  --accent-dark: #10b981;
+  --accent-300: rgba(52, 211, 153, 0.12);
+  --text: #e8f7ee;
+  --glass: rgba(6, 12, 8, 0.6);
+  --shadow-soft: 0 10px 30px rgba(1, 8, 3, 0.6);
+  --progress-bg: rgba(255, 255, 255, 0.04);
+  --winner-bg: rgba(52, 211, 153, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: radial-gradient(900px 300px at 10% 6%, rgba(22, 163, 74, 0.04), transparent), var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.cr-header {
+  max-width: 1100px;
+  margin: 28px auto 8px;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.cr-header-left {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.cr-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: var(--shadow-soft);
+}
+
+.cr-title-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.cr-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.cr-subtitle {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.cr-header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.cr-theme-toggle {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.cr-container {
+  max-width: 1100px;
+  margin: 0 auto 60px;
+  padding: 0 20px;
+}
+
+.cr-empty {
+  margin: 28px 0;
+  padding: 24px;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+  color: var(--muted);
+}
+
+.cr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.cr-card {
+  background: linear-gradient(180deg, rgba(240, 255, 245, 0.65), var(--card));
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(10, 25, 10, 0.03);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  overflow: hidden;
+}
+
+.cr-card:hover {
+  transform: translateY(-6px);
+}
+
+.cr-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cr-position {
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cr-total {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.cr-no-candidates {
+  color: var(--muted);
+  padding: 12px 0;
+}
+
+.cr-candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cr-candidate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  transition: background 140ms ease;
+}
+
+.cr-candidate-row:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.cr-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.cr-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--glass);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.cr-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-meta {
+  min-width: 0;
+}
+
+.cr-name {
+  font-weight: 700;
+  font-size: 0.98rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cr-party {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.cr-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  width: 52%;
+  min-width: 160px;
+}
+
+.cr-stats {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.cr-votes {
+  font-weight: 700;
+  font-size: 1.05rem;
+  min-width: 36px;
+  text-align: right;
+  color: var(--text);
+}
+
+.cr-pct {
+  color: var(--muted);
+  font-size: 0.9rem;
+  min-width: 44px;
+  text-align: right;
+}
+
+.cr-progress {
+  width: 100%;
+  height: 10px;
+  background: var(--progress-bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cr-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(52, 211, 153, 0.95), rgba(16, 185, 129, 0.95));
+  border-radius: 999px;
+  transition: width 900ms cubic-bezier(.2, .9, .2, 1);
+  box-shadow: inset 0 -2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cr-winner {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--winner-bg);
+  color: var(--accent-dark);
+  font-weight: 700;
+  font-size: 0.82rem;
+  border-radius: 999px;
+  align-self: flex-end;
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.06);
+}
+
+@media (max-width: 980px) {
+  .cr-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cr-right {
+    width: 48%;
+    min-width: 150px;
+  }
+}
+
+@media (max-width: 520px) {
+  .cr-header {
+    margin: 18px auto 8px;
+  }
+
+  .cr-header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .cr-title {
+    font-size: 1rem;
+  }
+
+  .cr-right {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .cr-candidate-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cr-stats {
+    justify-content: space-between;
+  }
+}

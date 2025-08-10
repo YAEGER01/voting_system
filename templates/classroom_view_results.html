@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Classroom Election Results</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/classroom_results.css') }}" />
+</head>
+
+<body>
+  <header class="cr-header">
+    <div class="cr-header-left">
+      <a href="{{ url_for('classroom_admin_dashboard') }}" class="cr-back">Back</a>
+      <div class="cr-title-wrap">
+        <h1 class="cr-title">Classroom Results</h1>
+        <p class="cr-subtitle">{{ course }} · {{ year_level }} · {{ section }}{% if track %} · {{ track }}{% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="cr-header-actions">
+      <button id="cr-theme-toggle" class="cr-theme-toggle" aria-label="Toggle theme">Theme</button>
+    </div>
+  </header>
+
+  <main class="cr-container">
+    {% if results|length == 0 %}
+    <section class="cr-empty">
+      <p>No results available for this classroom.</p>
+    </section>
+    {% else %}
+    <section class="cr-grid">
+      {% for block in results %}
+      {% set total_votes = block.candidates|sum(attribute='vote_count') %}
+      <article class="cr-card">
+        <div class="cr-card-header">
+          <h2 class="cr-position">{{ block.position.name }}</h2>
+          <span class="cr-total">{{ total_votes }} total vote{% if total_votes != 1 %}s{% endif %}</span>
+        </div>
+
+        {% if block.candidates|length == 0 %}
+        <div class="cr-no-candidates">No candidates for this position.</div>
+        {% else %}
+        <div class="cr-candidates">
+          {% set max_votes = 0 %}
+          {% for cand in block.candidates %}
+          {% if cand.vote_count > max_votes %}
+          {% set max_votes = cand.vote_count %}
+          {% endif %}
+          {% endfor %}
+
+          {% for cand in block.candidates %}
+          {% if total_votes > 0 %}
+          {% set pct = (cand.vote_count / total_votes * 100) | round(1) %}
+          {% else %}
+          {% set pct = 0 %}
+          {% endif %}
+          <div class="cr-candidate-row">
+            <div class="cr-left">
+              {% if cand.image %}
+              <img src="{{ url_for('static', filename=cand.image) }}" alt="{{ cand.name }}" class="cr-avatar" width="56"
+                height="56" />
+              {% else %}
+              <div class="cr-avatar cr-initial">{{ cand.name[0]|upper }}</div>
+              {% endif %}
+
+              <div class="cr-meta">
+                <div class="cr-name">{{ cand.name }}</div>
+                {% if cand.party is defined and cand.party %}
+                <div class="cr-party">{{ cand.party }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="cr-right">
+              <div class="cr-stats">
+                <span class="cr-votes">{{ cand.vote_count }}</span>
+                <span class="cr-pct">{{ pct }}%</span>
+              </div>
+
+              <div class="cr-progress" data-pct="{{ pct }}">
+                <div class="cr-progress-bar" style="width: {{ pct }}%"></div>
+              </div>
+
+              {% if cand.vote_count == max_votes and max_votes > 0 %}
+              <div class="cr-winner">Winner</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/classroom_results.js') }}"></script>
+</body>
+
+</html>

@@ -282,6 +282,7 @@
           <li class="nav-item"><a href="{{ url_for('classroom_manage_candidates') }}">Manage Candidates</a></li>
           <li class="nav-item"><a href="{{ url_for('classroom_manage_settings') }}">Manage Voting Settings</a></li>
           <!--<li class="nav-item"><a href="{{ url_for('activity') }}">Activity</a></li>-->
+          <li class="nav-item"><a href="{{ url_for('classroom_view_results') }}">Votes Results</a></li>
           <li class="nav-item"><a href="{{ url_for('logout') }}"
               onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
 
@@ -339,7 +340,7 @@
           <button id="endBtn" class="btn btn-danger">End</button>
           <br>
           <hr><br>
-          <a style="text-decoration: none;" class="btn" href="/vote_results_report">View Official Results</a>
+          <a style="text-decoration: none;" class="btn" href="/classroom_view_results">View Official Results</a>
         </div>
 
 

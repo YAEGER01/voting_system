@@ -616,13 +616,18 @@
     <div class="logo-display">
       <div class="logo-stack">
         <div class="logo-item">
-          <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" />
+          <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='images/isu.png') }}" alt="ISU Logo" />
+          </a>
+
         </div>
-        <div class="logo-item">
+        <!--div class="logo-item">
           <img src="{{ url_for('static', filename='images/ccsict.png') }}" alt="CCSICT Logo" />
-        </div>
+      </div-->
         <div class="logo-item">
-          <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Voting Logo" />
+          <img src="{{ url_for('static', filename='images/univ.jpg') }}" alt="Voting Logo"
+            style="clip-path: circle(50% at 50% 50%); object-fit: cover; width: 90px; height: 90px;" />
+
         </div>
       </div>
     </div>

@@ -2,125 +2,91 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>View Results</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='design2.css') }}">
-    <style>
-        :root {
-            --primary: #25c18c;
-            --primary-dark: #1e3b28;
-            --primary-light: #81C784;
-            --text: #333;
-            --bg: #f5f5f5;
-            --card-bg: #fff;
-            --shadow: rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        .results-container {
-            background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: 0 2px 12px var(--shadow);
-            padding: 32px;
-            max-width: 700px;
-            margin: 40px auto;
-        }
-
-        .position-title {
-            color: var(--primary);
-            font-size: 1.3em;
-            margin-top: 30px;
-            margin-bottom: 10px;
-        }
-
-        .candidate-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .candidate-row:last-child {
-            border-bottom: none;
-        }
-
-        .candidate-name {
-            font-weight: bold;
-        }
-
-        .vote-count {
-            color: var(--primary-dark);
-            font-size: 1.1em;
-        }
-
-        .candidate-img {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 12px;
-            border: 1px solid var(--primary);
-            background: #fff;
-        }
-
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 24px;
-            padding: 12px 28px;
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            box-shadow: 0 2px 8px var(--shadow);
-            transition: background 0.2s;
-            position: relative;
-            top: 0;
-            left: 0;
-        }
-
-        .back-btn:hover,
-        .back-btn:focus {
-            background: var(--primary-dark);
-            color: #fff;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>View Results</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design2.css') }}">
 </head>
 
 <body>
-    <a href="{{ url_for('dashboard') }}" class="back-btn">&larr; Back to Dashboard</a>
-    <div class="results-container">
-        <h2 style="text-align:center;">Voting Results for {{ department }}</h2>
-        {% if results|length == 0 %}
-        <p>No positions available for your department.</p>
-        {% else %}
-        {% for pos_result in results %}
-        <div class="position-title">{{ pos_result.position.name }}</div>
-        {% if pos_result.candidates|length == 0 %}
-        <div style="color:#888; margin-bottom:10px;">No candidates for this position.</div>
-        {% else %}
-        {% for cand in pos_result.candidates %}
-        <div class="candidate-row">
-            <div style="display:flex;align-items:center;">
-                {% if cand.image %}
-                <img src="{{ url_for('static', filename=cand.image) }}" class="candidate-img" alt="Candidate">
-                {% endif %}
-                <span class="candidate-name">{{ cand.name }}</span>
-            </div>
-            <span class="vote-count">{{ cand.vote_count }} vote{{ '' if cand.vote_count == 1 else 's' }}</span>
+  <header class="topbar">
+    <a href="{{ url_for('admin_dashboard') }}" class="back-btn">← Back to Admin Dashboard</a>
+    <div class="top-title">Voting Results</div>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">🌓</button>
+  </header>
+
+  <main class="container">
+    <section class="overview">
+      <h1>Results for {{ department }}</h1>
+      {% if results|length == 0 %}
+      <p class="muted">No positions available for your department.</p>
+      {% endif %}
+    </section>
+
+    <section class="positions">
+      {% for pos_result in results %}
+      {% set total_votes = pos_result.candidates|sum(attribute='vote_count') %}
+      <article class="position-card">
+        <div class="position-header">
+          <h2 class="position-name">{{ pos_result.position.name }}</h2>
+          <div class="position-meta">
+            <span class="total-votes">{{ total_votes }} total vote{% if total_votes != 1 %}s{% endif %}</span>
+          </div>
         </div>
-        {% endfor %}
+
+        {% if pos_result.candidates|length == 0 %}
+        <p class="muted">No candidates for this position.</p>
+        {% else %}
+        <div class="candidates-list">
+          {% set max_votes = 0 %}
+          {% for cand in pos_result.candidates %}
+          {% if cand.vote_count > max_votes %}
+          {% set max_votes = cand.vote_count %}
+          {% endif %}
+          {% endfor %}
+
+          {% for cand in pos_result.candidates %}
+          {% if total_votes > 0 %}
+          {% set pct = (cand.vote_count / total_votes * 100) | round(1) %}
+          {% else %}
+          {% set pct = 0 %}
+          {% endif %}
+          <div class="candidate-row">
+            <div class="candidate-left">
+              {% if cand.image %}
+              <img src="{{ url_for('static', filename=cand.image) }}" class="candidate-img" alt="Candidate">
+              {% else %}
+              <div class="candidate-avatar">{{ cand.name[0]|upper }}</div>
+              {% endif %}
+              <div class="candidate-meta">
+                <div class="candidate-name">{{ cand.name }}</div>
+                <div class="candidate-sub">{{ cand.party if cand.party is defined else '' }}</div>
+              </div>
+            </div>
+
+            <div class="candidate-right">
+              <div class="vote-row">
+                <div class="vote-count">{{ cand.vote_count }}</div>
+                <div class="vote-percent">{{ pct }}%</div>
+              </div>
+
+              <div class="progress" data-pct="{{ pct }}">
+                <div class="progress-bar" style="width: {{ pct }}%"></div>
+              </div>
+
+              {% if cand.vote_count == max_votes and max_votes > 0 %}
+              <div class="winner-badge">Winner</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
         {% endif %}
-        {% endfor %}
-        {% endif %}
-    </div>
+      </article>
+      {% endfor %}
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/results.js') }}"></script>
 </body>
 
 </html>

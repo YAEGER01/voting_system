@@ -1,0 +1,301 @@
+/* Green theme for Manage Dashboards */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+:root {
+  --bg: #f3fbf6;
+  --card: #ffffff;
+  --muted: #6b776b;
+  --accent: #16a34a;
+  --accent-700: #15803d;
+  --accent-300: #bbf7d0;
+  --text: #0f1720;
+  --shadow: 0 8px 28px rgba(6, 24, 6, 0.06);
+  --border: rgba(8, 16, 10, 0.06);
+  --success: #059669;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: radial-gradient(900px 300px at 10% 6%, rgba(22, 163, 74, 0.04), transparent), var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.md-header {
+  max-width: 1100px;
+  margin: 28px auto 8px;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.md-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.md-sub {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.md-back {
+  padding: 8px 12px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-700));
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.md-container {
+  max-width: 1100px;
+  margin: 18px auto 60px;
+  padding: 0 20px;
+}
+
+.md-instructions {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.md-instructions h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+}
+
+.md-list {
+  margin: 8px 0 0 18px;
+  color: var(--muted);
+}
+
+.md-form {
+  display: block;
+}
+
+.md-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.md-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(240, 255, 245, 0.6), var(--card));
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.md-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(6, 24, 6, 0.06);
+}
+
+.md-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.md-card-title {
+  font-weight: 700;
+  font-size: 0.98rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-card-desc {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.md-card-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* hide native checkbox but keep it accessible */
+.md-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 48px;
+  height: 28px;
+  border-radius: 18px;
+  position: relative;
+  outline: none;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #f3f7f4;
+  cursor: pointer;
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+
+.md-checkbox:focus {
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+}
+
+.md-toggle {
+  width: 40px;
+  height: 20px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.06);
+  display: inline-block;
+  position: relative;
+  transform: translateX(-42px);
+  pointer-events: none;
+}
+
+/* draw knob using pseudo-element on input when checked */
+.md-checkbox::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 6px rgba(2, 8, 4, 0.18);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.md-checkbox:checked {
+  background: linear-gradient(90deg, var(--accent-300), var(--accent));
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+.md-checkbox:checked::after {
+  transform: translateX(20px);
+  background: white;
+}
+
+.md-controls {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.md-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: white;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.md-btn-primary {
+  background: linear-gradient(180deg, var(--accent), var(--accent-700));
+  color: white;
+  border: none;
+  box-shadow: 0 10px 30px rgba(22, 163, 74, 0.10);
+}
+
+.md-btn-secondary {
+  background: transparent;
+  color: var(--muted);
+}
+
+.md-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.98), rgba(16, 185, 129, 0.98));
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(22, 163, 74, 0.12);
+  font-weight: 700;
+  transform: translateY(12px);
+  opacity: 0;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.md-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 880px) {
+  .md-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Toggle Switch Styles */
+.md-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.md-checkbox {
+  display: none;
+}
+
+.md-toggle {
+  width: 50px;
+  height: 26px;
+  background: #ccc;
+  border-radius: 13px;
+  position: relative;
+  transition: background 0.3s;
+}
+
+.md-toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.md-checkbox:checked+.md-toggle {
+  background: #4CAF50;
+}
+
+.md-checkbox:checked+.md-toggle::after {
+  transform: translateX(24px);
+}

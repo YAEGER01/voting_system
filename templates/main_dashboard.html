@@ -775,6 +775,11 @@
                 font-size: 20px;
             }
         }
+
+        .dashboard-card.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
     </style>
 </head>
 
@@ -858,7 +863,10 @@
                         style="font-size: 24px; font-weight: 700; color: #1b5e20; margin-bottom: 32px; text-align: center;">
                         Election Dashboards</h3>
                     <div class="dashboard-grid">
-                        <a href="{{ url_for('ssc_dashboard') }}" class="dashboard-card">
+                        <!-- SSC Dashboard -->
+                        <a href="{% if status_map.get('ssc_dashboard') %}{{ url_for('ssc_dashboard') }}{% else %}#{% endif %}"
+                            class="dashboard-card {% if not status_map.get('ssc_dashboard') %}disabled{% endif %}"
+                            onclick="alert('SSC Dashboard is currently {% if status_map.get('ssc_dashboard') %}active{% else %}inactive{% endif %}.'); {% if not status_map.get('ssc_dashboard') %}return false;{% endif %}">
                             <div class="dashboard-content">
                                 <div class="dashboard-icon">
                                     <i class="fas fa-university"></i>
@@ -868,17 +876,16 @@
                                     <p>Student Supreme Council Elections</p>
                                 </div>
                             </div>
-                            <div class="dashboard-status active">
-                                ACTIVE
+                            <div
+                                class="dashboard-status {% if status_map.get('ssc_dashboard') %}active{% else %}inactive{% endif %}">
+                                {% if status_map.get('ssc_dashboard') %}ACTIVE{% else %}INACTIVE{% endif %}
                             </div>
-                            <!--
-                            <div class="dashboard-status inactive">
-                                INACTIVE
-                            </div>
-                            -->
                         </a>
 
-                        <a href="{{ url_for('dashboard') }}" class="dashboard-card">
+                        <!-- Department Dashboard -->
+                        <a href="{% if status_map.get('dashboard') %}{{ url_for('dashboard') }}{% else %}#{% endif %}"
+                            class="dashboard-card {% if not status_map.get('dashboard') %}disabled{% endif %}"
+                            onclick="alert('Department Dashboard is currently {% if status_map.get('dashboard') %}active{% else %}inactive{% endif %}.'); {% if not status_map.get('dashboard') %}return false;{% endif %}">
                             <div class="dashboard-content">
                                 <div class="dashboard-icon">
                                     <i class="fas fa-building"></i>
@@ -888,12 +895,16 @@
                                     <p>Department Representative Elections</p>
                                 </div>
                             </div>
-                            <div class="dashboard-status active">
-                                ACTIVE
+                            <div
+                                class="dashboard-status {% if status_map.get('dashboard') %}active{% else %}inactive{% endif %}">
+                                {% if status_map.get('dashboard') %}ACTIVE{% else %}INACTIVE{% endif %}
                             </div>
                         </a>
 
-                        <a href="{{ url_for('classroom_dashboard') }}" class="dashboard-card">
+                        <!-- Classroom Dashboard -->
+                        <a href="{% if status_map.get('classroom_dashboard') %}{{ url_for('classroom_dashboard') }}{% else %}#{% endif %}"
+                            class="dashboard-card {% if not status_map.get('classroom_dashboard') %}disabled{% endif %}"
+                            onclick="alert('Classroom Dashboard is currently {% if status_map.get('classroom_dashboard') %}active{% else %}inactive{% endif %}.'); {% if not status_map.get('classroom_dashboard') %}return false;{% endif %}">
                             <div class="dashboard-content">
                                 <div class="dashboard-icon">
                                     <i class="fas fa-chalkboard-teacher"></i>
@@ -903,8 +914,9 @@
                                     <p>Class Representative Elections</p>
                                 </div>
                             </div>
-                            <div class="dashboard-status active">
-                                ACTIVE
+                            <div
+                                class="dashboard-status {% if status_map.get('classroom_dashboard') %}active{% else %}inactive{% endif %}">
+                                {% if status_map.get('classroom_dashboard') %}ACTIVE{% else %}INACTIVE{% endif %}
                             </div>
                         </a>
 
@@ -1065,13 +1077,7 @@
             }
         });
 
-        // Dashboard card functionality
-        document.querySelectorAll('.dashboard-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const dashboardName = card.querySelector('h4').textContent;
-                alert(`${dashboardName} is currently inactive. Please check back later.`);
-            });
-        });
+
     </script>
 </body>
 

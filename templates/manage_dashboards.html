@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Dashboards</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/manage_dashboards.css') }}">
+</head>
+
+<body>
+  <header class="md-header">
+    <h1 class="md-title">Manage Dashboards</h1>
+    <a href="{{ url_for('system_admin') }}" class="md-back">← Back</a>
+  </header>
+
+  <div class="md-container">
+    <div class="md-instructions">
+      <h2>Enable/Disable Dashboards</h2>
+      <p class="md-sub">Toggle dashboards on or off and click "Save Changes".</p>
+    </div>
+
+    <form id="md-form" method="POST" action="{{ url_for('manage_dashboards') }}" class="md-form">
+      <div class="md-grid">
+        {% for dash in dashboards %}
+        <div class="md-card">
+          <div class="md-card-left">
+            <span class="md-card-title">{{ dash.label }}</span>
+            <span class="md-card-desc">{{ dash.description or '' }}</span>
+          </div>
+          <div class="md-card-right">
+            <input type="checkbox" id="dash-{{ dash.name }}" name="{{ dash.name }}" class="md-checkbox" {% if
+              status_map[dash.name] %}checked{% endif %}>
+            <label for="dash-{{ dash.name }}" class="md-toggle"></label>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="md-controls">
+        <button type="submit" class="md-btn md-btn-primary">Save Changes</button>
+        <a href="{{ url_for('system_admin') }}" class="md-btn md-btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <div id="md-toast" class="md-toast" hidden>Saved successfully</div>
+
+  <script src="{{ url_for('static', filename='js/manage_dashboards.js') }}"></script>
+</body>
+
+</html>
