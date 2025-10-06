@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIVOTE - Maintenance</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+        }
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .retry-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .retry-btn:hover {
+            transform: translateY(-2px);
+        }
+        .features {
+            text-align: left;
+            margin-top: 30px;
+        }
+        .feature {
+            margin: 10px 0;
+            color: #555;
+        }
+        .checkmark {
+            color: #28a745;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔧</div>
+        <h1>System Maintenance</h1>
+        <p>{{ message }}</p>
+
+        <div class="status">
+            <h3>🛠️ What we're working on:</h3>
+            <div class="features">
+                <div class="feature">
+                    <span class="checkmark">✅</span>
+                    Flask application is running perfectly
+                </div>
+                <div class="feature">
+                    <span class="checkmark">🔄</span>
+                    Backup database system is active
+                </div>
+                <div class="feature">
+                    <span class="checkmark">📡</span>
+                    Attempting to connect to databases
+                </div>
+                <div class="feature">
+                    <span class="checkmark">⏱️</span>
+                    Automatic retry in progress
+                </div>
+            </div>
+        </div>
+
+        <p>
+            <strong>Don't worry!</strong> Your voting system will be back online shortly.
+            The backup database system is designed to handle these situations automatically.
+        </p>
+
+        <a href="/" class="retry-btn">🔄 Retry Connection</a>
+
+        <div style="margin-top: 30px; font-size: 12px; color: #888;">
+            <p>💡 <strong>Troubleshooting Tips:</strong></p>
+            <p>• Check if MariaDB/MySQL is running on your system</p>
+            <p>• Verify database credentials in your .env file</p>
+            <p>• The system will automatically recover when databases are available</p>
+        </div>
+    </div>
+</body>
+</html>

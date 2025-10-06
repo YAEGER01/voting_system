@@ -1,28 +1,28 @@
-INSERT INTO public.user (
-  school_id,
-  course,
-  email,
-  password_hash,
-  first_name,
-  last_name,
-  phone,
-  id_photo_front,
-  id_photo_back,
-  role,
-  active
-) VALUES (
-  'SYSADMIN001',
-  'Global Administration',
-  'sysadmin@global.local',
-  --/find password_generator.py >> 
-  --/replace 'password = "you are password"' with your password >>
-  --/run python password_generator.py and copy scypt converted password >>
-  'put scrypt password here', 
-  'System',
-  'Administrator',
-  '0000000000',
-  'placeholder_front.jpg',
-  'placeholder_back.jpg',
-  'SysAdmin',
-  'OFFLINE'
-);
+INSERT INTO
+  user (
+    school_id
+    , course
+    , email
+    , password_hash
+    , first_name
+    , last_name
+    , phone
+    , id_photo_front
+    , id_photo_back
+    , role
+    , active
+  )
+VALUES
+  (
+    'SYSADMIN001'
+    , 'Global Administration'
+    , 'sysadmin@global.local'
+    , 'scrypt:32768:8:1$ih8XrKyQWgPc2PaW$b4e105b08cd40c9fc76f84e8d8817a6add2e9476145eb3e9f5fb83f726bd2d2cb8a8fc4c8282663f7c2273758b17d0cd1f0fc91cdfe15b57b6a11727d9e78166'
+    , 'System'
+    , 'Administrator'
+    , '0000000000'
+    , 'placeholder_front.jpg'
+    , 'placeholder_back.jpg'
+    , 'SysAdmin'
+    , 'OFFLINE'
+  );
